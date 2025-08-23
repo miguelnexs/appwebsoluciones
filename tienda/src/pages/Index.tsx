@@ -1,8 +1,9 @@
 
-import { ShoppingBag, Truck, Shield, Award, Search } from "lucide-react";
+import { ShoppingBag, Truck, Shield, Award, Search, User, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import HeroCarousel from "@/components/HeroCarousel";
 import CartDropdown from "@/components/CartDropdown";
@@ -12,10 +13,20 @@ import { Link } from "react-router-dom";
 import logoImage from "../../img/logo_Mesa de trabajo 1.png";
 import { useProductos } from "../hooks/useProductos";
 import { useCategorias } from "../hooks/useCategorias";
+import { useAuth } from "../contexts/AuthContext";
+import { useRecommendations, usePersonalizedProducts } from "../hooks/useUserData";
+import { getImageUrl } from "../config/api";
 
 const Index = () => {
+  const { isAuthenticated, user } = useAuth();
   const { products, loading, error } = useProductos();
   const { categorias, loading: loadingCategorias, error: errorCategorias } = useCategorias();
+  const { data: recommendations, isLoading: recsLoading } = useRecommendations();
+  const { data: personalizedProducts, isLoading: personalizedLoading } = usePersonalizedProducts();
+
+  // Usar productos personalizados si está autenticado, sino productos generales
+  const displayProducts = isAuthenticated && personalizedProducts ? personalizedProducts : products;
+  const productsLoading = isAuthenticated ? personalizedLoading : loading;
 
   // Agrupar productos por categoría
   const grouped = products.reduce((acc: Record<string, typeof products>, prod) => {
@@ -40,14 +51,92 @@ const Index = () => {
         </div>
       </div>
 
+      {/* Saludo personalizado para usuarios autenticados */}
+      {isAuthenticated && user && (
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-6">
+          <div className="container mx-auto px-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold mb-1">
+                  ¡Hola, {user.first_name || user.username}! 👋
+                </h2>
+                <p className="text-blue-100">
+                  Bienvenido de vuelta a {user.tienda?.nombre || 'tu tienda personalizada'}
+                </p>
+              </div>
+              <Link to="/profile">
+                <Button variant="secondary" size="sm" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
+                  <User className="h-4 w-4 mr-2" />
+                  Ver Mi Perfil
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Carousel */}
       <HeroCarousel />
+
+      {/* Recomendaciones personalizadas para usuarios autenticados */}
+      {isAuthenticated && recommendations && recommendations.length > 0 && (
+        <section className="container mx-auto px-6 py-12">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-light text-neutral-900 tracking-wide mb-4 flex items-center justify-center">
+              <Heart className="h-6 w-6 mr-2 text-red-500" />
+              Recomendado Especialmente para Ti
+            </h2>
+            <p className="text-neutral-600">Basado en tus compras y preferencias anteriores</p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {recommendations.slice(0, 4).map((producto: any) => (
+              <Card key={producto.id} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-sm">
+                <CardContent className="p-0">
+                  <Link to={`/producto/${producto.slug}`}>
+                    <div className="aspect-square overflow-hidden rounded-t-lg">
+                      <img 
+                        src={producto.imagen ? getImageUrl(producto.imagen) : '/placeholder-product.jpg'} 
+                        alt={producto.nombre}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                          Recomendado
+                        </Badge>
+                      </div>
+                      <h3 className="font-medium text-neutral-900 mb-2 line-clamp-2">{producto.nombre}</h3>
+                      <p className="text-lg font-bold text-neutral-900">
+                        {new Intl.NumberFormat('es-CO', {
+                          style: 'currency',
+                          currency: 'COP',
+                          minimumFractionDigits: 0,
+                        }).format(producto.precio)}
+                      </p>
+                    </div>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          <div className="text-center">
+            <Link to="/profile">
+              <Button variant="outline" className="hover:bg-blue-50">
+                Ver Más Recomendaciones
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Categories Grid (catálogos visuales) */}
       <section className="container mx-auto px-6 py-16">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-light text-neutral-900 tracking-wide mb-4">
-            Tus CG Indispensables
+            {isAuthenticated && user?.tienda ? `Productos de ${user.tienda.nombre}` : 'Tus CG Indispensables'}
           </h2>
           <div className="w-24 h-px bg-neutral-300 mx-auto mb-6"></div>
           <Link to="/todos-productos">

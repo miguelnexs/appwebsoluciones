@@ -1,11 +1,8 @@
 // Configuración centralizada de la API
-export const BASE_URL = 'http://softwarebycg.shop';
-export const API_URL = `${BASE_URL}/api/`;
-
 export const API_CONFIG = {
-  BASE_URL,
+  BASE_URL: 'http://softwarebycg.shop',
   TIMEOUT: 30000,
-  API_URL,
+  API_URL: 'http://softwarebycg.shop/api',
   
   // Endpoints específicos
   ENDPOINTS: {
@@ -13,14 +10,6 @@ export const API_CONFIG = {
     CATEGORIAS: '/api/categorias/',
     VENTAS: '/api/ventas/',
     PEDIDOS: '/api/pedidos/',
-  },
-  
-  // Configuración para filtros de usuario
-  USER_FILTERS: {
-    PRODUCTOS_POR_USUARIO: 'usuario',
-    CATEGORIAS_POR_USUARIO: 'usuario',
-    PUBLICOS: 'publicos',
-    ACTIVA: 'activa'
   }
 };
 

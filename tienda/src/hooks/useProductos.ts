@@ -1,7 +1,7 @@
 // Este hook requiere que React esté instalado y tipado correctamente en el proyecto.
 import * as React from "react";
 import { API_CONFIG } from '../config/api';
-import { USER_CONFIG, buildUserApiUrl } from '../config/user';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface ProductColor {
   name: string;
@@ -22,6 +22,7 @@ export interface Product {
 import { getImageUrl } from '../config/api';
 
 export function useProductos() {
+  const { tokens } = useAuth();
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -31,11 +32,18 @@ export function useProductos() {
       setLoading(true);
       setError(null);
       try {
-        // Obtener productos específicos del usuario 'admin'
-        const url = buildUserApiUrl(`${API_CONFIG.API_URL}/productos/productos/`, {
-          publicos: USER_CONFIG.FILTERS.PRODUCTOS_PUBLICOS
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Agregar token de autenticación si está disponible
+        if (tokens?.access) {
+          headers['Authorization'] = `Bearer ${tokens.access}`;
+        }
+        
+        const res = await fetch(`${API_CONFIG.API_URL}/productos/productos/?publicos=true`, {
+          headers,
         });
-        const res = await fetch(url);
         if (!res.ok) throw new Error("Error al obtener productos");
         const data = await res.json();
         // Soporta respuesta paginada (con results) o array directo
@@ -64,7 +72,7 @@ export function useProductos() {
       }
     }
     fetchProducts();
-  }, []);
+  }, [tokens]);
 
   return { products, loading, error };
 }

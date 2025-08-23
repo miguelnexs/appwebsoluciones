@@ -1,6 +1,6 @@
 import * as React from "react";
 import { API_CONFIG } from '../config/api';
-import { USER_CONFIG, buildUserApiUrl } from '../config/user';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface Categoria {
   id: number;
@@ -12,6 +12,7 @@ export interface Categoria {
 }
 
 export function useCategorias() {
+  const { tokens } = useAuth();
   const [categorias, setCategorias] = React.useState<Categoria[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -21,11 +22,18 @@ export function useCategorias() {
       setLoading(true);
       setError(null);
       try {
-        // Obtener categorías específicas del usuario 'admin'
-        const url = buildUserApiUrl(`${API_CONFIG.API_URL}/categorias/`, {
-          activa: USER_CONFIG.FILTERS.CATEGORIAS_ACTIVAS
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Agregar token de autenticación si está disponible
+        if (tokens?.access) {
+          headers['Authorization'] = `Bearer ${tokens.access}`;
+        }
+        
+        const res = await fetch(`${API_CONFIG.API_URL}/categorias/?activa=true`, {
+          headers,
         });
-        const res = await fetch(url);
         if (!res.ok) throw new Error("Error al obtener categorías");
         const data = await res.json();
         const catsRaw = Array.isArray(data) ? data : data.results;
@@ -38,7 +46,7 @@ export function useCategorias() {
       }
     }
     fetchCategorias();
-  }, []);
+  }, [tokens]);
 
   return { categorias, loading, error };
 }

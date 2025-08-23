@@ -233,6 +233,44 @@ class CategoriaViewSet(viewsets.ModelViewSet):
                 "traceback": traceback.format_exc()
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=False, methods=['POST'])
+    def reorder(self, request):
+        """
+        Reordenar categorías actualizando su campo orden
+        """
+        try:
+            categorias_data = request.data.get('categoriaIds', [])
+            
+            if not isinstance(categorias_data, list):
+                return Response(
+                    {'error': 'El campo categoriaIds debe ser una lista'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Usar transacción para asegurar consistencia
+            from django.db import transaction
+            with transaction.atomic():
+                for index, categoria_id in enumerate(categorias_data):
+                    if categoria_id:
+                        try:
+                            categoria = CategoriaProducto.objects.get(
+                                id=categoria_id, 
+                                usuario=request.user
+                            )
+                            # Actualizar orden basado en la posición en la lista
+                            categoria.orden = index + 1
+                            categoria.save(update_fields=['orden'])
+                        except CategoriaProducto.DoesNotExist:
+                            continue
+            
+            return Response({'message': 'Categorías reordenadas correctamente'})
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
     def upload_imagen(self, request, slug=None):
         """Endpoint para subir imagen a categoría"""

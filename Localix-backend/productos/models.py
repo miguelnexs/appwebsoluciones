@@ -475,6 +475,70 @@ class ColorProducto(models.Model):
         return True
 
 
+class CaracteristicaProducto(models.Model):
+    """
+    Modelo para características de productos
+    """
+    producto = models.ForeignKey(
+        Producto,
+        on_delete=models.CASCADE,
+        related_name='caracteristicas',
+        verbose_name=_("Producto asociado")
+    )
+    
+    nombre = models.CharField(
+        max_length=100,
+        verbose_name=_("Nombre de la característica"),
+        help_text=_("Ej: Material, Dimensiones, Peso, etc.")
+    )
+    
+    valor = models.TextField(
+        verbose_name=_("Valor de la característica"),
+        help_text=_("Ej: Algodón 100%, 30x40cm, 2.5kg, etc.")
+    )
+    
+    orden = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("Orden de visualización")
+    )
+    
+    activo = models.BooleanField(
+        default=True,
+        verbose_name=_("Característica activa"),
+        help_text=_("Indica si la característica está visible")
+    )
+    
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Fecha de creación")
+    )
+    
+    fecha_actualizacion = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Última actualización")
+    )
+
+    class Meta:
+        verbose_name = _("Característica de producto")
+        verbose_name_plural = _("Características de productos")
+        ordering = ['orden', 'nombre']
+        unique_together = ['producto', 'nombre']
+        indexes = [
+            models.Index(fields=['producto']),
+            models.Index(fields=['nombre']),
+            models.Index(fields=['activo']),
+        ]
+
+    def __str__(self):
+        return f"{self.producto.nombre} - {self.nombre}: {self.valor}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Actualizar el producto padre si es necesario
+        if hasattr(self.producto, 'actualizar_stock_total'):
+            self.producto.actualizar_stock_total()
+
+
 class ImagenProducto(models.Model):
     """
     Modelo para imágenes de productos asociadas a colores

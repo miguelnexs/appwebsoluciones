@@ -11,6 +11,11 @@ from productos.views.colores import (
     establecer_imagen_principal,
     colores_producto_publico
 )
+from productos.views.caracteristicas import (
+    CaracteristicaProductoListCreateView,
+    CaracteristicaProductoDetailView,
+    caracteristicas_producto_publico
+)
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -49,10 +54,23 @@ urlpatterns = [
          establecer_imagen_principal, 
          name='establecer-imagen-principal'),
     
-    # Endpoint público para colores
+    # Endpoints públicos para colores
     path('productos/<int:producto_id>/colores-publico/', 
          colores_producto_publico, 
          name='colores-producto-publico'),
+    
+    # Características endpoints
+    path('productos/<int:producto_id>/caracteristicas/', 
+         CaracteristicaProductoListCreateView.as_view(), 
+         name='producto-caracteristicas-list'),
+    path('productos/<int:producto_id>/caracteristicas/<int:pk>/', 
+         CaracteristicaProductoDetailView.as_view(), 
+         name='producto-caracteristicas-detail'),
+    
+    # Endpoints públicos para características
+    path('productos/<int:producto_id>/caracteristicas-publico/', 
+         caracteristicas_producto_publico, 
+         name='caracteristicas-producto-publico'),
     
     # Include routers
     path('', include(router.urls)),

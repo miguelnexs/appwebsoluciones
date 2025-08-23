@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from nested_admin import NestedModelAdmin, NestedTabularInline
-from .models import Producto, VarianteProducto, ColorProducto, ImagenProducto
+from productos.models import Producto, VarianteProducto, ColorProducto, ImagenProducto, CaracteristicaProducto
 from categorias.models import CategoriaProducto
 
 class ImagenProductoInline(NestedTabularInline):
@@ -135,17 +135,39 @@ class ColorProductoAdmin(admin.ModelAdmin):
         return obj.cantidad_imagenes
     cantidad_imagenes.short_description = _("Imágenes")
 
-@admin.register(ImagenProducto)
-class ImagenProductoAdmin(admin.ModelAdmin):
-    list_display = ('color', 'orden', 'es_principal', 'imagen_preview', 'fecha_creacion')
-    list_filter = ('es_principal', 'color__producto', 'color', 'fecha_creacion')
-    search_fields = ('color__nombre', 'color__producto__nombre')
-    list_editable = ('orden', 'es_principal')
-    readonly_fields = ('imagen_preview', 'fecha_creacion')
+@admin.register(CaracteristicaProducto)
+class CaracteristicaProductoAdmin(admin.ModelAdmin):
+    list_display = ('producto', 'nombre', 'valor', 'orden', 'activo', 'fecha_creacion')
+    list_filter = ('activo', 'producto', 'fecha_creacion')
+    search_fields = ('nombre', 'valor', 'producto__nombre')
+    list_editable = ('orden', 'activo')
+    readonly_fields = ('fecha_creacion', 'fecha_actualizacion')
     
     fieldsets = (
         (_('Información Básica'), {
-            'fields': ('color', 'imagen', 'imagen_preview')
+            'fields': ('producto', 'nombre', 'valor')
+        }),
+        (_('Configuración'), {
+            'fields': ('orden', 'activo')
+        }),
+        (_('Fechas'), {
+            'classes': ('collapse',),
+            'fields': ('fecha_creacion', 'fecha_actualizacion')
+        }),
+    )
+
+
+@admin.register(ImagenProducto)
+class ImagenProductoAdmin(admin.ModelAdmin):
+    list_display = ('color', 'imagen', 'orden', 'es_principal', 'fecha_creacion')
+    list_filter = ('es_principal', 'fecha_creacion')
+    search_fields = ('color__nombre', 'color__producto__nombre')
+    list_editable = ('orden', 'es_principal')
+    readonly_fields = ('fecha_creacion',)
+    
+    fieldsets = (
+        (_('Información Básica'), {
+            'fields': ('color', 'imagen')
         }),
         (_('Configuración'), {
             'fields': ('orden', 'es_principal')

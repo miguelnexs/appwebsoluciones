@@ -1,0 +1,10 @@
+from django.apps import AppConfig
+
+
+class TiendasConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'tiendas'
+    verbose_name = 'Tiendas Virtuales'
+    
+    def ready(self):
+        import tiendas.signals

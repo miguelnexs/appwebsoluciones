@@ -116,7 +116,14 @@ class ProductoSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError(_("El SKU no puede estar vacío"))
             
-        queryset = Producto.objects.filter(sku__iexact=value)  # type: ignore
+        # Obtener el usuario del contexto de la request
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            # Filtrar por usuario para evitar conflictos entre diferentes usuarios
+            queryset = Producto.objects.filter(sku__iexact=value, usuario=request.user)  # type: ignore
+        else:
+            queryset = Producto.objects.filter(sku__iexact=value)  # type: ignore
+            
         if self.instance:
             queryset = queryset.exclude(pk=self.instance.pk)
             
@@ -129,7 +136,14 @@ class ProductoSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError(_("El nombre no puede estar vacío"))
             
-        queryset = Producto.objects.filter(nombre__iexact=value)  # type: ignore
+        # Obtener el usuario del contexto de la request
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            # Filtrar por usuario para evitar conflictos entre diferentes usuarios
+            queryset = Producto.objects.filter(nombre__iexact=value, usuario=request.user)  # type: ignore
+        else:
+            queryset = Producto.objects.filter(nombre__iexact=value)  # type: ignore
+            
         if self.instance:
             queryset = queryset.exclude(pk=self.instance.pk)
             
@@ -191,37 +205,52 @@ class ProductoSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        # Extraer IDs de categorías secundarias
-        # Eliminado: categorias_secundarias_ids = validated_data.pop('categorias_secundarias_ids', [])
-        
-        # Generar slug único
-        validated_data['slug'] = self._generate_unique_slug(
-            slugify(validated_data['nombre'])
-        )
-        
-        # Establecer fechas
-        now = timezone.now()
-        validated_data['fecha_creacion'] = now
-        validated_data['fecha_actualizacion'] = now
-        
-        if validated_data.get('estado') == 'publicado':
-            validated_data['fecha_publicacion'] = now
-        
-        # Procesar imagen principal si existe
-        if 'imagen_principal' in validated_data and validated_data['imagen_principal']:
-            validated_data['imagen_principal'] = self._process_image(validated_data['imagen_principal'])
-        
-        # Crear producto
-        producto = super().create(validated_data)
-        
-        # Asignar categorías secundarias
-        # Eliminado: if categorias_secundarias_ids:
-        # Eliminado:     producto.categorias_secundarias.set(categorias_secundarias_ids)
-        
-        # Generar thumbnail
-        self._generate_thumbnail(producto)
-        
-        return producto
+        try:
+            print(f"🔍 SERIALIZER CREATE - Datos validados: {list(validated_data.keys())}")
+            
+            # Extraer IDs de categorías secundarias
+            # Eliminado: categorias_secundarias_ids = validated_data.pop('categorias_secundarias_ids', [])
+            
+            # Generar slug único
+            base_slug = slugify(validated_data['nombre'])
+            validated_data['slug'] = self._generate_unique_slug(base_slug)
+            print(f"🔍 SERIALIZER CREATE - Slug generado: {validated_data['slug']}")
+            
+            # Establecer fechas
+            now = timezone.now()
+            validated_data['fecha_creacion'] = now
+            validated_data['fecha_actualizacion'] = now
+            
+            if validated_data.get('estado') == 'publicado':
+                validated_data['fecha_publicacion'] = now
+            
+            # Procesar imagen principal si existe
+            if 'imagen_principal' in validated_data and validated_data['imagen_principal']:
+                print(f"🔍 SERIALIZER CREATE - Procesando imagen: {validated_data['imagen_principal'].name}")
+                validated_data['imagen_principal'] = self._process_image(validated_data['imagen_principal'])
+            
+            # Crear producto
+            print(f"🔍 SERIALIZER CREATE - Creando producto con usuario desde contexto")
+            producto = super().create(validated_data)
+            print(f"✅ SERIALIZER CREATE - Producto creado exitosamente: {producto.id}")
+            
+            # Asignar categorías secundarias
+            # Eliminado: if categorias_secundarias_ids:
+            # Eliminado:     producto.categorias_secundarias.set(categorias_secundarias_ids)
+            
+            # Generar thumbnail
+            try:
+                self._generate_thumbnail(producto)
+            except Exception as thumb_error:
+                print(f"⚠️ SERIALIZER CREATE - Error generando thumbnail: {str(thumb_error)}")
+                # No fallar por error de thumbnail
+            
+            return producto
+            
+        except Exception as e:
+            print(f"❌ SERIALIZER CREATE - Error: {str(e)}")
+            print(f"❌ SERIALIZER CREATE - Tipo de error: {type(e).__name__}")
+            raise
 
     def update(self, instance, validated_data):
         print("=== SERIALIZER UPDATE DEBUG ===")
@@ -276,20 +305,34 @@ class ProductoSerializer(serializers.ModelSerializer):
 
 
     def _generate_unique_slug(self, base_slug, exclude_id=None):
+        """Genera un slug único agregando números si es necesario"""
         slug = base_slug
         counter = 1
         
-        queryset = Producto.objects.filter(slug=slug)  # type: ignore
-        if exclude_id:
-            queryset = queryset.exclude(pk=exclude_id)
+        # Obtener el usuario del contexto de la request
+        request = self.context.get('request')
         
-        while queryset.exists():
-            slug = f"{base_slug}-{counter}"
-            counter += 1
-            queryset = Producto.objects.filter(slug=slug)  # type: ignore
+        while True:
+            if request and hasattr(request, 'user'):
+                # Filtrar por usuario para evitar conflictos entre diferentes usuarios
+                queryset = Producto.objects.filter(slug=slug, usuario=request.user)  # type: ignore
+            else:
+                queryset = Producto.objects.filter(slug=slug)  # type: ignore
+                
             if exclude_id:
                 queryset = queryset.exclude(pk=exclude_id)
-        
+            
+            if not queryset.exists():
+                return slug
+            
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+            
+            # Evitar bucles infinitos
+            if counter > 1000:
+                slug = f"{base_slug}-{uuid.uuid4().hex[:8]}"
+                break
+                
         return slug
 
     def _process_image(self, image_file):
