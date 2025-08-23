@@ -98,7 +98,7 @@ const ProductListWithPreload = () => {
   const handleDelete = useCallback(async (product) => {
     if (window.confirm(`¿Estás seguro de que quieres eliminar "${product.nombre}"?`)) {
       try {
-        await window.electronAPI.productos.eliminarOptimizado(product.id);
+        await window.electronAPI.productos.eliminar(product.slug);
         refresh(); // Actualizar datos pre-cargados
       } catch (error) {
         console.error('Error al eliminar producto:', error);

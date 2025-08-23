@@ -3,6 +3,58 @@ import html2canvas from 'html2canvas';
 import { getLogoBase64, createSimpleLogo } from './logoConfig.js';
 import { getCompanyData } from './companyConfig.js';
 
+// Cache para el logo con invalidación automática
+let logoCache = null;
+let logoCacheTimestamp = null;
+let lastBrandSettingsHash = null;
+const LOGO_CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+// Función para generar hash de configuración de marca
+const getBrandSettingsHash = () => {
+  const brandSettings = getBrandSettings();
+  return JSON.stringify({
+    logo: brandSettings.logo,
+    showLogo: brandSettings.showLogo,
+    companyName: brandSettings.companyName
+  });
+};
+
+// Función para invalidar caché si cambió la configuración
+const invalidateCacheIfNeeded = () => {
+  const currentHash = getBrandSettingsHash();
+  if (lastBrandSettingsHash !== null && lastBrandSettingsHash !== currentHash) {
+    console.log('🔄 Configuración de marca cambió, invalidando caché de logo');
+    logoCache = null;
+    logoCacheTimestamp = null;
+  }
+  lastBrandSettingsHash = currentHash;
+};
+
+// Función para obtener la configuración de marca desde localStorage
+const getBrandSettings = () => {
+  try {
+    const settings = localStorage.getItem('localix-settings');
+    if (settings) {
+      const parsedSettings = JSON.parse(settings);
+      return parsedSettings.customBrand || {
+        logo: null,
+        companyName: 'Localix',
+        showLogo: true,
+        showCompanyName: true
+      };
+    }
+  } catch (error) {
+    console.warn('Error al obtener configuración de marca:', error);
+  }
+  
+  return {
+    logo: null,
+    companyName: 'Localix',
+    showLogo: true,
+    showCompanyName: true
+  };
+};
+
 // Función para cargar la imagen de fondo
 const loadBackgroundImage = async () => {
   try {
@@ -49,35 +101,55 @@ const loadRealLogo = async () => {
   try {
     console.log('🔍 Intentando cargar imagen real del logo...');
     
+    // 1. PRIORIDAD MÁXIMA: Logo de marca personalizada desde configuración
+    const brandSettings = getBrandSettings();
+    if (brandSettings.showLogo && brandSettings.logo) {
+      console.log('🎨 Usando logo de marca personalizada desde configuración');
+      // Verificar si es una URL válida de imagen
+      if (brandSettings.logo.startsWith('data:image/') || brandSettings.logo.startsWith('blob:') || brandSettings.logo.startsWith('http')) {
+        console.log('✅ Logo de marca personalizada encontrado');
+        return brandSettings.logo;
+      }
+    }
+    
+    // 2. SEGUNDA PRIORIDAD: Lista de posibles nombres de archivo para el logo
+    const logoFiles = ['localix-logo.png', 'Logo.png', 'logo.png', 'logo.jpg', 'logo.svg'];
+    
     // Primero intentar usar la API de Electron si está disponible
     if (window.electronAPI && window.electronAPI.loadImageAsBase64) {
-      console.log('📡 Usando API de Electron para cargar imagen...');
-      const base64 = await window.electronAPI.loadImageAsBase64('Logo.png');
-      if (base64) {
-        console.log('✅ Imagen cargada exitosamente desde Electron API');
-        return base64;
-      } else {
-        console.log('❌ Electron API no pudo cargar la imagen');
+      console.log('📡 Usando API de Electron para cargar logo...');
+      for (const logoFile of logoFiles) {
+        const base64 = await window.electronAPI.loadImageAsBase64(logoFile);
+        if (base64) {
+          console.log(`✅ Imagen cargada exitosamente desde Electron API: ${logoFile}`);
+          return base64;
+        }
       }
+      console.log('❌ Electron API no pudo cargar ninguna imagen');
     } else {
       console.log('⚠️ Electron API no disponible');
     }
     
     // Fallback: intentar cargar usando fetch
     console.log('🌐 Intentando cargar con fetch...');
-    const response = await fetch('/img/Logo.png');
-    if (response.ok) {
-      console.log('✅ Imagen cargada exitosamente con fetch');
-      const blob = await response.blob();
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-      });
-    } else {
-      console.log('❌ Fetch no pudo cargar la imagen:', response.status);
+    for (const logoFile of logoFiles) {
+      try {
+        const response = await fetch(`/src/img/${logoFile}`);
+        if (response.ok && response.headers.get('content-type')?.startsWith('image/')) {
+          console.log(`✅ Imagen cargada exitosamente con fetch: ${logoFile}`);
+          const blob = await response.blob();
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+        }
+      } catch (e) {
+        // Continuar con el siguiente archivo
+      }
     }
     
+    console.log('❌ No se pudo cargar ninguna imagen del logo');
     return null;
   } catch (error) {
     console.warn('❌ Error al cargar la imagen real del logo:', error);
@@ -90,10 +162,33 @@ const getLogo = async () => {
   try {
     console.log('🔍 Intentando cargar logo...');
     
-    // Primero intentar obtener el logo desde la configuración
+    // Verificar si necesitamos invalidar el caché
+    invalidateCacheIfNeeded();
+    
+    // Verificar caché válido
+    const now = Date.now();
+    if (logoCache && logoCacheTimestamp && (now - logoCacheTimestamp) < LOGO_CACHE_DURATION) {
+      console.log('✅ Logo obtenido desde caché');
+      return logoCache;
+    }
+    
+    console.log('🔄 Caché expirado o vacío, cargando logo...');
+    
+    // Primero intentar obtener el logo desde la configuración de marca personalizada
+    const brandSettings = getBrandSettings();
+    if (brandSettings.showLogo && brandSettings.logo) {
+      console.log('✅ Logo cargado desde configuración de marca personalizada');
+      logoCache = brandSettings.logo;
+      logoCacheTimestamp = now;
+      return brandSettings.logo;
+    }
+    
+    // Segundo, intentar obtener el logo desde la configuración legacy
     const configLogo = getLogoBase64();
     if (configLogo) {
-      console.log('✅ Logo cargado desde configuración');
+      console.log('✅ Logo cargado desde configuración legacy');
+      logoCache = configLogo;
+      logoCacheTimestamp = now;
       return configLogo;
     }
     
@@ -101,15 +196,32 @@ const getLogo = async () => {
     const realLogo = await loadRealLogo();
     if (realLogo) {
       console.log('✅ Logo cargado desde archivo');
+      logoCache = realLogo;
+      logoCacheTimestamp = now;
       return realLogo;
     }
     
-    // Como último recurso, usar el logo generado
-    console.log('🔄 Usando logo generado como fallback');
-    return createSimpleLogo();
+    // Como último recurso, usar el logo generado si está habilitado
+    if (brandSettings.showLogo) {
+      console.log('🔄 Usando logo generado como fallback');
+      const fallbackLogo = createSimpleLogo();
+      logoCache = fallbackLogo;
+      logoCacheTimestamp = now;
+      return fallbackLogo;
+    }
+    
+    // Si el logo está deshabilitado, retornar null
+    console.log('🚫 Logo deshabilitado en configuración');
+    logoCache = null;
+    logoCacheTimestamp = now;
+    return null;
   } catch (error) {
     console.warn('❌ Error al cargar logo, usando fallback:', error);
-    return createSimpleLogo();
+    const brandSettings = getBrandSettings();
+    const fallbackLogo = brandSettings.showLogo ? createSimpleLogo() : null;
+    logoCache = fallbackLogo;
+    logoCacheTimestamp = Date.now();
+    return fallbackLogo;
   }
 };
 
@@ -127,6 +239,12 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
   
   // Obtener configuración de la tienda
   const TIENDA_CONFIG = getTiendaConfig();
+  const brandSettings = getBrandSettings();
+  
+  // Usar el nombre de la empresa personalizado si está disponible
+  const companyName = brandSettings.showCompanyName ? 
+    (brandSettings.companyName || TIENDA_CONFIG.nombre) : 
+    TIENDA_CONFIG.nombre;
   
   // Calcular subtotal
   const subtotal = venta.items?.reduce((sum, item) => sum + parseFloat(item.subtotal || 0), 0) || 0;
@@ -170,12 +288,13 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
             }
             
             body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                line-height: 1.6;
-                color: #333;
+                font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                line-height: 1.3;
+                color: #1f2937;
                 background: white;
                 position: relative;
                 min-height: 100vh;
+                font-size: 12px;
             }
             
             /* Imagen de fondo con transparencia */
@@ -197,75 +316,84 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
             .container {
                 max-width: 210mm;
                 margin: 0 auto;
-                padding: 20px;
-                background: rgba(255, 255, 255, 0.95);
+                padding: 15px;
+                background: white;
                 min-height: 100vh;
             }
             
             /* Header */
             .header {
-                background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-                color: #333;
-                padding: 20px;
-                border-radius: 10px;
-                margin-bottom: 20px;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                background: #f8fafc;
+                color: #1f2937;
+                padding: 12px;
+                border-radius: 6px;
+                margin-bottom: 16px;
+                border: 1px solid #e5e7eb;
                 display: flex;
                 align-items: center;
-                gap: 20px;
-                border: 2px solid #dee2e6;
+                gap: 12px;
             }
             
             .logo {
-                width: 60px;
-                height: 60px;
+                width: 50px;
+                height: 50px;
                 object-fit: contain;
-                border-radius: 8px;
+                border-radius: 4px;
                 background: white;
-                padding: 5px;
+                padding: 4px;
+                border: 1px solid #e5e7eb;
             }
             
             .tienda-info h1 {
-                font-size: 24px;
-                font-weight: bold;
-                margin-bottom: 5px;
-                color: #333;
+                font-size: 18px;
+                font-weight: 600;
+                margin-bottom: 4px;
+                color: #1e40af;
             }
             
             .tienda-info p {
-                font-size: 12px;
+                font-size: 11px;
                 margin: 2px 0;
-                color: #333;
+                color: #64748b;
+                font-weight: 400;
             }
             
             /* Información de la venta */
             .venta-info {
-                background: white;
-                border: 2px solid #dee2e6;
-                border-radius: 10px;
-                padding: 20px;
-                margin-bottom: 20px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                background: #f8fafc;
+                padding: 10px;
+                border-radius: 4px;
+                margin-bottom: 12px;
+                border: 1px solid #e5e7eb;
             }
             
             .venta-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 15px;
-                padding-bottom: 10px;
-                border-bottom: 2px solid #dee2e6;
+                margin-bottom: 8px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #d1d5db;
             }
             
             .venta-numero {
-                font-size: 20px;
-                font-weight: bold;
-                color: #333;
+                font-size: 14px;
+                font-weight: 600;
+                color: #1e40af;
+                background: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                border: 1px solid #3b82f6;
             }
             
             .venta-fecha {
-                font-size: 14px;
-                color: #666;
+                font-size: 12px;
+                color: #64748b;
+                font-weight: 500;
+                background: white;
+                padding: 4px 6px;
+                border-radius: 4px;
+                border: 1px solid #d1d5db;
             }
             
             .cliente-info {
@@ -294,39 +422,42 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
             /* Tabla de productos */
             .productos-section {
                 background: white;
-                border: 2px solid #dee2e6;
-                border-radius: 10px;
+                border: 2px solid #e5e7eb;
+                border-radius: 16px;
                 overflow: hidden;
-                margin-bottom: 20px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                margin-bottom: 32px;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             }
             
             .productos-table {
                 width: 100%;
                 border-collapse: collapse;
+                margin-bottom: 12px;
+                background: white;
+                border: 1px solid #e5e7eb;
             }
             
             .productos-table th {
-                background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-                color: #333;
-                padding: 15px 10px;
+                background: #3b82f6;
+                color: white;
+                padding: 8px 6px;
                 text-align: left;
-                font-weight: bold;
-                font-size: 14px;
+                font-weight: 600;
+                font-size: 11px;
+                text-transform: uppercase;
+                border-bottom: 1px solid #1e40af;
             }
             
             .productos-table td {
-                padding: 12px 10px;
-                border-bottom: 1px solid #f0f0f0;
-                font-size: 13px;
+                padding: 6px;
+                border-bottom: 1px solid #e5e7eb;
+                font-size: 11px;
+                font-weight: 400;
+                color: #374151;
             }
             
             .productos-table tr:nth-child(even) {
-                background-color: #fafafa;
-            }
-            
-            .productos-table tr:hover {
-                background-color: #f5f5f5;
+                background: #f8fafc;
             }
             
             .producto-nombre {
@@ -355,18 +486,17 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
             
             /* Totales */
             .totales-section {
-                background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-                border-radius: 10px;
-                padding: 20px;
-                margin-bottom: 20px;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-                border: 2px solid #dee2e6;
+                background: #f8fafc;
+                border-radius: 4px;
+                padding: 10px;
+                margin-bottom: 10px;
+                border: 1px solid #e5e7eb;
             }
             
             .totales-grid {
                 display: grid;
                 grid-template-columns: 1fr auto;
-                gap: 10px;
+                gap: 6px;
                 align-items: center;
             }
             
@@ -374,34 +504,41 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 5px 0;
+                padding: 4px 0;
+                font-weight: 500;
+                color: #374151;
             }
             
             .total-label {
-                font-weight: bold;
-                color: #333;
-                font-size: 14px;
+                font-weight: 500;
+                color: #374151;
+                font-size: 11px;
             }
             
             .total-valor {
-                font-weight: bold;
-                color: #333;
-                font-size: 14px;
+                font-weight: 500;
+                color: #374151;
+                font-size: 11px;
             }
             
             .total-final {
-                border-top: 2px solid #333;
-                padding-top: 10px;
-                margin-top: 10px;
+                border-top: 2px solid #3b82f6;
+                padding: 8px;
+                margin-top: 8px;
+                background: white;
+                border-radius: 4px;
             }
             
             .total-final .total-label {
-                font-size: 18px;
+                font-size: 13px;
+                font-weight: 600;
+                color: #1e40af;
             }
             
             .total-final .total-valor {
-                font-size: 18px;
-                color: #333;
+                font-size: 13px;
+                font-weight: 600;
+                color: #1e40af;
             }
             
             /* Método de pago */
@@ -455,22 +592,31 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
             
             /* Footer */
             .footer {
+                margin-top: 15px;
+                padding: 8px;
+                border-top: 1px solid #e5e7eb;
                 text-align: center;
-                padding: 20px;
-                border-top: 3px solid #dee2e6;
-                margin-top: 20px;
+                color: #6b7280;
+                font-size: 10px;
+                background: #f9fafb;
+                border-radius: 4px;
+                font-weight: 400;
+                line-height: 1.3;
             }
             
             .footer h3 {
-                color: #333;
-                font-size: 16px;
-                margin-bottom: 10px;
+                font-weight: 500;
+                color: #374151;
+                margin-bottom: 4px;
+                font-size: 11px;
             }
             
             .footer p {
-                color: #666;
-                font-size: 12px;
-                margin: 3px 0;
+                color: #64748b;
+                font-size: 9px;
+                font-weight: 400;
+                margin: 2px 0;
+                line-height: 1.3;
             }
             
             /* Responsive */
@@ -492,7 +638,7 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
             <div class="header">
                 ${logoImage ? `<img src="${logoImage}" alt="Logo" class="logo">` : ''}
                 <div class="tienda-info">
-                    <h1>${TIENDA_CONFIG.nombre}</h1>
+                    <h1>${companyName}</h1>
                     <p>${TIENDA_CONFIG.direccion}</p>
                     <p>${TIENDA_CONFIG.telefono} | ${TIENDA_CONFIG.ruc}</p>
                     <p>${TIENDA_CONFIG.email}</p>

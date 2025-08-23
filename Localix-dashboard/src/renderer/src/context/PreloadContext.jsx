@@ -110,12 +110,13 @@ export const PreloadProvider = ({ children }) => {
 
       const loadTime = Date.now() - startTime;
       console.log(`🚀 Productos pre-cargados en ${loadTime}ms`);
+      console.log('🔍 Estructura de result:', result);
 
       setPreloadState(prev => ({
         ...prev,
         products: {
           state: PRELOAD_STATES.SUCCESS,
-          data: result.products || [],
+          data: result?.products || result?.productos || [],
           error: null,
           lastUpdated: Date.now()
         }
@@ -203,12 +204,13 @@ export const PreloadProvider = ({ children }) => {
 
       const loadTime = Date.now() - startTime;
       console.log(`🚀 Categorías pre-cargadas en ${loadTime}ms`);
+      console.log('🔍 Estructura de result categorías:', result);
 
       setPreloadState(prev => ({
         ...prev,
         categories: {
           state: PRELOAD_STATES.SUCCESS,
-          data: result || [],
+          data: result?.categories || result?.categorias || result || [],
           error: null,
           lastUpdated: Date.now()
         }

@@ -9,6 +9,7 @@ import {
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { generarReciboVenta } from '../utils/ventaPDFGenerator';
+import { useAuth } from '../context/AuthContext';
 
 import ProductSearch from '../components/ventas/ProductSearch';
 import ProductList from '../components/ventas/ProductList';
@@ -23,6 +24,7 @@ import { useOrderNotifications } from '../context/OrderNotificationsContext';
 const VentasPage = () => {
   const navigate = useNavigate();
   const { addOrderNotification } = useOrderNotifications();
+  const { user, isAuthenticated } = useAuth();
   
   // Estados principales
   const [productos, setProductos] = useState([]);
@@ -141,7 +143,8 @@ const VentasPage = () => {
       ]);
       
       if (productosRes.success) {
-        const productosData = Array.isArray(productosRes.data) ? productosRes.data : [];
+        let productosData = Array.isArray(productosRes.data) ? productosRes.data : [];
+        // El backend ya filtra por usuario, no necesitamos filtrar aquí
         setProductos(productosData);
       } else {
         setProductos([]);
@@ -183,13 +186,15 @@ const VentasPage = () => {
     try {
       const response = await window.ventasAPI.buscarProductos(query);
       if (response.success) {
-        setResultadosBusqueda(response.data || []);
+        // El backend ya filtra por usuario, no necesitamos filtrar aquí
+        let productosData = response.data || [];
+        setResultadosBusqueda(productosData);
         setMostrarResultados(true);
       }
     } catch (error) {
       // Error silencioso para evitar spam en consola
     }
-  }, []);
+  }, [user, isAuthenticated]);
 
   const buscarClientes = useCallback(async (query) => {
     if (!query.trim()) {

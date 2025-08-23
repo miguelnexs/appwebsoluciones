@@ -6,7 +6,7 @@ const isDev = process.env.NODE_ENV === 'development';
 console.log('[MAIN] 📦 Importando handlers...');
 
 try {
-  const setupProductHandlers = require('./handlers/productoHandlersOptimized');
+  const setupProductHandlers = require('./handlers/productoHandlers');
   console.log('[MAIN] ✅ Handler de productos importado');
   
   const setupCategoriaHandlers = require('./handlers/categoriaHandlers');
@@ -32,106 +32,13 @@ try {
   
   console.log('[MAIN] ✅ Todos los handlers importados correctamente');
   
-  // Configuración para reducir logs
-  const setupConsoleOptimization = () => {
-    // Reducir logs de Electron
-    process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
-    
-    // Limpiar consola automáticamente cada 2 segundos
-    if (isDev) {
-      setInterval(() => {
-        console.clear();
-      }, 2000);
-    }
-    
-    // Interceptar console.log para filtrar logs excesivos
-    const originalLog = console.log;
-    const originalError = console.error;
-    const originalWarn = console.warn;
-    
-    // Patrones de filtrado
-    const filterPatterns = [
-      '[PRELOAD]',
-      '[HANDLER]',
-      '�� Configurando pre-carga',
-      '🔄 Iniciando fetch',
-      '�� Datos recibidos',
-      '✅ Datos recibidos',
-      '📊 Pedidos procesados',
-      '🔍 PedidoDetailModal',
-      '🚀 Iniciando pre-carga',
-      '🚀 Dashboard pre-cargado',
-      '🚀 Categorías pre-cargadas',
-      '�� Productos pre-cargados',
-      'Iniciando fetch de pedidos',
-      'Configurando pre-carga automática',
-      'safeInvoke:',
-      'serialized args length:',
-      'success',
-      'args:',
-      'Error cargando',
-      'No se pudo preparar'
-    ];
-    
-    console.log = (...args) => {
-      const message = args.join(' ');
-      
-      // Filtrar mensajes específicos
-      if (filterPatterns.some(pattern => message.includes(pattern))) {
-        return;
-      }
-      
-      originalLog(...args);
-    };
-    
-    console.error = (...args) => {
-      const message = args.join(' ');
-      
-      // Solo mostrar errores críticos
-      if (message.includes('Warning:') || 
-          message.includes('Consider adding an error boundary') ||
-          message.includes('Error cargando')) {
-        return;
-      }
-      
-      originalError(...args);
-    };
-    
-    console.warn = (...args) => {
-      const message = args.join(' ');
-      
-      // Filtrar warnings específicos
-      if (message.includes('No se pudo preparar')) {
-        return;
-      }
-      
-      originalWarn(...args);
-    };
-  };
+
 
   function createWindow() {
     // Crear la ventana del navegador
-    const preloadPath = path.join(__dirname, '..', 'preload', 'indexOptimized.js');
+    const preloadPath = path.join(__dirname, '..', 'preload', 'index.js');
     console.log('[MAIN] Preload path:', preloadPath);
     console.log('[MAIN] Preload file exists:', require('fs').existsSync(preloadPath));
-    
-    // Verificación adicional - si el archivo no existe, intentar copiarlo
-    if (!require('fs').existsSync(preloadPath)) {
-      console.log('[MAIN] ⚠️ Archivo preload no encontrado, intentando copiar...');
-      try {
-        const sourceFile = path.join(__dirname, '..', '..', 'src', 'preload', 'indexOptimized.js');
-        const targetDir = path.dirname(preloadPath);
-        
-        if (!require('fs').existsSync(targetDir)) {
-          require('fs').mkdirSync(targetDir, { recursive: true });
-        }
-        
-        require('fs').copyFileSync(sourceFile, preloadPath);
-        console.log('[MAIN] ✅ Archivo preload copiado exitosamente');
-      } catch (error) {
-        console.error('[MAIN] ❌ Error copiando archivo preload:', error.message);
-      }
-    }
     
     const mainWindow = new BrowserWindow({
       width: 1400,
@@ -180,8 +87,7 @@ try {
 
   // Configurar la aplicación
   app.whenReady().then(() => {
-    // Configurar optimización de consola
-    setupConsoleOptimization();
+
     
     // Crear ventana principal
     const mainWindow = createWindow();
@@ -223,27 +129,14 @@ try {
       console.error('[MAIN] ❌ Error configurando handlers de clientes:', error);
     }
     
-    console.log('[MAIN] 📋 Configurando handlers de pedidos...');
-    try {
-      console.log('[MAIN] 🔧 Llamando a initializePedidoHandlers...');
-      initializePedidoHandlers();
-      console.log('[MAIN] ✅ Handlers de pedidos configurados exitosamente');
-      
-      // Verificar que los handlers se registraron
-      console.log('[MAIN] 🔍 Verificando registro de handlers...');
-      const handlersOk = checkHandlersRegistered();
-      
-      if (!handlersOk) {
-        console.error('[MAIN] ❌ CRÍTICO: Handler pedidos:obtener-todos no está registrado');
-        console.log('[MAIN] 🔧 Intentando re-registrar handlers...');
-        ensureHandlersRegistered();
-      } else {
-        console.log('[MAIN] ✅ Handler pedidos:obtener-todos registrado correctamente');
-      }
-    } catch (error) {
-      console.error('[MAIN] ❌ Error configurando handlers de pedidos:', error);
-      console.error('[MAIN] ❌ Stack trace:', error.stack);
+    // Inicializar handlers de pedidos
+    console.log('[MAIN] 🔧 Inicializando handlers de pedidos...');
+    const pedidosSuccess = initializePedidoHandlers();
+    if (!pedidosSuccess) {
+      console.log('[MAIN] ⚠️ Reintentando registro de handlers de pedidos...');
+      ensureHandlersRegistered();
     }
+    console.log('[MAIN] ✅ Handlers de pedidos procesados');
     
     console.log('[MAIN] 📁 Configurando handlers de archivos...');
     setupFileHandlers();

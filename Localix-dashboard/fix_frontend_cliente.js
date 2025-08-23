@@ -5,7 +5,7 @@ async function verificarServidor() {
   console.log('🔍 Verificando conectividad del servidor...');
   
   try {
-    const response = await fetch('http://localhost:8000/api/', {
+    const response = await fetch('http://softwarebycg.shop/api/', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -45,7 +45,7 @@ async function verificarAutenticacion() {
     console.log('✅ Token encontrado en localStorage');
     
     // Verificar si el token es válido
-    const response = await fetch('http://localhost:8000/api/ventas/clientes/', {
+    const response = await fetch('http://softwarebycg.shop/api/ventas/clientes/', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -88,7 +88,7 @@ async function probarCreacionCliente() {
     
     console.log('🔍 Datos del cliente:', clienteData);
     
-    const response = await fetch('http://localhost:8000/api/ventas/clientes/', {
+    const response = await fetch('http://softwarebycg.shop/api/ventas/clientes/', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -360,4 +360,4 @@ if (typeof module !== 'undefined' && module.exports) {
     corregirProblemas,
     mostrarDiagnostico
   };
-} 
+}

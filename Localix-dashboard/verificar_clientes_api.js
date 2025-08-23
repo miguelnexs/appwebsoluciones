@@ -38,7 +38,7 @@ console.log('Token de acceso:', token ? '✅ Presente' : '❌ Ausente');
 
 // 4. Probar conexión directa al servidor
 console.log('\n4. Probando conexión al servidor...');
-fetch('http://localhost:8000/api/')
+fetch('http://softwarebycg.shop/api/')
   .then(response => {
     if (response.ok) {
       console.log('✅ Servidor respondiendo correctamente');
@@ -170,4 +170,4 @@ setTimeout(mostrarResumen, 3000);
 console.log('\n💡 Para ejecutar pruebas específicas:');
 console.log('   - probarAPI() - Probar la API de clientes');
 console.log('   - verificarPreload() - Verificar el preload');
-console.log('   - mostrarResumen() - Mostrar resumen del diagnóstico'); 
+console.log('   - mostrarResumen() - Mostrar resumen del diagnóstico');

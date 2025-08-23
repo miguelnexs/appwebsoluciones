@@ -850,7 +850,7 @@ const ProductList = () => {
                 
                                  // Intento de recuperación usando el ID del producto
                  if (product.id) {
-                   toast.showInfo('Intentando recuperar el identificador del producto...');
+                   toast.info('Recuperando datos', 'Intentando recuperar el identificador del producto...');
                    // Recargar el producto específico e intentar la edición
                    retryEditProduct(product.id);
                  } else {

@@ -196,7 +196,6 @@ export const AuthProvider = ({ children }) => {
   // Verificar token al cargar la aplicación
   useEffect(() => {
     const verifyToken = async () => {
-      // Limpiar tokens inválidos al inicio
       const accessToken = localStorage.getItem('access_token');
       const refreshToken = localStorage.getItem('refresh_token');
       
@@ -207,8 +206,8 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       
-      // Solo verificar si hay un token de acceso
-      if (state.tokens.access && state.tokens.access.trim() !== '') {
+      // Verificar el token de acceso
+      if (accessToken && accessToken.trim() !== '') {
         try {
           dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
           
@@ -224,19 +223,22 @@ export const AuthProvider = ({ children }) => {
             type: AUTH_ACTIONS.LOGIN_SUCCESS,
             payload: {
               user: response.data.user,
-              tokens: state.tokens,
+              tokens: {
+                access: accessToken,
+                refresh: refreshToken
+              },
             },
           });
         } catch (error) {
           console.log('Token verification failed:', error.response?.status || error.message);
           
           // Si es un error 401, intentar refrescar el token primero
-          if (error.response?.status === 401 && state.tokens.refresh && state.tokens.refresh.trim() !== '') {
+          if (error.response?.status === 401 && refreshToken && refreshToken.trim() !== '') {
             try {
               console.log('Attempting to refresh token...');
               const refreshResponse = await Promise.race([
                 api.post('usuarios/refresh/', {
-                  refresh: state.tokens.refresh,
+                  refresh: refreshToken,
                 }),
                 new Promise((_, reject) => 
                   setTimeout(() => reject(new Error('Timeout')), 10000)
@@ -253,7 +255,10 @@ export const AuthProvider = ({ children }) => {
                 type: AUTH_ACTIONS.LOGIN_SUCCESS,
                 payload: {
                   user: profileResponse.data.user,
-                  tokens: { ...state.tokens, access },
+                  tokens: {
+                    access: access,
+                    refresh: refreshToken
+                  },
                 },
               });
             } catch (refreshError) {

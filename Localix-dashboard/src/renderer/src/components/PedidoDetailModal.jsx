@@ -3,6 +3,7 @@ import { X, Package, User, Calendar, MapPin, Phone, FileText, Truck, CheckCircle
 import { getHistorialPedido, cambiarEstadoPedido } from '../main/handlers/pedidoHandlers';
 import { generarReportePedido } from '../utils/pedidoPDFGenerator';
 import { toast } from 'react-toastify';
+import PrintSelector from './PrintSelector';
 
 const ESTADOS_PEDIDO = [
   { value: 'pendiente', label: 'Pendiente' },
@@ -488,14 +489,14 @@ const PedidoDetailModal = ({ pedido, isOpen, onClose, onEstadoCambiado }) => {
 
         {/* Footer */}
         <div className="flex justify-between items-center gap-3 p-6 border-t border-theme-border">
-          <button
-            onClick={handleGenerarPDF}
-            disabled={generandoPDF}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            <Download size={16} />
-            {generandoPDF ? 'Generando...' : 'Generar PDF'}
-          </button>
+          <PrintSelector
+            data={pedido}
+            type="pedido"
+            onPrintComplete={(printType) => {
+              console.log(`Pedido impreso como ${printType}`);
+            }}
+            className="flex-1"
+          />
           
           <button
             onClick={onClose}

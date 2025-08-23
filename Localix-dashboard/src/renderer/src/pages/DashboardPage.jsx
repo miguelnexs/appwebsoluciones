@@ -6,23 +6,26 @@ import {
   TrendingUp, Activity, CreditCard, Star,
   Plus, Search, Filter, Download, RefreshCw, Loader, AlertTriangle, CheckCircle,
   ArrowUp, ArrowDown, Eye, ShoppingCart, Clock, Zap,
-  Store, BarChart3, PieChart as PieChartIcon, LineChart, Calendar, Bell,
+  Store, BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, Calendar, Bell,
   UserPlus, PackagePlus, TrendingDown, Target, Sparkles
 } from 'lucide-react';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import DashboardSkeleton from '../components/ui/DashboardSkeleton';
-import useDashboardOptimized from '../hooks/useDashboardOptimized';
+import useDashboard from '../hooks/useDashboard';
 import { useTheme } from '../hooks/useTheme';
+import { useAuth } from '../context/AuthContext';
 import clsx from 'clsx';
 
 // Lazy loading para componentes pesados
 const BarChart = lazy(() => import('../components/charts/BarChart'));
+const LineChart = lazy(() => import('../components/charts/LineChart'));
 const PieChart = lazy(() => import('../components/charts/PieChart'));
 
 const DashboardPage = React.memo(() => {
   const navigate = useNavigate();
-  const { dashboardData, loading, error, refreshData, isAuthenticated } = useDashboardOptimized();
+  const { dashboardData, loading, error, refreshData } = useDashboard();
   const { currentTheme } = useTheme();
+  const { user, isAuthenticated } = useAuth();
 
   // KPIs optimizados desde resumen
   const {
@@ -225,13 +228,31 @@ const DashboardPage = React.memo(() => {
 
   return (
     <div className="min-h-screen bg-theme-background">
-      {/* Header mejorado */}
+      {/* Header mejorado con información del usuario */}
       <div className="bg-theme-surface border-b border-theme-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-2xl font-bold text-theme-text">Dashboard</h1>
-              <p className="text-theme-textSecondary text-sm">Resumen de tu tienda</p>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                  {user?.nombre?.charAt(0)?.toUpperCase() || user?.username?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-theme-text">Dashboard Personal</h1>
+                  <div className="flex items-center gap-2">
+                    <p className="text-theme-textSecondary text-sm">
+                      Datos exclusivos de {user?.nombre || user?.username || 'Usuario'}
+                    </p>
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Datos en tiempo real"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 inline-flex items-center gap-2">
+                <Eye className="w-4 h-4 text-blue-600" />
+                <span className="text-blue-700 text-xs font-medium">
+                  Solo tus datos • Privacidad garantizada
+                </span>
+              </div>
             </div>
             
             <button 
@@ -247,13 +268,18 @@ const DashboardPage = React.memo(() => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+
         {/* KPIs - MEJOR DISTRIBUIDOS Y ESPACIADOS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8">
           {/* Ingresos de Pedidos Confirmados */}
-          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200">
+          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200 relative">
+            <div className="absolute top-2 right-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full" title="Datos personales"></div>
+            </div>
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-theme-textSecondary mb-1">Ingresos Entregados</p>
+                <p className="text-sm font-medium text-theme-textSecondary mb-1">Tus Ingresos Entregados</p>
                 <p className="text-2xl font-bold text-theme-text">
                   ${totalIngresos.toLocaleString('es-CO', {minimumFractionDigits: 2})}
                 </p>
@@ -269,14 +295,17 @@ const DashboardPage = React.memo(() => {
           </div>
 
           {/* Pedidos */}
-          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200">
+          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200 relative">
+            <div className="absolute top-2 right-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full" title="Datos personales"></div>
+            </div>
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-theme-textSecondary mb-1">Total Pedidos</p>
+                <p className="text-sm font-medium text-theme-textSecondary mb-1">Tus Pedidos</p>
                 <p className="text-2xl font-bold text-theme-text">{totalPedidos}</p>
                 <div className="flex items-center mt-2 text-blue-600 text-xs">
                   <ArrowUp className="w-3 h-3 mr-1" />
-                  <span>+8 esta semana</span>
+                  <span>Solo tus datos</span>
                 </div>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
@@ -286,12 +315,15 @@ const DashboardPage = React.memo(() => {
           </div>
 
           {/* Productos */}
-          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200">
+          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200 relative">
+            <div className="absolute top-2 right-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full" title="Datos personales"></div>
+            </div>
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-theme-textSecondary mb-1">Productos</p>
+                <p className="text-sm font-medium text-theme-textSecondary mb-1">Tus Productos</p>
                 <p className="text-2xl font-bold text-theme-text">{totalProductos}</p>
-                <p className="text-xs text-theme-textSecondary mt-2">En catálogo</p>
+                <p className="text-xs text-theme-textSecondary mt-2">En tu catálogo</p>
               </div>
               <div className="p-3 bg-purple-100 rounded-xl">
                 <Package className="w-6 h-6 text-purple-600" />
@@ -300,12 +332,15 @@ const DashboardPage = React.memo(() => {
           </div>
 
           {/* Clientes */}
-          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200">
+          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200 relative">
+            <div className="absolute top-2 right-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full" title="Datos personales"></div>
+            </div>
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-theme-textSecondary mb-1">Clientes</p>
+                <p className="text-sm font-medium text-theme-textSecondary mb-1">Tus Clientes</p>
                 <p className="text-2xl font-bold text-theme-text">{totalClientes}</p>
-                <p className="text-xs text-theme-textSecondary mt-2">Base activa</p>
+                <p className="text-xs text-theme-textSecondary mt-2">Tu base activa</p>
               </div>
               <div className="p-3 bg-orange-100 rounded-xl">
                 <Users className="w-6 h-6 text-orange-600" />
@@ -314,16 +349,19 @@ const DashboardPage = React.memo(() => {
           </div>
 
           {/* Ganancia Total */}
-          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200">
+          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200 relative">
+            <div className="absolute top-2 right-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full" title="Datos personales"></div>
+            </div>
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-theme-textSecondary mb-1">Ganancia Total</p>
+                <p className="text-sm font-medium text-theme-textSecondary mb-1">Tu Ganancia Total</p>
                 <p className="text-2xl font-bold text-theme-text">
                   ${gananciaTotal.toLocaleString('es-CO', {minimumFractionDigits: 2})}
                 </p>
                 <div className="flex items-center mt-2 text-green-600 text-xs">
                   <TrendingUp className="w-3 h-3 mr-1" />
-                  <span>Beneficio neto</span>
+                  <span>Tu beneficio neto</span>
                 </div>
               </div>
               <div className="p-3 bg-green-100 rounded-xl">
@@ -358,19 +396,19 @@ const DashboardPage = React.memo(() => {
           <div className="bg-theme-surface rounded-xl border border-theme-border p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold text-theme-text">Tendencia de Ventas</h3>
-              <Calendar className="w-5 h-5 text-theme-textSecondary" />
+              <TrendingUp className="w-5 h-5 text-theme-textSecondary" />
             </div>
             <div className="h-72">
               {salesData.labels.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-theme-textSecondary">
                   <div className="text-center">
-                    <LineChart className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <LineChartIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p className="text-sm">No hay datos disponibles</p>
                   </div>
                 </div>
               ) : (
                 <Suspense fallback={<div className="h-72 bg-theme-secondary animate-pulse rounded-lg"></div>}>
-                  <BarChart 
+                  <LineChart 
                     data={salesData} 
                     options={{ 
                       plugins: { 

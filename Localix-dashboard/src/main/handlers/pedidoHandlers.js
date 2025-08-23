@@ -1,21 +1,57 @@
-const { ipcMain } = require('electron');
+const { ipcMain, BrowserWindow } = require('electron');
 const axios = require('axios');
+const { handleApiError, API_BASE_URL } = require('./apiErrorHandler');
 
-// Configuración de la API
-const API_BASE_URL = 'http://127.0.0.1:8000';
+// Función para obtener el token de autenticación
+async function getAuthToken() {
+  try {
+    const windows = BrowserWindow.getAllWindows();
+    
+    if (windows.length > 0) {
+      const mainWindow = windows[0];
+      const token = await mainWindow.webContents.executeJavaScript(`
+        localStorage.getItem('access_token')
+      `);
+      return token;
+    }
+    return null;
+  } catch (error) {
+    console.warn('No se pudo obtener el token de autenticación:', error.message);
+    return null;
+  }
+}
+
+// Función para crear configuración de axios con autenticación
+async function createAuthenticatedConfig() {
+  const token = await getAuthToken();
+  
+  const config = {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache'
+    },
+    timeout: 30000 // 30 segundos
+  };
+  
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
+  return config;
+}
 
 // Variable para rastrear si los handlers ya están registrados
 let handlersRegistered = false;
 
-// Función para hacer requests a la API
+// Función para hacer requests a la API con autenticación
 const apiRequest = async (method, endpoint, data = null) => {
   try {
+    const baseConfig = await createAuthenticatedConfig();
     const config = {
       method,
       url: `${API_BASE_URL}${endpoint}`,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      ...baseConfig
     };
 
     if (data) {
@@ -26,7 +62,7 @@ const apiRequest = async (method, endpoint, data = null) => {
     return response.data;
   } catch (error) {
     console.error('Error en API request:', error.response?.data || error.message);
-    throw error;
+    throw new Error(await handleApiError(error));
   }
 };
 
@@ -131,21 +167,18 @@ const handleBuscar = async (event, query) => {
   }
 };
 
-// Función de inicialización
+// Función de inicialización simplificada
 const initializePedidoHandlers = () => {
   console.log('🔧 Inicializando handlers de pedidos...');
-  console.log('🔧 ipcMain disponible:', !!ipcMain);
-  console.log('🔧 handleObtenerTodos disponible:', !!handleObtenerTodos);
+  
+  // Verificación básica
+  if (!ipcMain || !ipcMain.handle) {
+    console.error('❌ ipcMain.handle no está disponible');
+    return false;
+  }
 
   try {
-    // Verificar que ipcMain.handle existe
-    if (!ipcMain || !ipcMain.handle) {
-      throw new Error('ipcMain.handle no está disponible');
-    }
-
-    // Registrar handlers de manera simple y directa
-    console.log('🔧 Registrando handlers de pedidos...');
-    
+    // Registrar handlers directamente sin verificaciones complejas
     ipcMain.handle('pedidos:obtener-todos', handleObtenerTodos);
     ipcMain.handle('pedidos:obtener-por-id', handleObtenerPorId);
     ipcMain.handle('pedidos:crear', handleCrear);
@@ -156,41 +189,31 @@ const initializePedidoHandlers = () => {
     ipcMain.handle('pedidos:obtener-estadisticas', handleObtenerEstadisticas);
     ipcMain.handle('pedidos:buscar', handleBuscar);
 
-    // Verificar que se registraron correctamente
-    const listenerCount = ipcMain.listenerCount('pedidos:obtener-todos');
-    console.log('🔧 Verificación: listeners para pedidos:obtener-todos:', listenerCount);
-
-    if (listenerCount === 0) {
-      throw new Error('Handler pedidos:obtener-todos no se registró correctamente');
-    }
-
-    console.log('✅ Todos los handlers de pedidos inicializados correctamente');
+    console.log('✅ Handlers de pedidos registrados exitosamente');
+    return true;
   } catch (error) {
     console.error('❌ Error registrando handlers de pedidos:', error);
-    console.error('❌ Stack trace:', error.stack);
-    throw error;
+    return false;
   }
 };
 
 // Función para verificar si los handlers están registrados
 const checkHandlersRegistered = () => {
   if (!ipcMain) return false;
-  
-  const handlerCount = ipcMain.listenerCount('pedidos:obtener-todos');
-  console.log('🔍 Verificación: handlers registrados:', handlerCount > 0);
-  return handlerCount > 0;
+  return ipcMain.listenerCount('pedidos:obtener-todos') > 0;
 };
 
 // Función para re-registrar handlers si es necesario
 const ensureHandlersRegistered = () => {
   if (!checkHandlersRegistered()) {
-    console.log('🔧 Handlers no están registrados, re-registrando...');
-    initializePedidoHandlers();
+    console.log('🔧 Re-registrando handlers de pedidos...');
+    return initializePedidoHandlers();
   }
+  return true;
 };
 
 module.exports = { 
   initializePedidoHandlers, 
   checkHandlersRegistered, 
   ensureHandlersRegistered 
-}; 
+};

@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import CustomerModal from '../components/CustomerModal';
 import { toast } from 'react-toastify';
+import { useDeleteConfirmation } from '../hooks/useDeleteConfirmation';
+import DeleteConfirmationModal from '../components/ui/DeleteConfirmationModal';
 
 const CustomersPage = () => {
   // Estados para el dashboard
@@ -23,6 +25,9 @@ const CustomersPage = () => {
   const [filtroActivo, setFiltroActivo] = useState('todos'); // 'todos', 'activos', 'inactivos'
   const [eliminandoCliente, setEliminandoCliente] = useState(null); // ID del cliente que se está eliminando
   const [clienteParaEditar, setClienteParaEditar] = useState(null); // Cliente seleccionado para editar
+
+  // Hook para confirmación de eliminación
+  const { deleteModal, hideDeleteConfirmation, confirmDeleteClient } = useDeleteConfirmation();
 
   // Cargar datos
   useEffect(() => {
@@ -254,42 +259,34 @@ const CustomersPage = () => {
   const eliminarCliente = async (cliente) => {
     // Verificar si el cliente tiene ventas
     const ventasCliente = obtenerVentasCliente(cliente.id);
-    if (ventasCliente.length > 0) {
-      const confirmar = window.confirm(
-        `⚠️ El cliente "${cliente.nombre}" tiene ${ventasCliente.length} ventas registradas.\n\n` +
-        `¿Estás seguro de que deseas eliminar este cliente?\n\n` +
-        `Esta acción no se puede deshacer.`
-      );
-      if (!confirmar) return;
-    } else {
-      const confirmar = window.confirm(
-        `¿Estás seguro de que deseas eliminar el cliente "${cliente.nombre}"?\n\n` +
-        `Esta acción no se puede deshacer.`
-      );
-      if (!confirmar) return;
-    }
-
-    try {
-      setEliminandoCliente(cliente.id);
-      console.log('Intentando eliminar cliente:', cliente.id, cliente.nombre);
-      const response = await window.clientesAPI.eliminar(cliente.id);
-      console.log('Respuesta del servidor:', response);
-      
-      if (response.success) {
-        // Remover el cliente de la lista
-        setClientes(prevClientes => prevClientes.filter(c => c.id !== cliente.id));
-        console.log('Cliente eliminado exitosamente');
+    const mensaje = ventasCliente.length > 0 
+      ? `El cliente "${cliente.nombre}" tiene ${ventasCliente.length} ventas registradas. Esta acción eliminará el cliente y no se puede deshacer.`
+      : `Esta acción eliminará el cliente "${cliente.nombre}" y no se puede deshacer.`;
+    
+    const success = await confirmDeleteClient(
+      async () => {
+        setEliminandoCliente(cliente.id);
+        console.log('Intentando eliminar cliente:', cliente.id, cliente.nombre);
+        const response = await window.clientesAPI.eliminar(cliente.id);
+        console.log('Respuesta del servidor:', response);
         
-        // Mostrar mensaje de éxito
-        toast.success(`Cliente "${cliente.nombre}" eliminado exitosamente`);
-      } else {
-        console.error('Error eliminando cliente:', response.error);
-        toast.error(`Error al eliminar el cliente: ${response.error}`);
-      }
-    } catch (error) {
-      console.error('Error eliminando cliente:', error);
-      toast.error(`Error al eliminar el cliente: ${error.message}`);
-    } finally {
+        if (response.success) {
+          // Remover el cliente de la lista
+          setClientes(prevClientes => prevClientes.filter(c => c.id !== cliente.id));
+          console.log('Cliente eliminado exitosamente');
+          
+          // Mostrar mensaje de éxito
+          toast.success(`Cliente "${cliente.nombre}" eliminado exitosamente`);
+        } else {
+          console.error('Error eliminando cliente:', response.error);
+          toast.error(`Error al eliminar el cliente: ${response.error}`);
+          throw new Error(response.error);
+        }
+      },
+      cliente.nombre
+    );
+    
+    if (!success) {
       setEliminandoCliente(null);
     }
   };
@@ -869,6 +866,18 @@ const CustomersPage = () => {
           </div>
         </div>
       )}
+      
+      {/* Modal de confirmación de eliminación */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={hideDeleteConfirmation}
+        onConfirm={deleteModal.onConfirm}
+        title={deleteModal.title}
+        message={deleteModal.message}
+        itemName={deleteModal.itemName}
+        itemType={deleteModal.itemType}
+        dangerLevel={deleteModal.dangerLevel}
+      />
     </div>
   );
 };

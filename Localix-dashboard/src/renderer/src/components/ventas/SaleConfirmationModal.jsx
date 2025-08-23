@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, CheckCircle } from 'lucide-react';
+import PrintSelector from '../PrintSelector';
 
 const SaleConfirmationModal = ({ modalVenta, setModalVenta }) => {
   return (
@@ -64,14 +65,28 @@ const SaleConfirmationModal = ({ modalVenta, setModalVenta }) => {
             </div>
           </div>
 
-          {/* Botón de confirmación - Ahora visible */}
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={() => setModalVenta({ open: false, venta: null })}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Aceptar
-            </button>
+          {/* Opciones de impresión y confirmación */}
+          <div className="mt-6 space-y-4">
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-3 text-theme-text">Opciones de impresión:</h4>
+              <PrintSelector
+                data={modalVenta.venta}
+                type="venta"
+                onPrintComplete={(printType) => {
+                  console.log(`Venta impresa como ${printType}`);
+                }}
+                className="mb-3"
+              />
+            </div>
+            
+            <div className="flex justify-end">
+              <button
+                onClick={() => setModalVenta({ open: false, venta: null })}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       </div>

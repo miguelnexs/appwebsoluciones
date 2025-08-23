@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
-import { CheckCircle, AlertCircle, Info, Save, X, DollarSign, Image, FolderOpen, Truck, Palette, Search, Package } from 'lucide-react';
+import { CheckCircle, AlertCircle, Info, Save, X, DollarSign, Image, FolderOpen, Truck, Palette, Search, Package, Settings } from 'lucide-react';
 import ProductFormColors from './ProductFormColors';
+import ProductFormCaracteristicas from './ProductFormCaracteristicas';
 import { API_URL, RESOURCE_URL } from '../../api/apiConfig';
 
 // Constantes
@@ -12,7 +13,7 @@ const PRODUCT_TYPES = [{ value: 'fisico', label: 'Físico' }, { value: 'digital'
 const PRODUCT_STATUSES = [{ value: 'borrador', label: 'Borrador' }, { value: 'publicado', label: 'Publicado' }, { value: 'agotado', label: 'Agotado' }, { value: 'descontinuado', label: 'Descontinuado' }];
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const API_BASE_URL = 'http://72.60.7.133:8000/api';
+
 
 export default function ProductForm({ productToEdit, onSuccess, onCancel, compact = false }) {
   const { slug: slugFromParams } = useParams();
@@ -26,7 +27,7 @@ export default function ProductForm({ productToEdit, onSuccess, onCancel, compac
   
   // Asegurar que la pestaña activa sea válida
   useEffect(() => {
-    if (!productToEdit && activeTab === 'colores') {
+    if (!productToEdit && (activeTab === 'colores' || activeTab === 'caracteristicas')) {
       setActiveTab('general');
     }
   }, [productToEdit, activeTab]);
@@ -84,11 +85,11 @@ export default function ProductForm({ productToEdit, onSuccess, onCancel, compac
     mode: 'onChange',
     defaultValues: {
       nombre: '',
-      sku: '',
+      sku: `PROD-${Date.now()}`, // Generar SKU único por defecto
       tipo: 'fisico',
       estado: 'borrador',
-      descripcion_corta: '',
-      descripcion_larga: '',
+      descripcion_corta: 'Descripción breve del producto', // Valor por defecto
+      descripcion_larga: 'Descripción detallada del producto con todas sus características.', // Valor por defecto
       precio: 0,
       precio_comparacion: null,
       costo: 0,
@@ -108,7 +109,8 @@ export default function ProductForm({ productToEdit, onSuccess, onCancel, compac
   const validateImageRequired = () => {
     // Solo obligatorio si es creación
     if (!productToEdit && !watch('imagen_principal')) {
-      setError('La imagen principal es obligatoria.');
+      setError('❌ Error: La imagen principal es obligatoria para crear un nuevo producto. Por favor, selecciona una imagen.');
+      toast.showError('Imagen requerida', 'Debes seleccionar una imagen principal para el producto.');
       return false;
     }
     return true;
@@ -118,10 +120,57 @@ export default function ProductForm({ productToEdit, onSuccess, onCancel, compac
   const validateCategoryRequired = () => {
     const categoriaId = watch('categoria_id');
     if (!categoriaId || categoriaId === '') {
-      setError('Debes seleccionar una categoría para el producto.');
+      setError('❌ Error: Debes seleccionar una categoría para el producto. La categoría es obligatoria.');
+      toast.showError('Categoría requerida', 'Por favor, selecciona una categoría para el producto.');
       return false;
     }
     return true;
+  };
+
+  // Validar datos del formulario
+  const validateFormData = (data) => {
+    const errors = [];
+    
+    // Validar nombre (obligatorio)
+    if (!data.nombre || data.nombre.trim().length < 3) {
+      errors.push('El nombre del producto debe tener al menos 3 caracteres');
+    }
+    
+    // Validar SKU (obligatorio)
+    if (!data.sku || data.sku.trim().length === 0) {
+      errors.push('El SKU es obligatorio');
+    } else if (data.sku.length > 50) {
+      errors.push('El SKU no puede tener más de 50 caracteres');
+    }
+    
+    // Validar descripción corta (obligatoria)
+    if (!data.descripcion_corta || data.descripcion_corta.trim().length === 0) {
+      errors.push('La descripción corta es obligatoria');
+    } else if (data.descripcion_corta.length > 160) {
+      errors.push('La descripción corta no puede tener más de 160 caracteres');
+    }
+    
+    // Validar descripción larga (obligatoria)
+    if (!data.descripcion_larga || data.descripcion_larga.trim().length === 0) {
+      errors.push('La descripción detallada es obligatoria');
+    }
+    
+    // Validar precio (obligatorio y mayor a 0)
+    if (!data.precio || parseFloat(data.precio) <= 0) {
+      errors.push('El precio debe ser mayor a 0');
+    }
+    
+    // Validar costo (obligatorio y no negativo)
+    if (data.costo === undefined || data.costo === null || parseFloat(data.costo) < 0) {
+      errors.push('El costo no puede ser negativo');
+    }
+    
+    // Validar stock si la gestión está habilitada
+    if (data.gestion_stock && (data.stock === undefined || data.stock === null || parseInt(data.stock) < 0)) {
+      errors.push('El stock no puede ser negativo');
+    }
+    
+    return errors;
   };
 
   // Función para asegurar que existe la categoría "General"
@@ -364,13 +413,25 @@ const onSubmit = async (data) => {
     return;
   }
 
+  // Validar datos del formulario
+  const validationErrors = validateFormData(data);
+  if (validationErrors.length > 0) {
+    const errorMessage = `❌ Errores en el formulario:\n${validationErrors.map(err => `• ${err}`).join('\n')}`;
+    setError(errorMessage);
+    toast.showError('Formulario incompleto', validationErrors[0]);
+    setIsLoading(false);
+    return;
+  }
+
   try {
-    // Log de los datos antes de enviar (incluyendo precios con decimales)
-    console.log('💰 Datos del producto a enviar:', {
-      precio: data.precio,
-      precio_comparacion: data.precio_comparacion,
-      costo: data.costo,
-      categoria_id: data.categoria_id
+    // Log completo de los datos antes de enviar
+    console.log('📦 PAYLOAD COMPLETO a enviar:', {
+      ...data,
+      imagen_principal: data.imagen_principal ? {
+        name: data.imagen_principal.name,
+        type: data.imagen_principal.type,
+        size: data.imagen_principal.size
+      } : null
     });
     
     // Solo usar slug si es válido y no es 'producto'
@@ -430,14 +491,59 @@ const onSubmit = async (data) => {
 
     setProductId(productoId);
     toast.showProductSaved(!validSlug);
-    if (onSuccess) {
-      onSuccess(!validSlug); // true = nuevo producto, false = editado
-    } else {
-      navigate('/products');
-      setTimeout(() => window.location.reload(), 100);
+    
+    // Solo navegar automáticamente si estamos en la pestaña general
+    // Para pestañas como características o colores, mantener al usuario en el formulario
+    if (activeTab === 'general') {
+      if (onSuccess) {
+        onSuccess(!validSlug); // true = nuevo producto, false = editado
+      } else {
+        navigate('/products');
+        setTimeout(() => window.location.reload(), 100);
+      }
     }
+    // Si estamos en otras pestañas, solo mostrar el toast de éxito sin navegar
   } catch (err) {
-    setError(err.message || 'Error al guardar el producto');
+    console.error('❌ Error al guardar producto:', err);
+    
+    let errorMessage = '❌ Error al guardar el producto';
+    let toastTitle = 'Error al guardar';
+    let toastMessage = 'Ha ocurrido un error inesperado';
+    
+    // Analizar el tipo de error para proporcionar mensajes específicos
+    if (err.message) {
+      if (err.message.includes('400')) {
+        errorMessage = '❌ Error: Los datos del producto no son válidos. Por favor, revisa la información ingresada.';
+        toastTitle = 'Datos inválidos';
+        toastMessage = 'Revisa que todos los campos estén correctamente completados';
+      } else if (err.message.includes('401')) {
+        errorMessage = '❌ Error: No tienes permisos para realizar esta acción. Verifica tu sesión.';
+        toastTitle = 'Sin permisos';
+        toastMessage = 'Tu sesión puede haber expirado';
+      } else if (err.message.includes('404')) {
+        errorMessage = '❌ Error: El producto no fue encontrado. Puede haber sido eliminado.';
+        toastTitle = 'Producto no encontrado';
+        toastMessage = 'El producto que intentas editar no existe';
+      } else if (err.message.includes('409')) {
+        errorMessage = '❌ Error: Ya existe un producto con el mismo nombre o SKU. Por favor, usa valores únicos.';
+        toastTitle = 'Producto duplicado';
+        toastMessage = 'El nombre o SKU ya están en uso';
+      } else if (err.message.includes('500')) {
+        errorMessage = '❌ Error del servidor: Hay un problema técnico. Intenta nuevamente en unos minutos.';
+        toastTitle = 'Error del servidor';
+        toastMessage = 'Problema técnico temporal';
+      } else if (err.message.includes('Network Error') || err.message.includes('fetch')) {
+        errorMessage = '❌ Error de conexión: Verifica tu conexión a internet e intenta nuevamente.';
+        toastTitle = 'Sin conexión';
+        toastMessage = 'Revisa tu conexión a internet';
+      } else {
+        errorMessage = `❌ Error: ${err.message}`;
+        toastMessage = err.message;
+      }
+    }
+    
+    setError(errorMessage);
+    toast.error(toastTitle, toastMessage);
   } finally {
     setIsLoading(false);
   }
@@ -451,8 +557,9 @@ const onSubmit = async (data) => {
 
   const tabs = [
     { id: 'general', label: 'Información General', icon: '📝' },
-    // Solo mostrar pestaña de colores si es edición (productToEdit existe)
+    // Solo mostrar pestañas de colores y características si es edición (productToEdit existe)
     ...(productToEdit ? [{ id: 'colores', label: 'Colores', icon: '🎨' }] : []),
+    ...(productToEdit ? [{ id: 'caracteristicas', label: 'Características', icon: '⚙️' }] : []),
     { id: 'seo', label: 'SEO', icon: '🔍' }
   ];
 
@@ -530,32 +637,38 @@ const onSubmit = async (data) => {
                       </p>}
                     </div>
                     <div>
-                      <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">SKU</label>
+                      <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">SKU *</label>
                       <input 
                         type="text" 
                         className="w-full px-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors" 
                         placeholder="Ej: BOL-001"
-                        {...register('sku')} 
+                        required
+                        {...register('sku', { required: 'El SKU es obligatorio', maxLength: { value: 50, message: 'El SKU no puede tener más de 50 caracteres' } })} 
                       />
+                      {errors.sku && <p className="mt-1 text-sm text-red-500">{errors.sku.message}</p>}
                     </div>
                   </div>
                   <div>
-                    <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Descripción Corta</label>
+                    <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Descripción Corta *</label>
                     <textarea 
                       className="w-full px-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors" 
                       rows={3} 
                       placeholder="Descripción breve del producto..."
-                      {...register('descripcion_corta')} 
+                      required
+                      {...register('descripcion_corta', { required: 'La descripción corta es obligatoria' })} 
                     />
+                    {errors.descripcion_corta && <p className="mt-1 text-sm text-red-500">{errors.descripcion_corta.message}</p>}
                   </div>
                   <div>
-                    <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Descripción Larga</label>
+                    <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Descripción Larga *</label>
                     <textarea 
                       className="w-full px-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors" 
                       rows={6} 
                       placeholder="Descripción detallada del producto..."
-                      {...register('descripcion_larga')} 
+                      required
+                      {...register('descripcion_larga', { required: 'La descripción larga es obligatoria' })} 
                     />
+                    {errors.descripcion_larga && <p className="mt-1 text-sm text-red-500">{errors.descripcion_larga.message}</p>}
                   </div>
                 </div>
               </div>
@@ -576,21 +689,21 @@ const onSubmit = async (data) => {
                         <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-textSecondary">$</span>
                         <input 
                           type="number"
-                          step="0.01" 
+                          step="1" 
                           min="0"
-                          className="w-full pl-8 pr-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors appearance-none" 
-                          placeholder="0.00"
+                          className="w-full pl-8 pr-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" 
+                          placeholder="0"
                           {...register('precio', { 
                             required: 'El precio es obligatorio',
                             valueAsNumber: true,
                             min: { value: 0, message: 'El precio no puede ser negativo' },
-                            validate: value => !isNaN(value) || 'Debe ser un número válido'
+                            validate: value => Number.isInteger(value) || 'Debe ser un número entero'
                           })}
                           onFocus={handlePriceFocus}
                           onBlur={handlePriceBlur('precio')}
                         />
                       </div>
-                      <span className="text-xs text-theme-textSecondary mt-1 block">Precio con dos decimales (ej: 120000.00)</span>
+                      <span className="text-xs text-theme-textSecondary mt-1 block">Precio en números enteros (ej: 120000)</span>
                       {errors.precio && <p className="mt-2 text-sm text-theme-error flex items-center gap-1">
                         <AlertCircle className="h-4 w-4" />
                         {errors.precio.message}
@@ -602,20 +715,20 @@ const onSubmit = async (data) => {
                         <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-textSecondary">$</span>
                         <input 
                           type="number"
-                          step="0.01" 
+                          step="1" 
                           min="0"
-                          className="w-full pl-8 pr-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors appearance-none" 
-                          placeholder="0.00"
+                          className="w-full pl-8 pr-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" 
+                          placeholder="0"
                           {...register('precio_comparacion', { 
                             valueAsNumber: true,
                             min: { value: 0, message: 'Debe ser un valor positivo' },
-                            validate: value => value === null || value === undefined || value === '' || !isNaN(value) || 'Debe ser un número válido'
+                            validate: value => value === null || value === undefined || value === '' || Number.isInteger(value) || 'Debe ser un número entero'
                           })}
                           onFocus={handlePriceFocus}
                           onBlur={handlePriceBlur('precio_comparacion')}
                         />
                       </div>
-                      <span className="text-xs text-theme-textSecondary mt-1 block">Precio anterior con decimales (ej: 150000.00)</span>
+                      <span className="text-xs text-theme-textSecondary mt-1 block">Precio anterior en números enteros (ej: 150000)</span>
                     </div>
                     <div>
                       <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Costo</label>
@@ -623,20 +736,20 @@ const onSubmit = async (data) => {
                         <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-textSecondary">$</span>
                         <input 
                           type="number"
-                          step="0.01" 
+                          step="1" 
                           min="0"
-                          className="w-full pl-8 pr-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors appearance-none" 
-                          placeholder="0.00"
+                          className="w-full pl-8 pr-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" 
+                          placeholder="0"
                           {...register('costo', { 
                             valueAsNumber: true,
                             min: { value: 0, message: 'Debe ser un valor positivo' },
-                            validate: value => !isNaN(value) || 'Debe ser un número válido'
+                            validate: value => Number.isInteger(value) || 'Debe ser un número entero'
                           })}
                           onFocus={handlePriceFocus}
                           onBlur={handlePriceBlur('costo')}
                         />
                       </div>
-                      <span className="text-xs text-theme-textSecondary mt-1 block">Costo con decimales (ej: 80000.00)</span>
+                      <span className="text-xs text-theme-textSecondary mt-1 block">Costo en números enteros (ej: 80000)</span>
                     </div>
                   </div>
                 </div>
@@ -651,36 +764,44 @@ const onSubmit = async (data) => {
                   </h2>
                 </div>
                 <div className="p-6">
-                  <div className="flex items-center mb-6 p-4 bg-theme-secondary rounded-lg">
-                    <input 
-                      type="checkbox" 
-                      className="w-5 h-5 text-theme-warning border-theme-border rounded focus:ring-theme-warning" 
-                      {...register('gestion_stock')} 
-                    />
-                    <label className="ml-3 text-sm font-medium text-theme-text">Gestionar stock automáticamente</label>
-                  </div>
-                  {watch('gestion_stock') && (
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                      <div>
-                        <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Stock Disponible</label>
-                        <input 
-                          type="number" 
-                          className="w-full px-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-warning focus:border-theme-warning transition-colors" 
-                          placeholder="0"
-                          {...register('stock', { valueAsNumber: true, min: 0 })} 
-                        />
-                      </div>
-                      <div>
-                        <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Stock Mínimo</label>
-                        <input 
-                          type="number" 
-                          className="w-full px-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-warning focus:border-theme-warning transition-colors" 
-                          placeholder="5"
-                          {...register('stock_minimo', { valueAsNumber: true, min: 0 })} 
-                        />
-                      </div>
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div>
+                      <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Stock Disponible</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-full px-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-warning focus:border-theme-warning transition-colors" 
+                        placeholder="0"
+                        {...register('stock', { 
+                          valueAsNumber: true, 
+                          min: { value: 0, message: 'El stock no puede ser negativo' },
+                          validate: value => value >= 0 || 'El stock debe ser mayor o igual a 0'
+                        })} 
+                      />
+                      {errors.stock && <p className="mt-2 text-sm text-theme-error flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.stock.message}
+                      </p>}
                     </div>
-                  )}
+                    <div>
+                      <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Stock Mínimo</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-full px-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-warning focus:border-theme-warning transition-colors" 
+                        placeholder="5"
+                        {...register('stock_minimo', { 
+                          valueAsNumber: true, 
+                          min: { value: 0, message: 'El stock mínimo no puede ser negativo' },
+                          validate: value => value >= 0 || 'El stock mínimo debe ser mayor o igual a 0'
+                        })} 
+                      />
+                      {errors.stock_minimo && <p className="mt-2 text-sm text-theme-error flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.stock_minimo.message}
+                      </p>}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -848,6 +969,26 @@ const onSubmit = async (data) => {
                 productId={productId} 
                 onColorsChange={() => {
                   // Callback cuando se cambian los colores
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Pestaña de Características */}
+        {activeTab === 'caracteristicas' && (
+          <div className="bg-theme-surface rounded-xl shadow-sm border border-theme-border overflow-hidden">
+            <div className="bg-theme-warning bg-opacity-10 px-6 py-4 border-b border-theme-border">
+              <h2 className="text-xl font-semibold text-theme-text flex items-center gap-2">
+                <Settings className="h-5 w-5 text-theme-warning" />
+                Gestión de Características
+              </h2>
+            </div>
+            <div className="p-6">
+              <ProductFormCaracteristicas 
+                productId={productId} 
+                onCaracteristicasChange={() => {
+                  // Callback cuando se cambian las características
                 }}
               />
             </div>

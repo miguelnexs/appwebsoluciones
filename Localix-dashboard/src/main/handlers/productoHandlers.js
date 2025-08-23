@@ -1,4 +1,4 @@
-const { ipcMain, app } = require('electron');
+const { ipcMain, app, BrowserWindow } = require('electron');
 const fs = require('fs');
 const fsp = require('fs').promises;
 const path = require('path');
@@ -9,6 +9,46 @@ const { handleApiError, API_BASE_URL } = require('./apiErrorHandler');
 const { buildFormData } = require('./handlerUtils');
 const sharp = require('sharp');
 const crypto = require('crypto');
+
+// Función para obtener el token de autenticación
+async function getAuthToken() {
+  try {
+    const windows = BrowserWindow.getAllWindows();
+    
+    if (windows.length > 0) {
+      const mainWindow = windows[0];
+      const token = await mainWindow.webContents.executeJavaScript(`
+        localStorage.getItem('access_token')
+      `);
+      return token;
+    }
+    return null;
+  } catch (error) {
+    console.warn('No se pudo obtener el token de autenticación:', error.message);
+    return null;
+  }
+}
+
+// Función para crear configuración de axios con autenticación
+async function createAuthenticatedConfig() {
+  const token = await getAuthToken();
+  
+  const config = {
+    headers: {
+      'Accept': 'application/json',
+      'Cache-Control': 'no-cache'
+    },
+    maxContentLength: 50 * 1024 * 1024, // 50MB
+    maxBodyLength: 50 * 1024 * 1024,    // 50MB
+    timeout: 30000 // 30 segundos
+  };
+  
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
+  return config;
+}
 
 // Cache simple para evitar llamadas repetitivas
 const apiCache = new Map();
@@ -289,10 +329,11 @@ const createOrUpdateProduct = async (url, data, method = 'post') => {
       ids.forEach(id => formData.append(field, id.toString()));
     });
 
+    const baseConfig = await createAuthenticatedConfig();
     const config = {
-      ...AXIOS_CONFIG,
+      ...baseConfig,
       headers: {
-        ...AXIOS_CONFIG.headers,
+        ...baseConfig.headers,
         ...formData.getHeaders()
       }
     };
@@ -356,9 +397,10 @@ module.exports = function setupProductHandlers() {
   // Obtener un producto específico
   ipcMain.handle('productos:obtener', async (_, slug) => {
     try {
+      const config = await createAuthenticatedConfig();
       const response = await axios.get(
         `${API_BASE_URL}/api/productos/productos/${slug}/`, 
-        AXIOS_CONFIG
+        config
       );
       return response.data;
     } catch (error) {
@@ -412,11 +454,12 @@ module.exports = function setupProductHandlers() {
         knownLength: tempFile.size
       });
 
+      const baseConfig = await createAuthenticatedConfig();
       const config = {
-        ...AXIOS_CONFIG,
+        ...baseConfig,
         headers: {
           ...formData.getHeaders(),
-          ...AXIOS_CONFIG.headers
+          ...baseConfig.headers
         },
         onUploadProgress: (progressEvent) => {
           if (event) {
@@ -483,9 +526,10 @@ module.exports = function setupProductHandlers() {
     try {
       if (!slug) throw new Error('Slug del producto es requerido');
       
+      const config = await createAuthenticatedConfig();
       const response = await axios.delete(
         `${API_BASE_URL}/api/productos/productos/${slug}/remove_imagen_principal/`,
-        AXIOS_CONFIG
+        config
       );
       return response.data;
     } catch (error) {
@@ -496,10 +540,28 @@ module.exports = function setupProductHandlers() {
   // Crear nuevo producto
   ipcMain.handle('productos:crear', async (_, productData) => {
     try {
+      console.log('🚀 Handler: === INICIANDO CREACIÓN DE PRODUCTO ===');
+      console.log('📦 Handler: Datos completos recibidos:', JSON.stringify(productData, null, 2));
+      console.log('📦 Handler: Campos específicos:', {
+        nombre: productData?.nombre,
+        sku: productData?.sku,
+        descripcion_corta: productData?.descripcion_corta,
+        descripcion_larga: productData?.descripcion_larga,
+        precio: productData?.precio,
+        categoria_id: productData?.categoria_id,
+        imagen_principal: productData?.imagen_principal ? 'PRESENTE' : 'AUSENTE'
+      });
+      
+      // Verificar campos requeridos
+      if (!productData?.sku) {
+        console.log('❌ Handler: SKU faltante - esto causará error 400');
+      }
+      
       if (!productData?.nombre) throw new Error('Nombre del producto es requerido');
       
       console.log('Handler: Creando producto');
-      let config = { ...AXIOS_CONFIG };
+      const baseConfig = await createAuthenticatedConfig();
+      let config = { ...baseConfig };
       const formData = new FormData();
 
       // Agregar campos básicos
@@ -556,6 +618,11 @@ module.exports = function setupProductHandlers() {
         ...formData.getHeaders()
       };
 
+      // Log detallado de todos los campos antes de enviar
+      console.log('📋 Handler: Campos que se enviarán al backend:');
+      // Nota: FormData de Node.js no tiene método entries(), omitiendo log detallado
+      console.log('📋 Handler: FormData preparado para envío');
+      
       console.log('Handler: Enviando FormData a backend');
       try {
         const response = await axios.post(`${API_BASE_URL}/api/productos/productos/`, formData, config);
@@ -574,6 +641,12 @@ module.exports = function setupProductHandlers() {
         console.error('Handler: === ERROR EN CREAR PRODUCTO ===');
         console.error('Handler: Error status:', axiosError.response?.status);
         console.error('Handler: Error message:', axiosError.message);
+        console.error('Handler: Error response data:', axiosError.response?.data);
+        console.error('Handler: Error config:', {
+          url: axiosError.config?.url,
+          method: axiosError.config?.method,
+          headers: axiosError.config?.headers
+        });
         
         // Extraer mensaje de error más específico
         let errorMessage = 'Error al crear el producto';
@@ -647,7 +720,8 @@ module.exports = function setupProductHandlers() {
       if (!slug) throw new Error('Slug del producto es requerido');
       
       console.log('Handler: Actualizando producto:', slug);
-      let config = { ...AXIOS_CONFIG };
+      const baseConfig = await createAuthenticatedConfig();
+      let config = { ...baseConfig };
       const formData = new FormData();
 
       // Agregar campos básicos
@@ -720,9 +794,10 @@ module.exports = function setupProductHandlers() {
       
       console.log('🗑️ Eliminando producto:', slug);
       
+      const config = await createAuthenticatedConfig();
       const response = await axios.delete(
         `${API_BASE_URL}/api/productos/productos/${slug}/`, 
-        AXIOS_CONFIG
+        config
       );
       
       console.log('✅ Producto eliminado exitosamente:', slug, 'Status:', response.status);
@@ -738,14 +813,39 @@ module.exports = function setupProductHandlers() {
     }
   });
 
+  // Reordenar productos
+  ipcMain.handle('productos:reordenar', async (_, { productos }) => {
+    try {
+      console.log('🔄 Reordenando productos:', productos);
+      
+      const config = await createAuthenticatedConfig();
+      const response = await axios.post(
+        `${API_BASE_URL}/api/productos/productos/reorder/`, 
+        { productos },
+        config
+      );
+      
+      console.log('✅ Productos reordenados exitosamente');
+      
+      // Limpiar cache después de reordenar
+      clearCache();
+      
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('❌ Error reordenando productos:', error.message);
+      throw new Error(await handleApiError(error));
+    }
+  });
+
   // Obtener información de la imagen
   ipcMain.handle('get-producto-imagen-info', async (_, slug) => {
     try {
       if (!slug) throw new Error('Slug del producto es requerido');
       
+      const config = await createAuthenticatedConfig();
       const response = await axios.get(
         `${API_BASE_URL}/api/productos/productos/${slug}/imagen_principal_info/`,
-        AXIOS_CONFIG
+        config
       );
       return response.data;
     } catch (error) {
@@ -766,11 +866,12 @@ module.exports = function setupProductHandlers() {
       }
       
       // Configuración optimizada para colores (timeout más corto)
+      const baseConfig = await createAuthenticatedConfig();
       const colorsConfig = {
-        ...AXIOS_CONFIG,
+        ...baseConfig,
         timeout: 20000, // aumentar para evitar ECONNABORTED en Render cold start
         headers: {
-          ...AXIOS_CONFIG.headers,
+          ...baseConfig.headers,
           'Cache-Control': 'max-age=30' // Cache de 30 segundos
         }
       };
@@ -821,13 +922,14 @@ module.exports = function setupProductHandlers() {
       
       console.log('Datos del color preparados:', colorFormData);
       
+      const baseConfig = await createAuthenticatedConfig();
       const response = await axios.post(
         `${API_BASE_URL}/api/productos/productos/${productId}/colores/`, 
         querystring.stringify(colorFormData),
         {
-          ...AXIOS_CONFIG,
+          ...baseConfig,
           headers: {
-            ...AXIOS_CONFIG.headers,
+            ...baseConfig.headers,
             'Content-Type': 'application/x-www-form-urlencoded'
           }
         }
@@ -865,13 +967,14 @@ module.exports = function setupProductHandlers() {
       
       console.log('Datos del color preparados para actualizar:', colorFormData);
       
+      const baseConfig = await createAuthenticatedConfig();
       const response = await axios.put(
         `${API_BASE_URL}/api/productos/productos/${productId}/colores/${colorId}/`, 
         querystring.stringify(colorFormData),
         {
-          ...AXIOS_CONFIG,
+          ...baseConfig,
           headers: {
-            ...AXIOS_CONFIG.headers,
+            ...baseConfig.headers,
             'Content-Type': 'application/x-www-form-urlencoded'
           }
         }
@@ -888,7 +991,8 @@ module.exports = function setupProductHandlers() {
   // Eliminar color
   ipcMain.handle('productos:eliminarColor', async (event, productId, colorId) => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/productos/productos/${productId}/colores/${colorId}/`, AXIOS_CONFIG);
+      const config = await createAuthenticatedConfig();
+      await axios.delete(`${API_BASE_URL}/api/productos/productos/${productId}/colores/${colorId}/`, config);
       return { success: true };
     } catch (error) {
       return handleApiError(error, 'Error al eliminar color');
@@ -903,7 +1007,8 @@ module.exports = function setupProductHandlers() {
       console.log('=== OBTENIENDO IMÁGENES ===');
       console.log('Color ID:', colorId);
       
-      const response = await axios.get(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/`, AXIOS_CONFIG);
+      const config = await createAuthenticatedConfig();
+      const response = await axios.get(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/`, config);
       console.log('📡 Respuesta del backend:', response.data);
       
       // ✅ Manejar respuesta paginada del backend
@@ -1007,13 +1112,14 @@ module.exports = function setupProductHandlers() {
       console.log('📊 Tamaño del buffer:', imageBuffer.length);
       console.log('📊 Headers del FormData:', uploadFormData.getHeaders());
       
+      const baseConfig = await createAuthenticatedConfig();
       const response = await axios.post(
         `${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/`,
         uploadFormData,
         {
-          ...AXIOS_CONFIG,
+          ...baseConfig,
           headers: {
-            ...AXIOS_CONFIG.headers,
+            ...baseConfig.headers,
             ...uploadFormData.getHeaders()
           }
         }
@@ -1030,7 +1136,8 @@ module.exports = function setupProductHandlers() {
   // Eliminar imagen
   ipcMain.handle('productos:eliminarImagen', async (event, colorId, imagenId) => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/${imagenId}/`, AXIOS_CONFIG);
+      const config = await createAuthenticatedConfig();
+      await axios.delete(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/${imagenId}/`, config);
       return { success: true };
     } catch (error) {
       return handleApiError(error, 'Error al eliminar imagen');
@@ -1040,7 +1147,8 @@ module.exports = function setupProductHandlers() {
   // Establecer imagen principal
   ipcMain.handle('productos:establecerImagenPrincipal', async (event, colorId, imagenId) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/${imagenId}/establecer-principal/`, {}, AXIOS_CONFIG);
+      const config = await createAuthenticatedConfig();
+      const response = await axios.post(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/${imagenId}/establecer-principal/`, {}, config);
       return { success: true, data: response.data };
     } catch (error) {
       return handleApiError(error, 'Error al establecer imagen principal');
@@ -1050,10 +1158,151 @@ module.exports = function setupProductHandlers() {
   // Reordenar imágenes
   ipcMain.handle('productos:reordenarImagenes', async (event, colorId, ordenData) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/reordenar/`, ordenData, AXIOS_CONFIG);
+      const config = await createAuthenticatedConfig();
+      const response = await axios.post(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/reordenar/`, ordenData, config);
       return { success: true, data: response.data };
     } catch (error) {
       return handleApiError(error, 'Error al reordenar imágenes');
+    }
+  });
+
+  // ===== HANDLERS PARA CARACTERÍSTICAS =====
+  
+  // Obtener características de un producto
+  ipcMain.handle('productos:obtenerCaracteristicas', async (event, productId) => {
+    try {
+      const cacheKey = getCacheKey(`productos/${productId}/caracteristicas`);
+      const cachedData = getFromCache(cacheKey);
+      
+      if (cachedData) {
+        return cachedData;
+      }
+      
+      const baseConfig = await createAuthenticatedConfig();
+      const response = await axios.get(`${API_BASE_URL}/api/productos/productos/${productId}/caracteristicas/`, baseConfig);
+      
+      // Manejar respuesta paginada del backend
+      let caracteristicasData = [];
+      if (response.data && response.data.results) {
+        caracteristicasData = response.data.results;
+      } else if (Array.isArray(response.data)) {
+        caracteristicasData = response.data;
+      } else {
+        caracteristicasData = [];
+      }
+      
+      const result = { success: true, data: caracteristicasData };
+      setCache(cacheKey, result);
+      return result;
+    } catch (error) {
+      console.error('Error al obtener características:', error);
+      const errorMessage = await handleApiError(error);
+      return { success: false, message: errorMessage };
+    }
+  });
+
+  // Crear característica para un producto
+  ipcMain.handle('productos:crearCaracteristica', async (event, productId, caracteristicaData) => {
+    try {
+      // Limpiar caché relacionado con este producto
+      const cacheKey = getCacheKey(`productos/${productId}/caracteristicas`);
+      apiCache.delete(cacheKey);
+      
+      console.log('=== CREANDO CARACTERÍSTICA ===');
+      console.log('Product ID:', productId);
+      console.log('Característica data:', caracteristicaData);
+      
+      // Preparar datos de la característica
+      const caracteristicaFormData = {
+        producto: productId,
+        nombre: caracteristicaData.nombre,
+        valor: caracteristicaData.valor,
+        orden: caracteristicaData.orden || 1,
+        activo: caracteristicaData.activo !== undefined ? caracteristicaData.activo : true
+      };
+      
+      console.log('Datos de la característica preparados:', caracteristicaFormData);
+      
+      const baseConfig = await createAuthenticatedConfig();
+      const response = await axios.post(
+        `${API_BASE_URL}/api/productos/productos/${productId}/caracteristicas/`, 
+        querystring.stringify(caracteristicaFormData),
+        {
+          ...baseConfig,
+          headers: {
+            ...baseConfig.headers,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        }
+      );
+      
+      console.log('Característica creada exitosamente:', response.data);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error creando característica:', error);
+      const errorMessage = await handleApiError(error);
+      return { success: false, message: errorMessage };
+    }
+  });
+
+  // Actualizar característica
+  ipcMain.handle('productos:actualizarCaracteristica', async (event, productId, caracteristicaId, caracteristicaData) => {
+    try {
+      // Limpiar caché relacionado con este producto
+      const cacheKey = getCacheKey(`productos/${productId}/caracteristicas`);
+      apiCache.delete(cacheKey);
+      
+      console.log('=== ACTUALIZANDO CARACTERÍSTICA ===');
+      console.log('Product ID:', productId);
+      console.log('Característica ID:', caracteristicaId);
+      console.log('Característica data:', caracteristicaData);
+      
+      // Preparar datos de la característica
+      const caracteristicaFormData = {
+        nombre: caracteristicaData.nombre,
+        valor: caracteristicaData.valor,
+        orden: caracteristicaData.orden || 1,
+        activo: caracteristicaData.activo !== undefined ? caracteristicaData.activo : true
+      };
+      
+      console.log('Datos de la característica preparados para actualizar:', caracteristicaFormData);
+      
+      const baseConfig = await createAuthenticatedConfig();
+      const response = await axios.put(
+        `${API_BASE_URL}/api/productos/productos/${productId}/caracteristicas/${caracteristicaId}/`, 
+        querystring.stringify(caracteristicaFormData),
+        {
+          ...baseConfig,
+          headers: {
+            ...baseConfig.headers,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        }
+      );
+      
+      console.log('Característica actualizada exitosamente:', response.data);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error actualizando característica:', error);
+      const errorMessage = await handleApiError(error);
+      return { success: false, message: errorMessage };
+    }
+  });
+
+  // Eliminar característica
+  ipcMain.handle('productos:eliminarCaracteristica', async (event, productId, caracteristicaId) => {
+    try {
+      // Limpiar caché relacionado con este producto
+      const cacheKey = getCacheKey(`productos/${productId}/caracteristicas`);
+      apiCache.delete(cacheKey);
+      
+      const config = await createAuthenticatedConfig();
+      await axios.delete(`${API_BASE_URL}/api/productos/productos/${productId}/caracteristicas/${caracteristicaId}/`, config);
+      return { success: true };
+    } catch (error) {
+      console.error('Error eliminando característica:', error);
+      const errorMessage = await handleApiError(error);
+      return { success: false, message: errorMessage };
     }
   });
 

@@ -35,9 +35,12 @@ win:
         - x64
   icon: resources/localix-logo.png
   requestedExecutionLevel: asInvoker
-  artifactName: "${productName} Setup ${version}.${ext}"
+  artifactName: "${productName} ${version}"
   publisherName: Localix Dashboard
   verifyUpdateCodeSignature: false
+  sign: false
+  signDlls: false
+  forceCodeSigning: false
 
 nsis:
   oneClick: false

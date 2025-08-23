@@ -117,6 +117,10 @@ const exposeElectronAPI = () => {
       eliminar: (slug) => {
         if (!slug) throw new Error('Slug is required');
         return safeInvoke('categorias:eliminar', slug);
+      },
+      reordenar: (ordenData) => {
+        if (!ordenData) throw new Error('Order data is required');
+        return safeInvoke('categorias:reordenar', ordenData);
       }
     },
 

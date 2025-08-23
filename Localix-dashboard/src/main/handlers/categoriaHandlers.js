@@ -421,4 +421,25 @@ module.exports = () => {
       throw new Error(await handleApiError(error));
     }
   });
+
+  // Reordenar categorías
+  ipcMain.handle('categorias:reordenar', async (_, { categoriaIds }) => {
+    try {
+      console.log('🔄 Reordenando categorías:', categoriaIds);
+      
+      const config = await createAuthenticatedConfig();
+      const response = await axios.post(
+        `${API_BASE_URL}/api/categorias/reorder/`, 
+        { categoriaIds: categoriaIds },
+        config
+      );
+      
+      console.log('✅ Categorías reordenadas exitosamente');
+      
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('❌ Error reordenando categorías:', error.message);
+      throw new Error(await handleApiError(error));
+    }
+  });
 };

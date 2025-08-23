@@ -34,8 +34,10 @@ const SortableRow = ({ id, children, ...props }) => {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+    transition: isDragging ? 'none' : transition,
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+    boxShadow: isDragging ? '0 10px 25px rgba(0, 0, 0, 0.15)' : 'none',
   };
 
   return (
@@ -43,17 +45,17 @@ const SortableRow = ({ id, children, ...props }) => {
       ref={setNodeRef}
       style={style}
       {...props}
-      className={`${props.className || ''} ${isDragging ? 'z-50' : ''}`}
+      className={`${props.className || ''} ${isDragging ? 'z-50 bg-white border-2 border-blue-200 rounded-lg' : ''} transition-all duration-200 ease-in-out`}
     >
       {/* Columna de arrastre */}
       <td className="px-2 py-3 text-center">
         <div
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded transition-colors"
+          className="cursor-grab active:cursor-grabbing p-2 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all duration-200 ease-in-out transform hover:scale-110"
           title="Arrastrar para reordenar"
         >
-          <GripVertical className="w-4 h-4 text-gray-400" />
+          <GripVertical className="w-4 h-4 text-gray-400 hover:text-blue-600 transition-colors" />
         </div>
       </td>
       {children}
@@ -81,7 +83,7 @@ const DraggableDataTable = ({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 3,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -122,7 +124,7 @@ const DraggableDataTable = ({
       
       // Llamar a la función de reordenamiento proporcionada por el padre
       if (onReorder) {
-        onReorder(newData, oldIndex, newIndex);
+        onReorder(newData);
       }
     }
   };
@@ -145,8 +147,8 @@ const DraggableDataTable = ({
         {/* Columna adicional para el handle de arrastre */}
         {!dragDisabled && (
           <th className={`${config.header} ${config.text} text-center font-medium text-theme-textSecondary uppercase tracking-wider w-12`}>
-            <div className="flex items-center justify-center">
-              <GripVertical className="w-4 h-4 opacity-50" />
+            <div className="flex items-center justify-center" title="Columna de reordenamiento">
+              <GripVertical className="w-4 h-4 text-blue-400 opacity-70" />
             </div>
           </th>
         )}

@@ -1,4 +1,4 @@
-// URL base de la API para desarrollo local
+// URL base de la API actualizada
 const API_BASE_URL = 'http://localhost:8000';
 
 // Helper para endpoints de la API REST

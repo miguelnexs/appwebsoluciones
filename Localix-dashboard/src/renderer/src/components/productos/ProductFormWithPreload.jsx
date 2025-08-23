@@ -27,12 +27,22 @@ const ProductFormWithPreload = () => {
   // 🚀 ESTADO DEL FORMULARIO
   const [formData, setFormData] = useState({
     nombre: '',
-    descripcion: '',
+    sku: '',
+    descripcion_corta: '',
+    descripcion_larga: '',
     precio: '',
-    precio_anterior: '',
+    precio_comparacion: '',
+    costo: '',
     stock: '',
-    categoria: '',
-    activo: true,
+    categoria_id: '',
+    tipo: 'fisico',
+    estado: 'borrador',
+    gestion_stock: true,
+    stock_minimo: 5,
+    peso: 0,
+    dimensiones: '',
+    meta_titulo: '',
+    meta_descripcion: '',
     imagen_principal: null,
     imagenes_adicionales: []
   });
@@ -59,8 +69,8 @@ const ProductFormWithPreload = () => {
       try {
         console.log('🚀 Cargando producto para editar:', slug);
         
-        // Usar el handler optimizado que carga producto con detalles
-        const result = await window.electronAPI.productos.obtenerConDetalles(slug);
+        // Cargar producto para editar
+        const result = await window.electronAPI.productos.obtener(slug);
         
         if (result.product) {
           setProductToEdit(result.product);
@@ -69,12 +79,22 @@ const ProductFormWithPreload = () => {
           // Llenar formulario con datos del producto
           setFormData({
             nombre: result.product.nombre || '',
-            descripcion: result.product.descripcion || '',
+            sku: result.product.sku || '',
+            descripcion_corta: result.product.descripcion_corta || '',
+            descripcion_larga: result.product.descripcion_larga || '',
             precio: result.product.precio || '',
-            precio_anterior: result.product.precio_anterior || '',
+            precio_comparacion: result.product.precio_comparacion || '',
+            costo: result.product.costo || '',
             stock: result.product.stock || '',
-            categoria: result.product.categoria?.id || '',
-            activo: result.product.activo !== false,
+            categoria_id: result.product.categoria?.id || '',
+            tipo: result.product.tipo || 'fisico',
+            estado: result.product.estado || 'borrador',
+            gestion_stock: result.product.gestion_stock !== false,
+            stock_minimo: result.product.stock_minimo || 5,
+            peso: result.product.peso || 0,
+            dimensiones: result.product.dimensiones || '',
+            meta_titulo: result.product.meta_titulo || '',
+            meta_descripcion: result.product.meta_descripcion || '',
             imagen_principal: null,
             imagenes_adicionales: []
           });
@@ -139,15 +159,43 @@ const ProductFormWithPreload = () => {
   const validateForm = useCallback(() => {
     const errors = [];
 
-    if (!formData.nombre.trim()) {
-      errors.push('El nombre es requerido');
+    if (!formData.nombre?.trim()) {
+      errors.push('El nombre del producto es obligatorio');
+    }
+
+    if (!formData.sku?.trim()) {
+      errors.push('El SKU es obligatorio');
+    }
+
+    if (!formData.descripcion_corta?.trim()) {
+      errors.push('La descripción corta es obligatoria');
+    }
+
+    if (!formData.descripcion_larga?.trim()) {
+      errors.push('La descripción larga es obligatoria');
     }
 
     if (!formData.precio || parseFloat(formData.precio) <= 0) {
       errors.push('El precio debe ser mayor a 0');
     }
 
-    if (!formData.categoria) {
+    if (formData.precio && !Number.isInteger(parseFloat(formData.precio))) {
+      errors.push('El precio debe ser un número entero');
+    }
+
+    if (!formData.costo || parseFloat(formData.costo) < 0) {
+      errors.push('El costo debe ser mayor o igual a 0');
+    }
+
+    if (formData.costo && !Number.isInteger(parseFloat(formData.costo))) {
+      errors.push('El costo debe ser un número entero');
+    }
+
+    if (formData.precio_comparacion && !Number.isInteger(parseFloat(formData.precio_comparacion))) {
+      errors.push('El precio de comparación debe ser un número entero');
+    }
+
+    if (!formData.categoria_id) {
       errors.push('Debe seleccionar una categoría');
     }
 
@@ -174,19 +222,22 @@ const ProductFormWithPreload = () => {
     try {
       const productData = {
         ...formData,
-        precio: parseFloat(formData.precio),
-        precio_anterior: formData.precio_anterior ? parseFloat(formData.precio_anterior) : null,
-        stock: formData.stock ? parseInt(formData.stock) : 0
+        precio: parseInt(formData.precio),
+        precio_comparacion: formData.precio_comparacion ? parseInt(formData.precio_comparacion) : null,
+        costo: parseInt(formData.costo),
+        stock: formData.stock ? parseInt(formData.stock) : 0,
+        stock_minimo: parseInt(formData.stock_minimo) || 5,
+        peso: parseFloat(formData.peso) || 0
       };
 
       let result;
       
       if (isEditing) {
         console.log('🚀 Actualizando producto:', productToEdit.slug);
-        result = await window.electronAPI.productos.actualizarOptimizado(productToEdit.slug, productData);
+        result = await window.electronAPI.productos.actualizar(productToEdit.slug, productData);
       } else {
         console.log('🚀 Creando nuevo producto');
-        result = await window.electronAPI.productos.crearOptimizado(productData);
+        result = await window.electronAPI.productos.crear(productData);
       }
 
       // Subir imagen principal si se seleccionó una nueva
@@ -252,8 +303,13 @@ const ProductFormWithPreload = () => {
           type={type}
           value={formData[field]}
           onChange={(e) => handleInputChange(field, e.target.value)}
-          className="w-full px-3 py-2 border border-theme-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className={`w-full px-3 py-2 border border-theme-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+            type === 'number' && ['precio', 'precio_comparacion', 'costo'].includes(field) 
+              ? '[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]' 
+              : ''
+          }`}
           placeholder={options.placeholder}
+          {...(type === 'number' && ['precio', 'precio_comparacion', 'costo'].includes(field) ? { step: '1', min: '0' } : {})}
         />
       )}
     </div>
@@ -443,18 +499,26 @@ const ProductFormWithPreload = () => {
               placeholder: 'Ej: Billetera de Cuero' 
             })}
             
-            {renderField('Descripción', 'descripcion', 'textarea', { 
-              rows: 4, 
-              placeholder: 'Describe las características del producto...' 
+            {renderField('SKU', 'sku', 'text', { 
+              required: true, 
+              placeholder: 'Ej: BIL-001' 
             })}
             
-            {renderField('Categoría', 'categoria', 'select', { 
+            {renderField('Descripción Corta', 'descripcion_corta', 'textarea', { 
+              required: true,
+              rows: 2, 
+              placeholder: 'Descripción breve del producto...' 
+            })}
+            
+            {renderField('Descripción Larga', 'descripcion_larga', 'textarea', { 
+              required: true,
+              rows: 4, 
+              placeholder: 'Descripción detallada del producto...' 
+            })}
+            
+            {renderField('Categoría', 'categoria_id', 'select', { 
               required: true, 
               options: categories || [] 
-            })}
-            
-            {renderField('Activo', 'activo', 'checkbox', { 
-              label: 'Producto disponible para venta' 
             })}
           </div>
 
@@ -465,17 +529,26 @@ const ProductFormWithPreload = () => {
               <span>Precios y Stock</span>
             </h3>
             
-            {renderField('Precio Actual', 'precio', 'number', { 
+            {renderField('Precio de Venta', 'precio', 'number', { 
               required: true, 
-              placeholder: '0.00' 
+              placeholder: '0' 
             })}
             
-            {renderField('Precio Anterior (Opcional)', 'precio_anterior', 'number', { 
-              placeholder: '0.00' 
+            {renderField('Precio de Comparación', 'precio_comparacion', 'number', { 
+              placeholder: '0' 
+            })}
+            
+            {renderField('Costo del Producto', 'costo', 'number', { 
+              required: true, 
+              placeholder: '0' 
             })}
             
             {renderField('Stock Disponible', 'stock', 'number', { 
               placeholder: '0' 
+            })}
+            
+            {renderField('Stock Mínimo', 'stock_minimo', 'number', { 
+              placeholder: '5' 
             })}
           </div>
         </div>

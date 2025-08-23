@@ -63,7 +63,7 @@
   
   // 4. Probar conexión al servidor
   console.log('\n4. Probando conexión al servidor...');
-  fetch('http://localhost:8000/api/')
+  fetch('http://softwarebycg.shop/api/')
     .then(response => {
       if (response.ok) {
         console.log('✅ Servidor respondiendo correctamente');
@@ -166,4 +166,4 @@
   console.log('   - reiniciarAplicacion() - Instrucciones de reinicio');
   console.log('   - limpiarCache() - Instrucciones de limpieza de cache');
   
-})(); 
+})();

@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import CategoriaForm from './CategoriaForm';
-import EmptyState from './EmptyState';
 import { useToast } from '../../hooks/useToast';
 import { RESOURCE_URL } from '../../api/apiConfig';
 
@@ -18,8 +17,16 @@ function getImageUrl(url) {
   return `${RESOURCE_URL}${url}`;
 }
 
+// Función para truncar texto
+function truncateText(text, maxLength = 50) {
+  if (!text) return 'Sin descripción';
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
+}
+
 // Componentes UI estandarizados
 import DataTable from '../ui/DataTable';
+import DraggableDataTable from '../ui/DraggableDataTable';
 import ActionButtons from '../ui/ActionButtons';
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation';
 import DeleteConfirmationModal from '../ui/DeleteConfirmationModal';
@@ -46,8 +53,10 @@ const CategoriasList = () => {
     error: null
   });
   
+
+  
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: 'nombre', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'orden', direction: 'asc' });
   const [stats, setStats] = useState({
     total: 0,
     activas: 0,
@@ -82,8 +91,14 @@ const CategoriasList = () => {
       }
       const categoriasData = Array.isArray(response) ? response : [];
       
+      // Asegurar que cada categoría tenga un id para el drag-and-drop
+      const categoriasWithId = categoriasData.map(categoria => ({
+        ...categoria,
+        id: categoria.id || categoria.slug // Usar id si existe, sino usar slug
+      }));
+      
       setData({
-        categorias: categoriasData,
+        categorias: categoriasWithId,
         selectedCategoria: null
       });
       
@@ -104,6 +119,8 @@ const CategoriasList = () => {
   useEffect(() => {
     fetchCategorias();
   }, [fetchCategorias]);
+
+
 
   // Handlers optimizados
   const openDialogFor = useCallback(async (categoria, mode='view') => {
@@ -221,6 +238,61 @@ const CategoriasList = () => {
     }
   };
 
+  // Función para manejar el reordenamiento de categorías
+  const handleReorder = useCallback(async (reorderedItems) => {
+    // Actualizar el estado local inmediatamente para una mejor UX
+    setData(prev => ({ ...prev, categorias: reorderedItems }));
+    
+    // Preparar los IDs de las categorías en el nuevo orden
+    const categoriaIds = reorderedItems.map(categoria => categoria.id);
+    
+    try {
+      // Verificar si tenemos acceso a electronAPI (modo Electron)
+      if (window.electronAPI && window.electronAPI.categorias) {
+        // Usar IPC de Electron
+        const result = await window.electronAPI.categorias.reordenar({
+          categoriaIds: categoriaIds
+        });
+        console.log('Reordenamiento IPC exitoso:', result);
+      } else {
+        // Verificar autenticación para HTTP
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          throw new Error('No hay token de autenticación disponible');
+        }
+        
+        // Usar llamada HTTP directa para reordenar
+        const response = await api.post('categorias/reorder/', {
+          categoriaIds: categoriaIds
+        });
+        console.log('Reordenamiento HTTP exitoso:', response.data);
+      }
+      
+      // Actualizar la tabla después del éxito
+      await fetchCategorias();
+      
+    } catch (error) {
+      console.error('Error al reordenar categorías:', error);
+      
+      // Manejar error 401 (token expirado)
+      if (error.response && error.response.status === 401) {
+        console.log('Token expirado, redirigiendo al login...');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        window.location.href = '/login';
+        return;
+      }
+      
+      // Revertir cambios locales en caso de error
+      await fetchCategorias();
+      toast.error('Error al reordenar las categorías');
+    }
+  }, [fetchCategorias, toast]);
+
+
+
+
+
   // Configuración de columnas para la tabla estandarizada
   const getCategoriaColumns = (onView, onEdit, onDelete) => [
     {
@@ -228,7 +300,11 @@ const CategoriasList = () => {
       label: 'Categoría',
       sortable: true,
       render: (categoria) => (
-        <div className="flex items-center space-x-3">
+        <div 
+          className="flex items-center space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded-lg transition-colors"
+          onClick={() => navigate(`/categoria/${categoria.slug}`)}
+          title="Hacer clic para ver productos de esta categoría"
+        >
           <div className="flex-shrink-0 w-8 h-8">
             {categoria.imagen ? (
               <img
@@ -247,23 +323,27 @@ const CategoriasList = () => {
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-theme-text truncate">
+            <p className="text-sm font-medium text-blue-700 hover:text-blue-900 truncate">
               {categoria.nombre}
             </p>
-            <p className="text-xs text-theme-textSecondary truncate">
-              {categoria.descripcion || 'Sin descripción'}
+            <p className="text-xs text-theme-textSecondary" title={categoria.descripcion}>
+              {truncateText(categoria.descripcion, 40)}
             </p>
           </div>
         </div>
       )
     },
     {
-      key: 'productos_count',
+      key: 'cantidad_productos',
       label: 'Productos',
       sortable: true,
       render: (categoria) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          {categoria.productos_count || 0}
+        <span 
+          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 cursor-pointer hover:bg-blue-200 transition-colors"
+          onClick={() => navigate(`/categoria/${categoria.slug}`)}
+          title="Ver productos"
+        >
+          {categoria.cantidad_productos || 0}
         </span>
       )
     },
@@ -555,22 +635,26 @@ const CategoriasList = () => {
                 }
               </p>
             </div>
+            
+
           </div>
         </div>
       </div>
 
-      {/* Tabla de Categorías estandarizada */}
+      {/* Tabla de Categorías */}
       <div className="max-w-7xl mx-auto px-6 mb-6">
-        <DataTable
+        <DraggableDataTable
           columns={getCategoriaColumns(openDialogFor, openDialogFor, handleDelete)}
           data={filteredCategorias}
           sortConfig={sortConfig}
           onSort={requestSort}
+          onReorder={handleReorder}
           loading={loading.categorias}
           emptyMessage="No hay categorías disponibles"
           size="md"
           striped={true}
           hover={true}
+          dragDisabled={false}
         />
       </div>
 

@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const sourceFile = path.join(__dirname, 'src', 'preload', 'indexOptimized.js');
-const targetFile = path.join(__dirname, 'out', 'preload', 'indexOptimized.js');
+const sourceFile = path.join(__dirname, 'src', 'preload', 'index.js');
+const targetFile = path.join(__dirname, 'out', 'preload', 'index.js');
 
 console.log('🔧 Verificando archivo preload...');
 console.log('📁 Archivo fuente:', sourceFile);

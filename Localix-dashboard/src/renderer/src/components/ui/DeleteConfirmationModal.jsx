@@ -26,6 +26,15 @@ const DeleteConfirmationModal = ({
     switch (dangerLevel) {
       case 'high':
         return {
+          border: 'border-red-300',
+          bg: 'bg-red-100',
+          icon: 'text-red-700',
+          button: 'bg-red-700 hover:bg-red-800',
+          title: 'text-red-900',
+          message: 'text-red-800'
+        };
+      case 'medium':
+        return {
           border: 'border-red-200',
           bg: 'bg-red-50',
           icon: 'text-red-600',
@@ -33,23 +42,14 @@ const DeleteConfirmationModal = ({
           title: 'text-red-800',
           message: 'text-red-700'
         };
-      case 'medium':
-        return {
-          border: 'border-orange-200',
-          bg: 'bg-orange-50',
-          icon: 'text-orange-600',
-          button: 'bg-orange-600 hover:bg-orange-700',
-          title: 'text-orange-800',
-          message: 'text-orange-700'
-        };
       case 'low':
         return {
-          border: 'border-yellow-200',
-          bg: 'bg-yellow-50',
-          icon: 'text-yellow-600',
-          button: 'bg-yellow-600 hover:bg-yellow-700',
-          title: 'text-yellow-800',
-          message: 'text-yellow-700'
+          border: 'border-red-200',
+          bg: 'bg-red-50',
+          icon: 'text-red-500',
+          button: 'bg-red-500 hover:bg-red-600',
+          title: 'text-red-700',
+          message: 'text-red-600'
         };
       default:
         return {
@@ -76,7 +76,7 @@ const DeleteConfirmationModal = ({
       {/* Modal centrado */}
       <div className="flex items-center justify-center min-h-screen p-4">
         <div 
-          className={`relative bg-theme-surface rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 scale-100 opacity-100 ${styles.border} border-2`}
+          className={`relative bg-theme-surface rounded-lg shadow-xl max-w-sm w-full mx-4 transform transition-all duration-300 scale-100 opacity-100 ${styles.border} border-2`}
           style={{
             animation: 'modalSlideIn 0.3s ease-out'
           }}
@@ -107,38 +107,37 @@ const DeleteConfirmationModal = ({
           </div>
 
           {/* Contenido */}
-          <div className="px-6 py-6">
+          <div className="px-4 py-4">
             {/* Icono principal */}
-            <div className="flex justify-center mb-4">
-              <div className={`p-4 rounded-full ${styles.bg} ${styles.border} border-2`}>
-                <Trash2 className={`h-8 w-8 ${styles.icon}`} />
+            <div className="flex justify-center mb-3">
+              <div className={`p-3 rounded-full ${styles.bg} ${styles.border} border-2`}>
+                <Trash2 className={`h-6 w-6 ${styles.icon}`} />
               </div>
             </div>
 
             {/* Mensaje principal */}
-            <div className="text-center mb-6">
-              <h4 className="text-xl font-semibold text-theme-text mb-2">
+            <div className="text-center mb-4">
+              <h4 className="text-lg font-semibold text-theme-text mb-2">
                 ¿Eliminar {itemType}?
               </h4>
               {itemName && (
-                <p className="text-lg font-medium text-theme-textSecondary mb-2">
+                <p className="text-base font-medium text-theme-textSecondary mb-2">
                   "{itemName}"
                 </p>
               )}
-              <p className="text-theme-textSecondary leading-relaxed">
+              <p className="text-sm text-theme-textSecondary leading-relaxed">
                 {message}
               </p>
             </div>
 
             {/* Advertencia */}
             {showWarning && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-                <div className="flex items-start gap-3">
-                  <Info className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-amber-800">
-                    <p className="font-medium mb-1">Esta acción no se puede deshacer</p>
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-amber-800">
                     <p className="text-amber-700">
-                      Una vez eliminado, no podrás recuperar este {itemType} ni sus datos asociados.
+                      Una vez eliminado, no podrás recuperar este {itemType}.
                     </p>
                   </div>
                 </div>
@@ -146,12 +145,12 @@ const DeleteConfirmationModal = ({
             )}
 
             {/* Botones */}
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-3 text-theme-textSecondary bg-theme-secondary hover:bg-theme-border rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+                className="flex-1 px-3 py-2 text-theme-textSecondary bg-theme-secondary hover:bg-theme-border rounded-md font-medium transition-colors duration-200 flex items-center justify-center gap-1 text-sm"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3" />
                 {cancelText}
               </button>
               <button
@@ -166,9 +165,9 @@ const DeleteConfirmationModal = ({
                     onClose();
                   }
                 }}
-                className={`flex-1 px-4 py-3 text-white ${styles.button} rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105`}
+                className={`flex-1 px-3 py-2 text-white ${styles.button} rounded-md font-medium transition-colors duration-200 flex items-center justify-center gap-1 shadow-md hover:shadow-lg transform hover:scale-105 text-sm`}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3 w-3" />
                 {confirmText}
               </button>
             </div>
@@ -192,4 +191,4 @@ const DeleteConfirmationModal = ({
   );
 };
 
-export default DeleteConfirmationModal; 
+export default DeleteConfirmationModal;

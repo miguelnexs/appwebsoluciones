@@ -17,6 +17,8 @@ import {
 } from '../main/handlers/pedidoHandlers';
 import { generarReportePedido } from '../utils/pedidoPDFGenerator';
 import PedidoDetailModal from '../components/PedidoDetailModal';
+import { useDeleteConfirmation } from '../hooks/useDeleteConfirmation';
+import DeleteConfirmationModal from '../components/ui/DeleteConfirmationModal';
 
 
 
@@ -62,6 +64,9 @@ const OrdersPage = () => {
     entregados: 0,
     cancelados: 0
   });
+
+  // Hook para confirmación de eliminación
+  const { deleteModal, hideDeleteConfirmation, confirmDelete } = useDeleteConfirmation();
 
   // Configuración de columnas para la tabla estandarizada
   const getPedidoColumns = (onView, onDelete, onPrint = null) => [
@@ -172,7 +177,7 @@ const OrdersPage = () => {
       render: (pedido) => (
         <ActionButtons
           onView={() => onView(pedido)}
-          onDelete={() => onDelete(pedido)}
+          onDelete={() => onDelete(pedido.id)}
           onPrint={onPrint ? () => onPrint(pedido) : undefined}
           showPrint={!!onPrint}
           showEdit={false}
@@ -517,18 +522,19 @@ const OrdersPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este pedido?')) {
-      return;
-    }
+    const success = await confirmDelete(
+      async () => {
+        await deletePedido(id);
+        fetchPedidos();
+        toast.success('Pedido eliminado exitosamente.');
+      },
+      `Pedido #${id}`,
+      'pedido'
+    );
     
-    try {
-      await deletePedido(id);
-      fetchPedidos();
-      toast.success('Pedido eliminado exitosamente.');
-    } catch (err) {
-      console.error('Error eliminando pedido:', err);
-      setUi(prev => ({ ...prev, error: err.message }));
-      toast.error('Error al eliminar el pedido: ' + (err.message || 'Error desconocido'));
+    if (!success) {
+      // El usuario canceló o hubo un error
+      console.log('Eliminación de pedido cancelada o falló');
     }
   };
 
@@ -878,6 +884,18 @@ const OrdersPage = () => {
         isOpen={ui.openDialog && ui.dialogMode === 'view'}
         onClose={() => setUi(prev => ({ ...prev, openDialog: false }))}
         onEstadoCambiado={fetchPedidos}
+      />
+      
+      {/* Modal de confirmación de eliminación */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={hideDeleteConfirmation}
+        onConfirm={deleteModal.onConfirm}
+        title={deleteModal.title}
+        message={deleteModal.message}
+        itemName={deleteModal.itemName}
+        itemType={deleteModal.itemType}
+        dangerLevel={deleteModal.dangerLevel}
       />
     </div>
   );

@@ -2,7 +2,7 @@
 const axios = require('axios');
 
 // Configuración
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://softwarebycg.shop';
 const TEST_CLIENTE = {
   nombre: 'Cliente de Prueba',
   email: 'test@example.com',
@@ -196,4 +196,4 @@ module.exports = {
   crearCliente,
   obtenerClientes,
   verificarServidor
-}; 
+};

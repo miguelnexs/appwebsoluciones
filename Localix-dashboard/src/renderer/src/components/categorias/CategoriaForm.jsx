@@ -33,6 +33,7 @@ const CategoriaForm = ({ open, onClose, categoria, onCreateSuccess, onUpdateSucc
     descripcion: '',
     imagen: null,
     activa: true,
+    orden: 0,
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -48,6 +49,7 @@ const CategoriaForm = ({ open, onClose, categoria, onCreateSuccess, onUpdateSucc
         descripcion: categoria.descripcion || '',
         imagen: null,
         activa: categoria.activa ?? true,
+        orden: categoria.orden ?? 0,
       });
       setImagePreview(categoria.imagen_url || null);
     } else {
@@ -63,6 +65,7 @@ const CategoriaForm = ({ open, onClose, categoria, onCreateSuccess, onUpdateSucc
       descripcion: '',
       imagen: null,
       activa: true,
+      orden: 0,
     });
     setImagePreview(null);
     setError(null);
@@ -149,6 +152,8 @@ const CategoriaForm = ({ open, onClose, categoria, onCreateSuccess, onUpdateSucc
             formDataToSend.append('nombre', nombreTrim);
             formDataToSend.append('descripcion', (formData.descripcion || '').trim());
             formDataToSend.append('activa', formData.activa);
+            // Removido el campo 'orden' para evitar conflictos con drag-and-drop
+            // formDataToSend.append('orden', formData.orden || 0);
             formDataToSend.append('imagen', formData.imagen.file); // Usar el archivo original
             
 
@@ -161,6 +166,7 @@ const CategoriaForm = ({ open, onClose, categoria, onCreateSuccess, onUpdateSucc
               nombre: nombreTrim,
               descripcion: (formData.descripcion || '').trim(),
               activa: !!formData.activa,
+              // Removido el campo 'orden' para evitar conflictos con drag-and-drop
             };
             const apiResponse = await api.put(`categorias/${categoria.slug}/`, categoriaData);
             response = apiResponse.data;
@@ -173,6 +179,8 @@ const CategoriaForm = ({ open, onClose, categoria, onCreateSuccess, onUpdateSucc
             formDataToSend.append('nombre', nombreTrim);
             formDataToSend.append('descripcion', (formData.descripcion || '').trim());
             formDataToSend.append('activa', formData.activa);
+            // Removido el campo 'orden' para evitar conflictos con drag-and-drop
+            // formDataToSend.append('orden', formData.orden || 0);
             formDataToSend.append('imagen', formData.imagen.file); // Usar el archivo original
             
 
@@ -185,6 +193,7 @@ const CategoriaForm = ({ open, onClose, categoria, onCreateSuccess, onUpdateSucc
               nombre: nombreTrim,
               descripcion: (formData.descripcion || '').trim(),
               activa: !!formData.activa,
+              // Removido el campo 'orden' para evitar conflictos con drag-and-drop
             };
             const apiResponse = await api.post('categorias/', categoriaData);
             response = apiResponse.data;
@@ -197,6 +206,7 @@ const CategoriaForm = ({ open, onClose, categoria, onCreateSuccess, onUpdateSucc
           nombre: nombreTrim,
           descripcion: (formData.descripcion || '').trim(),
           activa: !!formData.activa,
+          orden: parseInt(formData.orden) || 0,
           imagen: formData.imagen ? {
             name: formData.imagen.name,
             type: formData.imagen.type,
@@ -413,6 +423,26 @@ const CategoriaForm = ({ open, onClose, categoria, onCreateSuccess, onUpdateSucc
           disabled={loading}
         />
       </div>
+
+      {/* Campo de orden - Oculto porque se maneja con drag-and-drop */}
+      {/* 
+      <div style={{ marginBottom: '16px' }}>
+        <label htmlFor="orden-categoria" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: 'var(--color-text)' }}>
+          Orden de visualización
+        </label>
+        <input
+          id="orden-categoria"
+          type="number"
+          value={formData.orden}
+          onChange={(e) => handleInputChange(e)}
+          name="orden"
+          min="0"
+          className="w-full px-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors"
+          disabled={loading}
+          placeholder="0 = primera posición"
+        />
+      </div>
+      */}
 
       {/* Switch de activa */}
       <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
