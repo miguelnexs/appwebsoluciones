@@ -78,10 +78,15 @@ export const useDashboard = () => {
         window.ventasAPI?.obtenerResumen?.()?.catch(() => ({ success: false, data: null })) || Promise.resolve({ success: false, data: null }),
         window.ventasAPI?.obtenerVentas?.()?.catch(() => ({ success: false, data: [] })) || Promise.resolve({ success: false, data: [] }),
         (window.electronAPI?.pedidos?.obtenerTodos || window.pedidosAPI?.obtenerTodos)?.({ page_size: 5 })?.catch(() => ({ results: [] })) || Promise.resolve({ results: [] }),
-        window.electronAPI?.productos?.listar?.({ page_size: 1000 })?.catch(() => ({ results: [] })) || Promise.resolve({ results: [] }),
+        window.electronAPI?.productos?.listar?.({ page_size: 1000 })?.catch((error) => {
+          console.error('Error al cargar productos para dashboard:', error);
+          return { results: [] };
+        }) || Promise.resolve({ results: [] }),
         window.clientesAPI?.obtenerTodos?.()?.catch(() => ({ success: false, data: [] })) || Promise.resolve({ success: false, data: [] }),
         (window.electronAPI?.pedidos?.obtenerEstadisticas || window.pedidosAPI?.obtenerEstadisticas)?.()?.catch(() => ({})) || Promise.resolve({})
       ]);
+
+      console.log('Dashboard - Respuesta de productos:', productosRes);
 
       // Procesar datos con manejo correcto de formatos de respuesta
       const resumenData = resumenRes?.success ? resumenRes.data : (resumenRes?.resumen || {});
@@ -92,9 +97,13 @@ export const useDashboard = () => {
       const estadisticasPedidos = estadisticasPedidosRes || {};
 
       // Calcular totales reales
+      console.log('Dashboard - productosData:', productosData);
+      console.log('Dashboard - productosData.length:', productosData.length);
       const totalProductos = productosData.length;
       const totalClientes = Array.isArray(clientesData) ? clientesData.length : 0;
       const totalPedidos = estadisticasPedidos.total_pedidos || pedidosData.length || 0;
+      
+      console.log('Dashboard - totalProductos calculado:', totalProductos);
              // Usar ingresos de pedidos entregados en lugar de todos los ingresos
        const totalIngresos = estadisticasPedidos.total_ingresos || resumenData.total_ingresos || 0;
        const totalIngresosTodos = estadisticasPedidos.total_ingresos_todos || 0;
@@ -168,4 +177,4 @@ export const useDashboard = () => {
   };
 };
 
-export default useDashboard; 
+export default useDashboard;

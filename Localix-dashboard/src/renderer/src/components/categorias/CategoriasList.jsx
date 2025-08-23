@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import CategoriaForm from './CategoriaForm';
+import CategoriaViewModal from './CategoriaViewModal';
 import { useToast } from '../../hooks/useToast';
 import { RESOURCE_URL } from '../../api/apiConfig';
 
@@ -490,11 +491,11 @@ const CategoriasList = () => {
         <div className="flex space-x-2">
           <button
             onClick={() => openDialogFor(categoria, 'view')}
-            className="flex items-center gap-1 px-2 py-1 bg-theme-secondary text-theme-textSecondary rounded hover:bg-theme-border transition-colors"
-            title="Ver detalles"
+            className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+            title="Visualizar categoría"
           >
             <Eye size={14} />
-            <span className="text-xs">Ver</span>
+            <span className="text-xs font-medium">Visualizar</span>
           </button>
           <button
             onClick={() => openDialogFor(categoria, 'edit')}
@@ -658,15 +659,22 @@ const CategoriasList = () => {
         />
       </div>
 
-      {/* Formulario de Categoría en Modal */}
-      {ui.openDialog && (
+      {/* Modal de Visualización de Categoría */}
+      {ui.openDialog && ui.dialogMode === 'view' && (
+        <CategoriaViewModal
+          open={ui.openDialog}
+          categoria={data.selectedCategoria}
+          onClose={() => setUi(prev => ({ ...prev, openDialog: false }))}
+        />
+      )}
+
+      {/* Formulario de Categoría en Modal (para editar/crear) */}
+      {ui.openDialog && ui.dialogMode === 'edit' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-theme-surface rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-theme-border">
               <h3 className="text-lg font-semibold text-theme-text">
-                {data.selectedCategoria
-                  ? (ui.dialogMode === 'edit' ? 'Editar Categoría' : 'Detalles de la Categoría')
-                  : 'Nueva Categoría'}
+                {data.selectedCategoria ? 'Editar Categoría' : 'Nueva Categoría'}
               </h3>
               <button
                 onClick={() => setUi(prev => ({ ...prev, openDialog: false }))}

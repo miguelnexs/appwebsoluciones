@@ -1,13 +1,32 @@
 // src/pages/DashboardPage.jsx
-import React, { useMemo, lazy, Suspense } from 'react';
+import React, { useMemo, lazy, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { 
   ShoppingBag, Users, DollarSign, Package, 
   TrendingUp, Activity, CreditCard, Star,
   Plus, Search, Filter, Download, RefreshCw, Loader, AlertTriangle, CheckCircle,
   ArrowUp, ArrowDown, Eye, ShoppingCart, Clock, Zap,
   Store, BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, Calendar, Bell,
-  UserPlus, PackagePlus, TrendingDown, Target, Sparkles
+  UserPlus, PackagePlus, TrendingDown, Target, Sparkles, GripVertical
 } from 'lucide-react';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import DashboardSkeleton from '../components/ui/DashboardSkeleton';
@@ -27,6 +46,87 @@ const DashboardPage = React.memo(() => {
   const { currentTheme } = useTheme();
   const { user, isAuthenticated } = useAuth();
 
+  // Estado para el orden de los widgets
+  const [widgetOrder, setWidgetOrder] = useState([
+    'ingresos',
+    'pedidos', 
+    'clientes',
+    'ganancia'
+  ]);
+
+  // Sensores para el drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Función para manejar el drag and drop
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      setWidgetOrder((items) => {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // Componente SortableWidget
+  const SortableWidget = ({ widget }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: widget.id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200 relative ${
+          isDragging ? 'shadow-2xl scale-105 z-50' : ''
+        }`}
+      >
+        <div className="absolute top-2 right-2 flex items-center gap-2">
+          <div className="w-2 h-2 bg-blue-500 rounded-full" title="Datos personales"></div>
+          <div 
+            {...attributes}
+            {...listeners}
+            className="cursor-grab hover:cursor-grabbing p-1 rounded hover:bg-theme-secondary transition-colors"
+          >
+            <GripVertical className="w-4 h-4 text-theme-textSecondary" />
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-theme-textSecondary mb-1">{widget.title}</p>
+            <p className="text-2xl font-bold text-theme-text">{widget.value}</p>
+            <div className={`flex items-center mt-2 ${widget.textColor} text-xs`}>
+              <CheckCircle className="w-3 h-3 mr-1" />
+              <span>{widget.subtitle}</span>
+            </div>
+          </div>
+          <div className={`p-3 ${widget.bgColor} rounded-xl`}>
+            {widget.icon}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // KPIs optimizados desde resumen
   const {
     totalVentas = 0,
@@ -38,6 +138,46 @@ const DashboardPage = React.memo(() => {
     gananciaTotal = 0,
     pedidosEntregados = 0
   } = dashboardData.resumen || {};
+
+  // Definición de widgets
+  const widgets = {
+    ingresos: {
+      id: 'ingresos',
+      title: 'Tus Ingresos Entregados',
+      value: `$${totalIngresos.toLocaleString('es-CO', {minimumFractionDigits: 2})}`,
+      subtitle: `${pedidosEntregados} entregados`,
+      icon: <DollarSign className="w-6 h-6 text-green-600" />,
+      bgColor: 'bg-green-100',
+      textColor: 'text-green-600'
+    },
+    pedidos: {
+      id: 'pedidos',
+      title: 'Tus Pedidos',
+      value: totalPedidos,
+      subtitle: 'Solo tus datos',
+      icon: <ShoppingBag className="w-6 h-6 text-blue-600" />,
+      bgColor: 'bg-blue-100',
+      textColor: 'text-blue-600'
+    },
+    clientes: {
+      id: 'clientes',
+      title: 'Tus Clientes',
+      value: totalClientes,
+      subtitle: 'Tu base activa',
+      icon: <Users className="w-6 h-6 text-orange-600" />,
+      bgColor: 'bg-orange-100',
+      textColor: 'text-orange-600'
+    },
+    ganancia: {
+      id: 'ganancia',
+      title: 'Tu Ganancia Total',
+      value: `$${gananciaTotal.toLocaleString('es-CO', {minimumFractionDigits: 2})}`,
+      subtitle: 'Tu beneficio neto',
+      icon: <DollarSign className="w-6 h-6 text-green-600" />,
+      bgColor: 'bg-green-100',
+      textColor: 'text-green-600'
+    }
+  };
 
   // Gráfica de ventas optimizada
   const salesData = useMemo(() => {
@@ -270,106 +410,26 @@ const DashboardPage = React.memo(() => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
 
-        {/* KPIs - MEJOR DISTRIBUIDOS Y ESPACIADOS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8">
-          {/* Ingresos de Pedidos Confirmados */}
-          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200 relative">
-            <div className="absolute top-2 right-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full" title="Datos personales"></div>
+        {/* KPIs Draggables - Sin Productos */}
+        <DndContext 
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext 
+            items={widgetOrder}
+            strategy={horizontalListSortingStrategy}
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {widgetOrder.map((widgetId) => {
+                const widget = widgets[widgetId];
+                return (
+                  <SortableWidget key={widget.id} widget={widget} />
+                );
+              })}
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-theme-textSecondary mb-1">Tus Ingresos Entregados</p>
-                <p className="text-2xl font-bold text-theme-text">
-                  ${totalIngresos.toLocaleString('es-CO', {minimumFractionDigits: 2})}
-                </p>
-                <div className="flex items-center mt-2 text-green-600 text-xs">
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  <span>{pedidosEntregados} entregados</span>
-                </div>
-              </div>
-              <div className="p-3 bg-green-100 rounded-xl">
-                <DollarSign className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          {/* Pedidos */}
-          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200 relative">
-            <div className="absolute top-2 right-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full" title="Datos personales"></div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-theme-textSecondary mb-1">Tus Pedidos</p>
-                <p className="text-2xl font-bold text-theme-text">{totalPedidos}</p>
-                <div className="flex items-center mt-2 text-blue-600 text-xs">
-                  <ArrowUp className="w-3 h-3 mr-1" />
-                  <span>Solo tus datos</span>
-                </div>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <ShoppingBag className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          {/* Productos */}
-          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200 relative">
-            <div className="absolute top-2 right-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full" title="Datos personales"></div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-theme-textSecondary mb-1">Tus Productos</p>
-                <p className="text-2xl font-bold text-theme-text">{totalProductos}</p>
-                <p className="text-xs text-theme-textSecondary mt-2">En tu catálogo</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <Package className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          {/* Clientes */}
-          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200 relative">
-            <div className="absolute top-2 right-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full" title="Datos personales"></div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-theme-textSecondary mb-1">Tus Clientes</p>
-                <p className="text-2xl font-bold text-theme-text">{totalClientes}</p>
-                <p className="text-xs text-theme-textSecondary mt-2">Tu base activa</p>
-              </div>
-              <div className="p-3 bg-orange-100 rounded-xl">
-                <Users className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-          </div>
-
-          {/* Ganancia Total */}
-          <div className="bg-theme-surface rounded-xl border border-theme-border p-6 hover:shadow-lg transition-all duration-200 relative">
-            <div className="absolute top-2 right-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full" title="Datos personales"></div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-theme-textSecondary mb-1">Tu Ganancia Total</p>
-                <p className="text-2xl font-bold text-theme-text">
-                  ${gananciaTotal.toLocaleString('es-CO', {minimumFractionDigits: 2})}
-                </p>
-                <div className="flex items-center mt-2 text-green-600 text-xs">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  <span>Tu beneficio neto</span>
-                </div>
-              </div>
-              <div className="p-3 bg-green-100 rounded-xl">
-                <DollarSign className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-        </div>
+          </SortableContext>
+        </DndContext>
 
         {/* Botones de Acción Rápida - MEJOR DISTRIBUIDOS */}
         <div className="mb-8">
