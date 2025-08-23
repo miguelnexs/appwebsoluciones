@@ -181,6 +181,27 @@ const exposeElectronAPI = () => {
         return safeInvoke('productos:eliminarColor', productId, colorId);
       },
       
+      // Características handlers
+      obtenerCaracteristicas: (productId) => {
+        if (!productId) throw new Error('Product ID is required');
+        return safeInvoke('productos:obtenerCaracteristicas', productId);
+      },
+      crearCaracteristica: (productId, caracteristicaData) => {
+        if (!productId) throw new Error('Product ID is required');
+        if (!caracteristicaData?.nombre) throw new Error('Characteristic name is required');
+        return safeInvoke('productos:crearCaracteristica', productId, caracteristicaData);
+      },
+      actualizarCaracteristica: (productId, caracteristicaId, caracteristicaData) => {
+        if (!productId) throw new Error('Product ID is required');
+        if (!caracteristicaId) throw new Error('Characteristic ID is required');
+        return safeInvoke('productos:actualizarCaracteristica', productId, caracteristicaId, caracteristicaData);
+      },
+      eliminarCaracteristica: (productId, caracteristicaId) => {
+        if (!productId) throw new Error('Product ID is required');
+        if (!caracteristicaId) throw new Error('Characteristic ID is required');
+        return safeInvoke('productos:eliminarCaracteristica', productId, caracteristicaId);
+      },
+      
       // Image handlers
       obtenerImagenes: (colorId) => {
         if (!colorId) throw new Error('Color ID is required');
@@ -205,6 +226,10 @@ const exposeElectronAPI = () => {
         if (!colorId) throw new Error('Color ID is required');
         if (!ordenData) throw new Error('Order data is required');
         return safeInvoke('productos:reordenarImagenes', colorId, ordenData);
+      },
+      reordenar: (ordenData) => {
+        if (!ordenData) throw new Error('Order data is required');
+        return safeInvoke('productos:reordenar', ordenData);
       },
       uploadImagenPrincipal: ({ slug, imageFile }) => {
         if (!slug) throw new Error('Slug is required');
@@ -339,7 +364,7 @@ if (process.contextIsolated) {
   };
 }
 
-// APIs de ventas (optimizadas)
+// APIs de ventas
 contextBridge.exposeInMainWorld('ventasAPI', {
   obtenerProductos: () => ipcRenderer.invoke('ventas:obtener-productos'),
   buscarProductos: (query) => ipcRenderer.invoke('ventas:buscar-productos', query),
@@ -350,7 +375,7 @@ contextBridge.exposeInMainWorld('ventasAPI', {
   obtenerResumen: () => ipcRenderer.invoke('ventas:obtener-resumen'),
 });
 
-// APIs de clientes (optimizadas)
+// APIs de clientes
 contextBridge.exposeInMainWorld('clientesAPI', {
   obtenerTodos: () => ipcRenderer.invoke('clientes:obtener-todos'),
   obtenerPorId: (clienteId) => ipcRenderer.invoke('clientes:obtener-por-id', clienteId),
@@ -364,7 +389,7 @@ contextBridge.exposeInMainWorld('clientesAPI', {
   obtenerEstadisticas: () => ipcRenderer.invoke('clientes:obtener-estadisticas'),
 });
 
-// APIs de pedidos (optimizadas)
+// APIs de pedidos
 contextBridge.exposeInMainWorld('pedidosAPI', {
   obtenerTodos: (params = {}) => ipcRenderer.invoke('pedidos:obtener-todos', params),
   obtenerPorId: (pedidoId) => ipcRenderer.invoke('pedidos:obtener-por-id', pedidoId),

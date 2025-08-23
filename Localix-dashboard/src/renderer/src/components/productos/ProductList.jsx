@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import api from '../../api/axios';
 import {
   Search, Plus, RefreshCw, Eye, Edit, Trash2,
@@ -179,7 +179,7 @@ const ProductList = () => {
   const [filters, setFilters] = useState({});
   const [suggestions, setSuggestions] = useState([]);
   
-  const [sortConfig, setSortConfig] = useState({ key: 'nombre', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [stats, setStats] = useState({
     total: 0,
     publicados: 0,
@@ -397,33 +397,27 @@ const ProductList = () => {
   const handleReorder = useCallback(async (reorderedItems) => {
     try {
       // Actualizar el estado local inmediatamente
-      const updatedProducts = reorderedItems.map((product, index) => ({
-        ...product,
-        orden: index + 1
-      }));
-      
-      setData(prev => ({ ...prev, products: updatedProducts }));
+      setData(prev => ({ ...prev, products: reorderedItems }));
       
       // Verificar si el usuario está autenticado
       const token = localStorage.getItem('access_token');
       const isAuthenticated = !!token;
       
+      // Preparar datos para el backend (solo IDs en el orden correcto)
+      const productosParaBackend = reorderedItems.map(product => ({
+        id: product.id
+      }));
+      
       // Enviar cambios al backend
       if (isAuthenticated) {
         // Usar llamada HTTP directa
         await api.post('productos/productos/reorder/', {
-          productos: updatedProducts.map(product => ({
-            id: product.id,
-            orden: product.orden
-          }))
+          productos: productosParaBackend
         });
       } else {
         // Usar IPC si no está autenticado
         await window.electronAPI.productos.reordenar({
-          productos: updatedProducts.map(product => ({
-            id: product.id,
-            orden: product.orden
-          }))
+          productos: productosParaBackend
         });
       }
       
@@ -538,7 +532,15 @@ const ProductList = () => {
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
-    setSortConfig({ key, direction });
+    
+    // Si se ordena por fecha_creacion, permitir drag-and-drop deshabilitando el ordenamiento automático
+    if (key === 'fecha_creacion') {
+      setSortConfig({ key: null, direction: 'asc' });
+      // Recargar productos para obtener el orden del backend
+      fetchProducts(pagination.page, searchQuery, filters);
+    } else {
+      setSortConfig({ key, direction });
+    }
   };
 
   // Función para obtener icono de ordenamiento
@@ -689,19 +691,27 @@ const ProductList = () => {
     }
   }, [data.products, searchQuery, filters, startLoading, stopLoading, toast]);
 
-  // Ordenar productos
-  const sortedProducts = [...data.products].sort((a, b) => {
-    let aValue = a[sortConfig.key];
-    let bValue = b[sortConfig.key];
+  // Ordenar productos - Solo aplicar ordenamiento si no se está usando drag-and-drop
+  const sortedProducts = useMemo(() => {
+    // Si el drag-and-drop está habilitado, mantener el orden actual de los productos
+    // para permitir el reordenamiento manual
+    if (!sortConfig.key || sortConfig.key === 'fecha_creacion') {
+      return [...data.products];
+    }
     
-    if (aValue < bValue) {
-      return sortConfig.direction === 'asc' ? -1 : 1;
-    }
-    if (aValue > bValue) {
-      return sortConfig.direction === 'asc' ? 1 : -1;
-    }
-    return 0;
-  });
+    return [...data.products].sort((a, b) => {
+      let aValue = a[sortConfig.key];
+      let bValue = b[sortConfig.key];
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [data.products, sortConfig]);
 
   // Componentes renderizados condicionalmente
   const renderLoadingState = () => (
