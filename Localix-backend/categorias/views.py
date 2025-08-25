@@ -26,33 +26,12 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
     parser_classes = (MultiPartParser, FormParser, JSONParser)
     
-    def get_permissions(self):
-        """
-        Permite acceso público para listar y obtener categorías cuando se solicita publicos=true
-        """
-        if self.action in ['list', 'retrieve'] and self.request.GET.get('publicos') == 'true':
-            return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
-    
     def get_queryset(self):
         """
-        Filtra las categorías por usuario autenticado o permite acceso público
+        Filtra las categorías por usuario autenticado
         """
-        # Si se solicita acceso público
-        if self.request.GET.get('publicos') == 'true':
-            # Filtrar solo categorías del usuario admin
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            try:
-                admin_user = User.objects.get(username='admin')
-                return CategoriaProducto.objects.filter(usuario=admin_user, activa=True)
-            except User.DoesNotExist:
-                return CategoriaProducto.objects.none()
-        
-        # Para usuarios autenticados, mostrar sus categorías
         if self.request.user.is_authenticated:
             return CategoriaProducto.objects.filter(usuario=self.request.user)
-        
         return CategoriaProducto.objects.none()
 
     def create(self, request, *args, **kwargs):
