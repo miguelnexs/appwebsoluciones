@@ -20,7 +20,7 @@ import ProductColorsDisplay from './ProductColorsDisplay';
 import SmartProductSearch from './SmartProductSearch';
 
 // Componentes UI estandarizados
-import DraggableDataTable from '../ui/DraggableDataTable';
+import DataTable from '../ui/DataTable';
 import ActionButtons from '../ui/ActionButtons';
 
 // Hooks y utilidades
@@ -344,26 +344,20 @@ const ProductList = () => {
         ? response.results
         : (Array.isArray(response) ? response : []);
       
-      // Asegurar que cada producto tenga un id para el drag-and-drop
-      const productsWithId = productsData.map(product => ({
-        ...product,
-        id: product.id || product.slug || `product-${Date.now()}-${Math.random()}`
-      }));
-      
       setData(prev => ({
-        products: append ? [...prev.products, ...productsWithId] : productsWithId,
+        products: append ? [...prev.products, ...productsData] : productsData,
         selectedProduct: null
       }));
       
       // Calcular y actualizar estadísticas
-      const newStats = calculateStats(append ? [...data.products, ...productsWithId] : productsWithId);
+      const newStats = calculateStats(append ? [...data.products, ...productsData] : productsData);
       setStats(newStats);
       
       setPagination(prev => ({
         ...prev,
-        totalItems: typeof response?.count === 'number' ? response.count : productsWithId.length,
+        totalItems: typeof response?.count === 'number' ? response.count : productsData.length,
         page,
-        hasMore: productsWithId.length === pagination.pageSize,
+        hasMore: productsData.length === pagination.pageSize,
         loading: false
       }));
 
@@ -1031,7 +1025,7 @@ const ProductList = () => {
 
       {/* Tabla de Productos estandarizada */}
       <div className="max-w-7xl mx-auto px-6 mb-6">
-        <DraggableDataTable
+        <DataTable
           columns={getProductColumns(
             (product) => openDialogFor(product, 'view'),
             (product) => openDialogFor(product, 'edit'),
@@ -1040,8 +1034,6 @@ const ProductList = () => {
           data={sortedProducts}
           sortConfig={sortConfig}
           onSort={requestSort}
-          onReorder={handleReorder}
-          dragDisabled={false}
           loading={isLoading}
           emptyMessage="No hay productos disponibles"
           size="md"

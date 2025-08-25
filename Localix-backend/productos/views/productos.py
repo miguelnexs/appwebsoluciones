@@ -7,7 +7,7 @@ from PIL import Image
 from django.db.models import Q
 from django.utils import timezone
 from django.core.files.base import ContentFile
-from rest_framework import viewsets, status, filters, permissions
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -32,20 +32,6 @@ class ProductoViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter]
     lookup_field = 'slug'
     parser_classes = (MultiPartParser, FormParser, JSONParser)
-    
-    def get_permissions(self):
-        """
-        Permisos personalizados: permitir acceso público para productos públicos
-        """
-        if self.action == 'list' and self.request.query_params.get('publicos') == 'true':
-            # Permitir acceso sin autenticación para productos públicos
-            return [permissions.AllowAny()]
-        elif self.action == 'retrieve' and self.request.query_params.get('publicos') == 'true':
-            # Permitir acceso sin autenticación para ver producto específico público
-            return [permissions.AllowAny()]
-        else:
-            # Requerir autenticación para otras acciones
-            return [permissions.IsAuthenticated()]
 
     # Configuración de filtros y búsqueda
     search_fields = ['nombre', 'descripcion_corta', 'descripcion_larga', 'sku']
@@ -69,22 +55,13 @@ class ProductoViewSet(viewsets.ModelViewSet):
         """
         Sobreescribe el queryset para incluir filtros personalizados y multi-tenancy
         """
-        # Si se solicitan productos públicos, solo mostrar productos del usuario 'admin'
+        queryset = Producto.objects.filter(usuario=self.request.user).prefetch_related(
+            'variantes',
+        ).order_by('-fecha_creacion')
+        
+        # Filtro para productos públicos
         if self.request.query_params.get('publicos') == 'true':
-            # Filtrar solo por usuario 'admin' y productos públicos
-            queryset = Producto.objects.filter(
-                usuario__username='admin',
-                estado='publicado'
-            ).prefetch_related('variantes').order_by('-fecha_creacion')
-        else:
-            # Para usuarios autenticados, filtrar por su propio usuario
-            queryset = Producto.objects.filter(usuario=self.request.user).prefetch_related(
-                'variantes',
-            ).order_by('-fecha_creacion')
-            
-            # Filtro para productos públicos del usuario autenticado
-            if self.request.query_params.get('publicos') == 'true':
-                queryset = queryset.filter(estado='publicado')
+            queryset = queryset.filter(estado='publicado')
             
         # Filtro por rango de fechas
         fecha_inicio = self.request.query_params.get('fecha_inicio')
@@ -555,52 +532,6 @@ class ProductoViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response(
                 {'error': f'Error actualizando stock: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    @action(detail=False, methods=['POST'])
-    def reorder(self, request):
-        """
-        Reordenar productos actualizando su fecha de creación para simular orden
-        """
-        try:
-            productos_data = request.data.get('productos', [])
-            
-            if not isinstance(productos_data, list):
-                return Response(
-                    {'error': 'El campo productos debe ser una lista'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            # Usar transacción para asegurar consistencia
-            from django.db import transaction
-            with transaction.atomic():
-                # Obtener la fecha base más reciente
-                from django.utils import timezone
-                import datetime
-                base_time = timezone.now()
-                
-                for index, item in enumerate(productos_data):
-                    producto_id = item.get('id')
-                    if producto_id:
-                        try:
-                            producto = Producto.objects.get(
-                                id=producto_id, 
-                                usuario=request.user
-                            )
-                            # Actualizar fecha_creacion para simular orden
-                            # Los productos con menor índice tendrán fechas más recientes
-                            new_time = base_time + datetime.timedelta(seconds=len(productos_data) - index)
-                            producto.fecha_creacion = new_time
-                            producto.save(update_fields=['fecha_creacion'])
-                        except Producto.DoesNotExist:
-                            continue
-            
-            return Response({'message': 'Productos reordenados correctamente'})
-            
-        except Exception as e:
-            return Response(
-                {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
