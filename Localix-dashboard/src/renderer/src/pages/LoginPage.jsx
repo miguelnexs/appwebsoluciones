@@ -107,7 +107,7 @@ const LoginPage = () => {
       if (result.success) {
         // Verificar el estado del plan después del login exitoso
         try {
-          const planResponse = await fetch('http://softwarebycg.shop/api/usuarios/usage/status/', {
+          const planResponse = await fetch('http://localhost:8000/api/usuarios/usage/status/', {
             headers: {
               'Authorization': `Bearer ${result.tokens.access}`,
               'Content-Type': 'application/json',
