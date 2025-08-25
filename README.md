@@ -242,7 +242,6 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 **Miguel Núñez**
 - GitHub: [@miguelnexs](https://github.com/miguelnexs)
-- LinkedIn: [Miguel Núñez](https://linkedin.com/in/miguelnexs)
 
 ## 🙏 Agradecimientos
 
@@ -256,7 +255,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 Si tienes alguna pregunta o necesitas ayuda:
 
-- 📧 Email: miguel@example.com
+- 📧 Email: appwebsoluciones@appwebsoluciones.com
 - 🐛 Issues: [GitHub Issues](https://github.com/miguelnexs/localix/issues)
 - 📖 Wiki: [Documentación](https://github.com/miguelnexs/localix/wiki)
 
