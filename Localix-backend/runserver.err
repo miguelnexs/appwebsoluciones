@@ -1,9 +1,0 @@
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-?: (debug_toolbar.W001) debug_toolbar.middleware.DebugToolbarMiddleware is missing from MIDDLEWARE.
-	HINT: Add debug_toolbar.middleware.DebugToolbarMiddleware to MIDDLEWARE.
-?: (staticfiles.W004) The directory 'D:\usuario\Desktop\Proyectos Terminados\Localix\localix\Localix-backend\static' in the STATICFILES_DIRS setting does not exist.
-
-System check identified 2 issues (0 silenced).

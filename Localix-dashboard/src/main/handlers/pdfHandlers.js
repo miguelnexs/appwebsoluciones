@@ -96,12 +96,20 @@ ipcMain.handle('venta:imprimir-recibo', async (event, ventaData) => {
 });
 
 /**
- * Handler para configurar impresora por defecto
+ * Handler para obtener impresora por defecto
  */
-ipcMain.handle('printer:get-default', async () => {
+ipcMain.handle('printer:get-default', async (event) => {
   try {
-    // En Electron, podemos obtener la impresora por defecto
-    const defaultPrinter = require('electron').webContents.getFocusedWebContents()?.getPrinters()?.[0];
+    // Obtener la ventana principal desde el evento
+    const webContents = event.sender;
+    const printers = webContents.getPrinters();
+    
+    // Buscar la impresora por defecto
+    const defaultPrinter = printers.find(printer => printer.isDefault) || printers[0];
+    
+    console.log('Impresoras disponibles:', printers.length);
+    console.log('Impresora por defecto:', defaultPrinter?.name || 'No encontrada');
+    
     return { success: true, printer: defaultPrinter };
   } catch (error) {
     console.error('Error al obtener impresora por defecto:', error);
@@ -112,9 +120,17 @@ ipcMain.handle('printer:get-default', async () => {
 /**
  * Handler para listar impresoras disponibles
  */
-ipcMain.handle('printer:list', async () => {
+ipcMain.handle('printer:list', async (event) => {
   try {
-    const printers = require('electron').webContents.getFocusedWebContents()?.getPrinters() || [];
+    // Obtener la ventana principal desde el evento
+    const webContents = event.sender;
+    const printers = webContents.getPrinters();
+    
+    console.log('Listando impresoras disponibles:', printers.length);
+    printers.forEach((printer, index) => {
+      console.log(`${index + 1}. ${printer.name} ${printer.isDefault ? '(Por defecto)' : ''}`);
+    });
+    
     return { success: true, printers };
   } catch (error) {
     console.error('Error al listar impresoras:', error);

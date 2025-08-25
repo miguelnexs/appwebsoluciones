@@ -405,3 +405,12 @@ contextBridge.exposeInMainWorld('pedidosAPI', {
   obtenerEstadisticas: () => ipcRenderer.invoke('pedidos:obtener-estadisticas'),
   buscar: (query) => ipcRenderer.invoke('pedidos:buscar', query),
 });
+
+// APIs de PDF e impresión
+contextBridge.exposeInMainWorld('pdfAPI', {
+  imprimir: (pdfBlob, fileName) => ipcRenderer.invoke('pdf:print', pdfBlob, fileName),
+  guardar: (pdfBlob, fileName) => ipcRenderer.invoke('pdf:save', pdfBlob, fileName),
+  imprimirRecibo: (ventaData) => ipcRenderer.invoke('venta:imprimir-recibo', ventaData),
+  obtenerImpresoraPorDefecto: () => ipcRenderer.invoke('printer:get-default'),
+  listarImpresoras: () => ipcRenderer.invoke('printer:list'),
+});
