@@ -93,6 +93,12 @@ class CategoriaProducto(CategoriaBase):
             models.Index(fields=['usuario', 'nombre']),
             models.Index(fields=['usuario', 'slug']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['usuario', 'slug'],
+                name='unique_categoria_usuario_slug'
+            ),
+        ]
 
     @property
     def cantidad_productos(self):

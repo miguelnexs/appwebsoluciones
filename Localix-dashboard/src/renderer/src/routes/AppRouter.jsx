@@ -19,6 +19,7 @@ import ProductPage from '../pages/ProductPage';
 import ProductFormPage from '../pages/ProductFormPage';
 import VentasPage from '../pages/VentasPage';
 import HelpPage from '../pages/HelpPage';
+import SettingsPage from '../pages/SettingsPage';
 
 // Components
 import ThemeDemo from '../components/ui/ThemeDemo';
@@ -49,6 +50,7 @@ const AppRouter = () => {
             <Route path="orders" element={<OrdersPage />} />
             <Route path="customers" element={<CustomerPage />} />
             <Route path="quick-sales" element={<VentasPage />} />
+            <Route path="settings" element={<SettingsPage />} />
             <Route path="theme-demo" element={<ThemeDemo />} />
             <Route path="scrollbar-demo" element={<ScrollbarDemo />} />
             <Route path="typography-demo" element={<TypographyDemo />} />

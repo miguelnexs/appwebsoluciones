@@ -42,16 +42,16 @@ class VarianteProductoInline(NestedTabularInline):
 
 @admin.register(Producto)
 class ProductoAdmin(NestedModelAdmin):
-    list_display = ('nombre', 'sku', 'categoria', 'precio', 'stock', 'estado', 'imagen_preview', 'colores_count')
-    list_filter = ('estado', 'categoria', 'tipo')
+    list_display = ('nombre', 'sku', 'categoria', 'precio', 'stock', 'estado', 'usuario', 'imagen_preview', 'colores_count')
+    list_filter = ('estado', 'categoria', 'tipo', 'usuario')
     search_fields = ('nombre', 'sku', 'descripcion_corta')
     prepopulated_fields = {'slug': ('nombre',)}
-    readonly_fields = ('stock', 'vendidos', 'imagen_preview', 'margen_ganancia_display', 'fecha_creacion', 'fecha_actualizacion', 'colores_count')
+    readonly_fields = ('stock', 'vendidos', 'imagen_preview', 'margen_ganancia_display', 'fecha_creacion', 'fecha_actualizacion', 'colores_count', 'usuario')
     inlines = [ColorProductoInline, VarianteProductoInline]
     
     fieldsets = (
         (_('Información Básica'), {
-            'fields': ('nombre', 'slug', 'sku', 'categoria', 'tipo', 'estado')
+            'fields': ('nombre', 'slug', 'sku', 'categoria', 'tipo', 'estado', 'usuario')
         }),
         (_('Descripciones'), {
             'fields': ('descripcion_corta', 'descripcion_larga')
@@ -93,6 +93,9 @@ class ProductoAdmin(NestedModelAdmin):
     colores_count.short_description = _("Colores")
     
     def save_model(self, request, obj, form, change):
+        """Asignar automáticamente el usuario actual al crear un producto"""
+        if not change:  # Solo al crear, no al editar
+            obj.usuario = request.user
         super().save_model(request, obj, form, change)
         obj.actualizar_stock_total()
     

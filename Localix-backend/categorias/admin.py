@@ -6,16 +6,22 @@ from productos.models import Producto
 
 @admin.register(CategoriaProducto)
 class CategoriaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'descripcion', 'activa', 'orden', 'mostrar_productos', 'cantidad_productos')
+    list_display = ('nombre', 'descripcion', 'activa', 'orden', 'usuario', 'mostrar_productos', 'cantidad_productos')
     list_editable = ('activa', 'orden')
     search_fields = ('nombre',)
     prepopulated_fields = {'slug': ('nombre',)}
-    readonly_fields = ('mostrar_productos', 'cantidad_productos')
+    readonly_fields = ('mostrar_productos', 'cantidad_productos', 'usuario')
     fieldsets = (
         (None, {
-            'fields': ('nombre', 'slug', 'descripcion', 'activa', 'orden', 'imagen', 'mostrar_productos', 'cantidad_productos')
+            'fields': ('nombre', 'slug', 'descripcion', 'activa', 'orden', 'imagen', 'usuario', 'mostrar_productos', 'cantidad_productos')
         }),
     )
+    
+    def save_model(self, request, obj, form, change):
+        """Asignar automáticamente el usuario actual al crear una categoría"""
+        if not change:  # Solo al crear, no al editar
+            obj.usuario = request.user
+        super().save_model(request, obj, form, change)
 
     def imagen_preview(self, obj):
         if obj.imagen:

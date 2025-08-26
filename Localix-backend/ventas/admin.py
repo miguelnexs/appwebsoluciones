@@ -61,6 +61,18 @@ class ClienteAdmin(admin.ModelAdmin):
         }),
     )
     
+    def has_module_permission(self, request):
+        """Solo permite acceso al módulo de clientes a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_add_permission(self, request):
+        """Solo permite crear clientes a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_view_permission(self, request, obj=None):
+        """Solo permite ver clientes a superusuarios"""
+        return request.user.is_superuser
+    
     def get_queryset(self, request):
         """Filtra clientes por usuario (multi-tenancy)"""
         qs = super().get_queryset(request)
@@ -187,6 +199,14 @@ class VentaAdmin(admin.ModelAdmin):
         )
     get_cliente_display.short_description = 'Cliente'
     
+    def has_module_permission(self, request):
+        """Solo permite acceso al módulo de ventas a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_view_permission(self, request, obj=None):
+        """Solo permite ver ventas a superusuarios"""
+        return request.user.is_superuser
+    
     def get_queryset(self, request):
         """Optimiza las consultas incluyendo el cliente y filtra por usuario"""
         qs = super().get_queryset(request).select_related('cliente')
@@ -260,6 +280,26 @@ class ItemVentaAdmin(admin.ModelAdmin):
             'fields': ('subtotal',)
         }),
     )
+    
+    def has_module_permission(self, request):
+        """Solo permite acceso al módulo de items de venta a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_add_permission(self, request):
+        """Solo permite crear items de venta a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_change_permission(self, request, obj=None):
+        """Solo permite editar items de venta a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_delete_permission(self, request, obj=None):
+        """Solo permite eliminar items de venta a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_view_permission(self, request, obj=None):
+        """Solo permite ver items de venta a superusuarios"""
+        return request.user.is_superuser
     
     def get_queryset(self, request):
         """Optimiza las consultas incluyendo venta, producto y variante"""

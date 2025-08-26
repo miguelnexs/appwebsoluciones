@@ -86,6 +86,33 @@ class ProductoViewSet(viewsets.ModelViewSet):
             )
 
         return queryset.distinct()
+    
+    def get_object(self):
+        """
+        Sobrescribe get_object para asegurar que solo se obtenga el producto del usuario autenticado
+        Esto evita el error cuando hay slugs duplicados entre diferentes usuarios
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Realizar la búsqueda por slug y usuario
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
+        
+        try:
+            obj = queryset.get(**filter_kwargs)
+        except Producto.DoesNotExist:
+            from django.http import Http404
+            raise Http404('No se encontró el producto especificado.')
+        except Producto.MultipleObjectsReturned:
+            # Si hay múltiples objetos, tomar el primero (esto no debería pasar con el filtro por usuario)
+            obj = queryset.filter(**filter_kwargs).first()
+            if not obj:
+                from django.http import Http404
+                raise Http404('No se encontró el producto especificado.')
+        
+        # Verificar permisos del objeto
+        self.check_object_permissions(self.request, obj)
+        return obj
 
     @action(detail=True, methods=['POST'], parser_classes=[MultiPartParser])
     def upload_imagen_principal(self, request, slug=None):

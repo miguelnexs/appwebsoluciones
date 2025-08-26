@@ -269,6 +269,14 @@ class Producto(models.Model):
                 models.Q(precio_comparacion__gt=models.F('precio')),
                 name="precio_comparacion_mayor"
             ),
+            models.UniqueConstraint(
+                fields=['usuario', 'sku'],
+                name='unique_producto_usuario_sku'
+            ),
+            models.UniqueConstraint(
+                fields=['usuario', 'slug'],
+                name='unique_producto_usuario_slug'
+            ),
         ]
 
     def __str__(self):

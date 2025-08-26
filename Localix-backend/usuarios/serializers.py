@@ -55,6 +55,10 @@ class UsuarioCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('password_confirm')
         user = Usuario.objects.create_user(**validated_data)
+        # Asegurar que ambos campos de activación estén establecidos
+        user.is_active = True
+        user.es_activo = True
+        user.save()
         return user
 
 class UsuarioUpdateSerializer(serializers.ModelSerializer):

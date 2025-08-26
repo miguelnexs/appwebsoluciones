@@ -7,6 +7,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken
 from django.contrib.auth import logout
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
+from Backend.permissions import AdminOnlyPermission
 from .models import Usuario
 from .serializers import (
     LoginSerializer, UsuarioSerializer, UsuarioCreateSerializer,
@@ -75,7 +76,7 @@ class LogoutView(APIView):
 class UsuarioCreateView(generics.CreateAPIView):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioCreateSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [AdminOnlyPermission]
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -96,7 +97,7 @@ class UsuarioCreateView(generics.CreateAPIView):
 class UsuarioListView(generics.ListAPIView):
     queryset = Usuario.objects.all().order_by('-fecha_creacion')
     serializer_class = UsuarioSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [AdminOnlyPermission]
     
     def get_queryset(self):
         queryset = Usuario.objects.all().order_by('-fecha_creacion')
@@ -116,8 +117,9 @@ class UsuarioDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_permissions(self):
+        """Aplica permisos específicos según el método HTTP"""
         if self.request.method in ['PUT', 'PATCH', 'DELETE']:
-            return [permissions.IsAdminUser()]
+            return [AdminOnlyPermission()]
         return [permissions.IsAuthenticated()]
     
     def retrieve(self, request, *args, **kwargs):
@@ -207,7 +209,7 @@ class ProfileView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAdminUser])
+@permission_classes([AdminOnlyPermission])
 def toggle_user_status(request, user_id):
     """Activar/desactivar usuario"""
     user = get_object_or_404(Usuario, id=user_id)

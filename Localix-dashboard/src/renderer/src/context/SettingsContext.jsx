@@ -104,6 +104,13 @@ const defaultSettings = {
     web: 'www.localix.com',
     ciudad: 'Pereira',
     pais: 'Colombia'
+  },
+  // Configuración de colores para PDFs
+  pdfColors: {
+    primary: '#e91e63', // Rosa
+    secondary: '#f8bbd9', // Rosa claro
+    accent: '#2196f3', // Azul
+    neutral: '#6b7280' // Gris
   }
 };
 
@@ -180,6 +187,15 @@ export const SettingsProvider = ({ children }) => {
       ...prev,
       companyData: { ...prev.companyData, [field]: value }
     })),
+    // Funciones para configuración de colores PDF
+    updatePdfColors: (colors) => setSettings(prev => ({
+      ...prev,
+      pdfColors: { ...prev.pdfColors, ...colors }
+    })),
+    updatePdfColor: (colorType, value) => setSettings(prev => ({
+      ...prev,
+      pdfColors: { ...prev.pdfColors, [colorType]: value }
+    })),
     resetSettings: () => setSettings(defaultSettings),
     isLoading
   }), [settings, isLoading]);
@@ -241,4 +257,4 @@ export const SettingsProvider = ({ children }) => {
       {children}
     </SettingsContext.Provider>
   );
-}; 
+};

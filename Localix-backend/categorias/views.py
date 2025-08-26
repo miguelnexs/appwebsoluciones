@@ -33,6 +33,33 @@ class CategoriaViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             return CategoriaProducto.objects.filter(usuario=self.request.user)
         return CategoriaProducto.objects.none()
+    
+    def get_object(self):
+        """
+        Sobrescribe get_object para asegurar que solo se obtenga la categoría del usuario autenticado
+        Esto evita el error cuando hay slugs duplicados entre diferentes usuarios
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Realizar la búsqueda por slug y usuario
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
+        
+        try:
+            obj = queryset.get(**filter_kwargs)
+        except CategoriaProducto.DoesNotExist:
+            from django.http import Http404
+            raise Http404('No se encontró la categoría especificada.')
+        except CategoriaProducto.MultipleObjectsReturned:
+            # Si hay múltiples objetos, tomar el primero (esto no debería pasar con el filtro por usuario)
+            obj = queryset.filter(**filter_kwargs).first()
+            if not obj:
+                from django.http import Http404
+                raise Http404('No se encontró la categoría especificada.')
+        
+        # Verificar permisos del objeto
+        self.check_object_permissions(self.request, obj)
+        return obj
 
     def create(self, request, *args, **kwargs):
         """Crear categoría con mejor manejo de errores"""

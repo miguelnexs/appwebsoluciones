@@ -41,6 +41,26 @@ class UsuarioAdmin(UserAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related()
+    
+    def has_module_permission(self, request):
+        """Solo permite acceso al módulo de usuarios a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_add_permission(self, request):
+        """Solo permite crear usuarios a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_change_permission(self, request, obj=None):
+        """Solo permite editar usuarios a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_delete_permission(self, request, obj=None):
+        """Solo permite eliminar usuarios a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_view_permission(self, request, obj=None):
+        """Solo permite ver usuarios a superusuarios"""
+        return request.user.is_superuser
 
 @admin.register(UserUsagePlan)
 class UserUsagePlanAdmin(admin.ModelAdmin):
@@ -65,6 +85,26 @@ class UserUsagePlanAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+    def has_module_permission(self, request):
+        """Solo permite acceso al módulo de planes de uso a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_add_permission(self, request):
+        """Solo permite crear planes de uso a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_change_permission(self, request, obj=None):
+        """Solo permite editar planes de uso a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_delete_permission(self, request, obj=None):
+        """Solo permite eliminar planes de uso a superusuarios"""
+        return request.user.is_superuser
+    
+    def has_view_permission(self, request, obj=None):
+        """Solo permite ver planes de uso a superusuarios"""
+        return request.user.is_superuser
     
     def days_remaining_display(self, obj):
         """Muestra los días restantes con colores"""

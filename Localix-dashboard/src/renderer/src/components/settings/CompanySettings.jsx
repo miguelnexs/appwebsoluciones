@@ -11,7 +11,8 @@ import {
   Download,
   Upload,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Palette
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { 
@@ -23,16 +24,37 @@ import {
 } from '../../utils/companyConfig';
 
 const CompanySettings = () => {
-  const { settings, updateCompanyData: updateSettingsCompanyData } = useSettings();
+  const { settings, updateCompanyData: updateSettingsCompanyData, updatePdfColor } = useSettings();
   const [formData, setFormData] = useState(getCompanyData());
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [validationErrors, setValidationErrors] = useState({});
+  const [pdfColors, setPdfColors] = useState(settings.pdfColors || {
+    primary: '#e91e63',
+    secondary: '#f8bbd9', 
+    accent: '#2196f3',
+    neutral: '#6b7280'
+  });
 
   // Actualizar formData cuando cambien los settings
   useEffect(() => {
     setFormData(getCompanyData());
   }, [settings.companyData]);
+
+  // Actualizar colores PDF cuando cambien los settings
+  useEffect(() => {
+    if (settings.pdfColors) {
+      setPdfColors(settings.pdfColors);
+    }
+  }, [settings.pdfColors]);
+
+  const handleColorChange = (colorType, value) => {
+    setPdfColors(prev => ({
+      ...prev,
+      [colorType]: value
+    }));
+    updatePdfColor(colorType, value);
+  };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -397,6 +419,126 @@ const CompanySettings = () => {
                 {getFieldError('direccion')}
               </p>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Colores para PDF */}
+      <div className="bg-theme-secondary rounded-lg border border-theme-border p-6">
+        <h4 className="text-lg font-semibold text-theme-text mb-4 flex items-center gap-2">
+          <Palette size={20} />
+          Colores para PDF
+        </h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-theme-text">
+              Color Principal (Rosa)
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={pdfColors.primary}
+                onChange={(e) => handleColorChange('primary', e.target.value)}
+                className="w-12 h-10 rounded-lg border border-theme-border cursor-pointer"
+              />
+              <input
+                type="text"
+                value={pdfColors.primary}
+                onChange={(e) => handleColorChange('primary', e.target.value)}
+                placeholder="#e91e63"
+                className="flex-1 px-3 py-2 bg-theme-surface border border-theme-border rounded-lg text-theme-text placeholder-theme-textSecondary focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-theme-text">
+              Color Secundario (Rosa Claro)
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={pdfColors.secondary}
+                onChange={(e) => handleColorChange('secondary', e.target.value)}
+                className="w-12 h-10 rounded-lg border border-theme-border cursor-pointer"
+              />
+              <input
+                type="text"
+                value={pdfColors.secondary}
+                onChange={(e) => handleColorChange('secondary', e.target.value)}
+                placeholder="#f8bbd9"
+                className="flex-1 px-3 py-2 bg-theme-surface border border-theme-border rounded-lg text-theme-text placeholder-theme-textSecondary focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-theme-text">
+              Color de Acento (Azul)
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={pdfColors.accent}
+                onChange={(e) => handleColorChange('accent', e.target.value)}
+                className="w-12 h-10 rounded-lg border border-theme-border cursor-pointer"
+              />
+              <input
+                type="text"
+                value={pdfColors.accent}
+                onChange={(e) => handleColorChange('accent', e.target.value)}
+                placeholder="#2196f3"
+                className="flex-1 px-3 py-2 bg-theme-surface border border-theme-border rounded-lg text-theme-text placeholder-theme-textSecondary focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-theme-text">
+              Color Neutral (Gris)
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={pdfColors.neutral}
+                onChange={(e) => handleColorChange('neutral', e.target.value)}
+                className="w-12 h-10 rounded-lg border border-theme-border cursor-pointer"
+              />
+              <input
+                type="text"
+                value={pdfColors.neutral}
+                onChange={(e) => handleColorChange('neutral', e.target.value)}
+                placeholder="#6b7280"
+                className="flex-1 px-3 py-2 bg-theme-surface border border-theme-border rounded-lg text-theme-text placeholder-theme-textSecondary focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4 p-4 bg-theme-surface rounded-lg border border-theme-border">
+          <h5 className="text-sm font-medium text-theme-text mb-2">Vista previa de colores</h5>
+          <div className="flex gap-3">
+            <div 
+              className="w-8 h-8 rounded-lg border border-theme-border" 
+              style={{ backgroundColor: pdfColors.primary }}
+              title="Color Principal"
+            ></div>
+            <div 
+              className="w-8 h-8 rounded-lg border border-theme-border" 
+              style={{ backgroundColor: pdfColors.secondary }}
+              title="Color Secundario"
+            ></div>
+            <div 
+              className="w-8 h-8 rounded-lg border border-theme-border" 
+              style={{ backgroundColor: pdfColors.accent }}
+              title="Color de Acento"
+            ></div>
+            <div 
+              className="w-8 h-8 rounded-lg border border-theme-border" 
+              style={{ backgroundColor: pdfColors.neutral }}
+              title="Color Neutral"
+            ></div>
           </div>
         </div>
       </div>

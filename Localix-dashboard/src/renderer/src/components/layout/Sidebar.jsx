@@ -27,7 +27,7 @@ import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useOrderNotifications } from '../../context/OrderNotificationsContext';
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
-import SettingsPanel from './SettingsPanel';
+
 import ThemeIndicator from './ThemeIndicator';
 import UserProfileModal from './UserProfileModal';
 import localixLogo from '../../img/localix-logo.png';
@@ -35,7 +35,7 @@ import localixLogo from '../../img/localix-logo.png';
 const Sidebar = ({ collapsed = false, onToggle }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
+
   const [userProfileModalOpen, setUserProfileModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -151,11 +151,9 @@ const Sidebar = ({ collapsed = false, onToggle }) => {
       title: 'Sistema',
       items: [
         { 
-          path: '#', 
+          path: '/settings', 
           icon: Settings, 
-          label: 'Configuración',
-          onClick: () => setSettingsPanelOpen(true),
-          isButton: true
+          label: 'Configuración'
         },
         { path: '/help', icon: HelpCircle, label: 'Ayuda' }
       ]
@@ -457,11 +455,7 @@ const Sidebar = ({ collapsed = false, onToggle }) => {
           {renderNavContent()}
         </div>
 
-        {/* Panel de configuración */}
-        <SettingsPanel 
-          isOpen={settingsPanelOpen} 
-          onClose={() => setSettingsPanelOpen(false)} 
-        />
+
 
         {/* Modal de perfil de usuario */}
         <UserProfileModal
@@ -486,11 +480,7 @@ const Sidebar = ({ collapsed = false, onToggle }) => {
         {renderNavContent()}
       </div>
 
-      {/* Panel de configuración */}
-      <SettingsPanel 
-        isOpen={settingsPanelOpen} 
-        onClose={() => setSettingsPanelOpen(false)} 
-      />
+
 
       {/* Modal de perfil de usuario */}
       <UserProfileModal
