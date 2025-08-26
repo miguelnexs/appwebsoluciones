@@ -248,6 +248,7 @@ cython_debug/
 # Electron
 out/
 dist/
+dist-electron/
 release/
 
 # OS generated files
