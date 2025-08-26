@@ -232,7 +232,7 @@ class VentaViewSet(viewsets.ModelViewSet):
                 venta_data = {
                     'cliente': cliente.id if cliente else None,
                     'cliente_nombre': cliente_nombre,
-                    'porcentaje_descuento': Decimal(str(data.get('porcentaje_descuento', 0))),
+                    'porcentaje_descuento': int(data.get('porcentaje_descuento', 0)),
                     'metodo_pago': data.get('metodo_pago', 'efectivo'),
                     'observaciones': data.get('observaciones', ''),
                     'vendedor': data.get('vendedor', 'Sistema'),
@@ -326,7 +326,7 @@ class VentaViewSet(viewsets.ModelViewSet):
                         variante=variante,
                         color=color,
                         cantidad=item_data['cantidad'],
-                        descuento_item=Decimal(str(item_data.get('descuento_item', 0)))
+                        descuento_item=int(item_data.get('descuento_item', 0))
                     )
 
                     # ✅ El descuento de stock ahora se maneja automáticamente en el modelo ItemVenta
@@ -415,6 +415,90 @@ class VentaViewSet(viewsets.ModelViewSet):
                 'total_ingresos': total_ingresos
             }
         })
+    
+    @action(detail=False, methods=['get'])
+    def estadisticas(self, request):
+        """Obtener estadísticas detalladas de ventas del usuario autenticado"""
+        from django.db.models import Sum, Count, Avg
+        from datetime import datetime, timedelta
+        
+        # Usar get_queryset() que ya filtra por usuario
+        user_ventas = self.get_queryset()
+        
+        # Estadísticas generales
+        total_ventas = user_ventas.count()
+        total_ingresos = user_ventas.aggregate(total=Sum('total'))['total'] or 0
+        promedio_venta = user_ventas.aggregate(promedio=Avg('total'))['promedio'] or 0
+        
+        # Ventas del mes actual
+        hoy = timezone.now()
+        inicio_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        ventas_mes = user_ventas.filter(fecha_venta__gte=inicio_mes)
+        total_ventas_mes = ventas_mes.count()
+        ingresos_mes = ventas_mes.aggregate(total=Sum('total'))['total'] or 0
+        
+        # Ventas de la semana actual
+        inicio_semana = hoy - timedelta(days=hoy.weekday())
+        inicio_semana = inicio_semana.replace(hour=0, minute=0, second=0, microsecond=0)
+        ventas_semana = user_ventas.filter(fecha_venta__gte=inicio_semana)
+        total_ventas_semana = ventas_semana.count()
+        ingresos_semana = ventas_semana.aggregate(total=Sum('total'))['total'] or 0
+        
+        # Ventas de hoy
+        inicio_dia = hoy.replace(hour=0, minute=0, second=0, microsecond=0)
+        ventas_hoy = user_ventas.filter(fecha_venta__gte=inicio_dia)
+        total_ventas_hoy = ventas_hoy.count()
+        ingresos_hoy = ventas_hoy.aggregate(total=Sum('total'))['total'] or 0
+        
+        # Top productos más vendidos
+        from django.db.models import F
+        top_productos = ItemVenta.objects.filter(
+            venta__usuario=request.user
+        ).values(
+            'producto__nombre'
+        ).annotate(
+            total_vendido=Sum('cantidad')
+        ).order_by('-total_vendido')[:5]
+        
+        # Calcular ingresos manualmente para cada producto
+        top_productos_list = list(top_productos)
+        for producto in top_productos_list:
+            items = ItemVenta.objects.filter(
+                venta__usuario=request.user,
+                producto__nombre=producto['producto__nombre']
+            ).select_related('producto', 'variante')
+            
+            ingresos_total = 0
+            for item in items_completados:
+                precio_base = item.producto.precio if item.producto else 0
+                precio_extra = item.variante.precio_extra if item.variante else 0
+                precio_unitario = precio_base + precio_extra
+                ingresos_total += precio_unitario * item.cantidad
+            
+            producto['ingresos_producto'] = float(ingresos_total)
+        
+        return Response({
+            'estadisticas_generales': {
+                'total_ventas': total_ventas,
+                'total_ingresos': float(total_ingresos),
+                'promedio_venta': float(promedio_venta)
+            },
+            'periodo_actual': {
+                'mes': {
+                    'ventas': total_ventas_mes,
+                    'ingresos': float(ingresos_mes)
+                },
+                'semana': {
+                    'ventas': total_ventas_semana,
+                    'ingresos': float(ingresos_semana)
+                },
+                'hoy': {
+                    'ventas': total_ventas_hoy,
+                    'ingresos': float(ingresos_hoy)
+                }
+            },
+            'top_productos': list(top_productos)
+        })
 
 
 class ReservaViewSet(viewsets.ModelViewSet):
@@ -463,7 +547,7 @@ class ReservaViewSet(viewsets.ModelViewSet):
 					cantidad=item['cantidad'],
 					descuento_item=item.get('descuento_item', '0.00')
 				)
-			monto_deposito = Decimal(str(serializer_in.validated_data.get('monto_deposito', '0.00')))
+			monto_deposito = int(serializer_in.validated_data.get('monto_deposito', 0))
 			if monto_deposito and monto_deposito > 0:
 				PagoReserva.objects.create(reserva=reserva, monto=monto_deposito, metodo='efectivo', usuario=request.user)
 			reserva.refresh_from_db()

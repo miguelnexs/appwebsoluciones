@@ -259,10 +259,7 @@ export const PreloadProvider = ({ children }) => {
     try {
       const startTime = Date.now();
       
-      const result = await window.electronAPI.ventas.obtenerEstadisticas({
-        signal: controller.signal,
-        priority
-      });
+      const result = await window.ventasAPI.obtenerEstadisticas();
 
       const loadTime = Date.now() - startTime;
       console.log(`🚀 Dashboard pre-cargado en ${loadTime}ms`);

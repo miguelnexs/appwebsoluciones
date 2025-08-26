@@ -206,7 +206,7 @@ export const generarTicketVenta = async (venta, ticketSize = '80mm', autoPrint =
       doc.text(lines, margin + 10, yPosition);
       
       // Total del item
-      const totalText = `$${itemTotal.toFixed(2)}`;
+      const totalText = `$${(itemTotal / 100).toFixed(2)}`;
       const totalWidth = doc.getTextWidth(totalText);
       doc.text(totalText, maxWidth - margin - totalWidth, yPosition);
       
@@ -229,16 +229,16 @@ export const generarTicketVenta = async (venta, ticketSize = '80mm', autoPrint =
     // Totales
     yPosition += 2;
     
-    yPosition = addJustifiedText('Subtotal:', `$${subtotal.toFixed(2)}`, yPosition);
+    yPosition = addJustifiedText('Subtotal:', `$${(subtotal / 100).toFixed(2)}`, yPosition);
     
     // Descuento si existe
     if (venta.descuento && venta.descuento > 0) {
-      yPosition = addJustifiedText('Descuento:', `-$${venta.descuento.toFixed(2)}`, yPosition);
+      yPosition = addJustifiedText('Descuento:', `-$${(venta.descuento / 100).toFixed(2)}`, yPosition);
     }
     
     // Envío si existe
     if (venta.precio_envio && venta.precio_envio > 0) {
-      yPosition = addJustifiedText('Envío:', `$${venta.precio_envio.toFixed(2)}`, yPosition);
+      yPosition = addJustifiedText('Envío:', `$${(venta.precio_envio / 100).toFixed(2)}`, yPosition);
     }
     
     yPosition = addSeparatorLine(yPosition + 1);
@@ -246,7 +246,7 @@ export const generarTicketVenta = async (venta, ticketSize = '80mm', autoPrint =
     // Total final
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(fontSize + 1);
-    yPosition = addJustifiedText('TOTAL:', `$${(venta.total || subtotal).toFixed(2)}`, yPosition + 1);
+    yPosition = addJustifiedText('TOTAL:', `$${((venta.total || subtotal) / 100).toFixed(2)}`, yPosition + 1);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(fontSize);
 
@@ -411,7 +411,7 @@ export const generarTicketPedido = async (pedido, ticketSize = '80mm', autoPrint
       const lines = doc.splitTextToSize(nombreProducto, maxProductNameWidth);
       doc.text(lines, margin + 10, yPosition);
       
-      const totalText = `$${itemTotal.toFixed(2)}`;
+      const totalText = `$${(itemTotal / 100).toFixed(2)}`;
       const totalWidth = doc.getTextWidth(totalText);
       doc.text(totalText, maxWidth - margin - totalWidth, yPosition);
       
@@ -424,7 +424,7 @@ export const generarTicketPedido = async (pedido, ticketSize = '80mm', autoPrint
     // Total
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(fontSize + 1);
-    yPosition = addJustifiedText('TOTAL:', `$${(pedido.total || subtotal).toFixed(2)}`, yPosition);
+    yPosition = addJustifiedText('TOTAL:', `$${((pedido.total || subtotal) / 100).toFixed(2)}`, yPosition);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(fontSize);
 

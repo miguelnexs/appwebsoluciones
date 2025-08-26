@@ -150,33 +150,32 @@ class Venta(models.Model):
     )
     
     # Totales
-    subtotal = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal('0.00'),
-        verbose_name=_("Subtotal")
+    subtotal = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name=_("Subtotal"),
+        help_text=_("Subtotal en centavos")
     )
     
-    porcentaje_descuento = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=Decimal('0.00'),
+    porcentaje_descuento = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
         verbose_name=_("Porcentaje de descuento"),
-        help_text=_("Porcentaje de descuento aplicado a la venta (0-100)")
+        help_text=_("Porcentaje de descuento aplicado a la venta (0-10000 para 0-100%)")
     )
     
-    descuento = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal('0.00'),
-        verbose_name=_("Descuento")
+    descuento = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name=_("Descuento"),
+        help_text=_("Descuento en centavos")
     )
     
-    total = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal('0.00'),
-        verbose_name=_("Total")
+    total = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name=_("Total"),
+        help_text=_("Total en centavos")
     )
     
     # Estado y método de pago
@@ -221,13 +220,13 @@ class Venta(models.Model):
         """Calcula los totales de la venta"""
         items_queryset = self.items.all()
         subtotal_sum = sum(float(item.subtotal) for item in items_queryset)
-        self.subtotal = Decimal(str(subtotal_sum))
+        self.subtotal = subtotal_sum
         
         # Calcular descuento basado en el porcentaje
         if self.porcentaje_descuento and self.porcentaje_descuento > 0:
-            self.descuento = (self.subtotal * self.porcentaje_descuento) / Decimal('100.00')
+            self.descuento = (self.subtotal * self.porcentaje_descuento) // 100
         else:
-            self.descuento = Decimal('0.00')
+            self.descuento = 0
         
         self.total = self.subtotal - self.descuento
         self.save(update_fields=['subtotal', 'descuento', 'total'])
@@ -307,32 +306,33 @@ class ItemVenta(models.Model):
         verbose_name=_("Cantidad")
     )
     
-    descuento_item = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal('0.00'),
-        verbose_name=_("Descuento del item")
+    descuento_item = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name=_("Descuento del item"),
+        help_text=_("Descuento en centavos")
     )
     
-    subtotal = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        verbose_name=_("Subtotal del item")
+    subtotal = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        verbose_name=_("Subtotal del item"),
+        help_text=_("Subtotal en centavos")
     )
 
     @property
     def precio_unitario(self):
-        base = Decimal(str(self.producto.precio)) if self.producto else Decimal('0.00')
+        """Precio unitario en centavos"""
+        base = self.producto.precio if self.producto else 0
         if self.variante:
-            return base + Decimal(str(self.variante.precio_extra))
+            return base + self.variante.precio_extra
         return base
 
-    def calcular_subtotal(self) -> Decimal:
-        """Calcula el subtotal del item"""
+    def calcular_subtotal(self) -> int:
+        """Calcula el subtotal del item en centavos"""
         precio_unitario = self.precio_unitario
-        cantidad = Decimal(str(self.cantidad or 0))
+        cantidad = self.cantidad or 0
         precio_total = precio_unitario * cantidad
-        self.subtotal = precio_total - Decimal(str(self.descuento_item or 0))
+        self.subtotal = precio_total - (self.descuento_item or 0)
         return self.subtotal
 
     def save(self, *args, **kwargs) -> None:
@@ -412,15 +412,15 @@ class Reserva(models.Model):
 	fecha_creacion = models.DateTimeField(auto_now_add=True)
 	fecha_vencimiento = models.DateTimeField(null=True, blank=True)
 	estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='activa')
-	monto_total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
-	monto_deposito = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
-	monto_pendiente = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+	monto_total = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+	monto_deposito = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+	monto_pendiente = models.IntegerField(default=0, validators=[MinValueValidator(0)])
 	notas = models.TextField(blank=True, null=True)
 
 	def recalcular_montos(self):
-		subtotal = sum((item.subtotal for item in self.items.all()), Decimal('0.00'))
+		subtotal = sum(item.subtotal for item in self.items.all())
 		self.monto_total = subtotal
-		self.monto_pendiente = max(Decimal('0.00'), subtotal - self.monto_deposito)
+		self.monto_pendiente = max(0, subtotal - self.monto_deposito)
 		self.save(update_fields=['monto_total', 'monto_pendiente'])
 
 	def __str__(self) -> str:
@@ -432,15 +432,17 @@ class ItemReserva(models.Model):
 	variante = models.ForeignKey(VarianteProducto, on_delete=models.SET_NULL, null=True, blank=True)
 	color = models.ForeignKey(ColorProducto, on_delete=models.SET_NULL, null=True, blank=True)
 	cantidad = models.PositiveIntegerField(validators=[MinValueValidator(1)])
-	descuento_item = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
-	subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+	descuento_item = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+	subtotal = models.IntegerField(default=0, validators=[MinValueValidator(0)])
 
-	def calcular_subtotal(self) -> Decimal:
-		precio_unitario = Decimal(str(self.producto.precio))
+	def calcular_subtotal(self) -> int:
+		"""Calcula el subtotal del item de reserva en centavos"""
+		precio_unitario = self.producto.precio
 		if self.variante:
-			precio_unitario += Decimal(str(self.variante.precio_extra))
-		precio_total = precio_unitario * Decimal(str(self.cantidad))
-		self.subtotal = precio_total - Decimal(str(self.descuento_item or 0))
+			precio_unitario += self.variante.precio_extra
+		cantidad = self.cantidad or 0
+		precio_total = precio_unitario * cantidad
+		self.subtotal = precio_total - (self.descuento_item or 0)
 		return self.subtotal
 
 	def save(self, *args, **kwargs):
@@ -468,7 +470,7 @@ class ItemReserva(models.Model):
 
 class PagoReserva(models.Model):
 	reserva = models.ForeignKey(Reserva, on_delete=models.CASCADE, related_name='pagos')
-	monto = models.DecimalField(max_digits=12, decimal_places=2)
+	monto = models.IntegerField(validators=[MinValueValidator(0)])
 	fecha = models.DateTimeField(auto_now_add=True)
 	metodo = models.CharField(max_length=20, default='efectivo')
 	usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -476,5 +478,5 @@ class PagoReserva(models.Model):
 	def save(self, *args, **kwargs):
 		super().save(*args, **kwargs)
 		# Actualizar montos en reserva
-		self.reserva.monto_deposito = (self.reserva.monto_deposito or Decimal('0.00')) + self.monto
+		self.reserva.monto_deposito = (self.reserva.monto_deposito or 0) + self.monto
 		self.reserva.recalcular_montos()

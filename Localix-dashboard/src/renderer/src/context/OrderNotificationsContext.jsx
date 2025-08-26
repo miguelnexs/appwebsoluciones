@@ -54,7 +54,7 @@ export const OrderNotificationsProvider = ({ children }) => {
       id: orderData.id || Date.now(),
       numero_venta: orderData.numero_venta || orderData.numero_pedido,
       numero_pedido: orderData.numero_pedido || orderData.numero_venta,
-      total: parseFloat(orderData.total) || 0,
+      total: Number(orderData.total) || 0,
       cliente: orderData.cliente_nombre || orderData.cliente?.nombre || 'Cliente anónimo',
       timestamp: new Date().toISOString(),
       items_count: orderData.items?.length || 0,
@@ -135,9 +135,9 @@ export const OrderNotificationsProvider = ({ children }) => {
     return {
       count: newOrders.length,
       recentCount: recentOrders.length,
-      totalAmount: newOrders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0),
+      totalAmount: newOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0),
       averageAmount: newOrders.length > 0 ? 
-        (newOrders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0) / newOrders.length) : 0,
+        (newOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0) / newOrders.length) : 0,
       latestOrder: newOrders[0] || null,
       oldestOrder: newOrders[newOrders.length - 1] || null
     };
@@ -195,4 +195,4 @@ export const OrderNotificationsProvider = ({ children }) => {
   );
 };
 
-export default OrderNotificationsContext; 
+export default OrderNotificationsContext;

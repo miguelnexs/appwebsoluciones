@@ -520,6 +520,30 @@ const ProductList = () => {
     fetchProducts(pagination.page);
   }, [fetchProducts, pagination.page]);
 
+  // Función para reintentar edición de producto con slug inválido
+  const retryEditProduct = useCallback(async (productId) => {
+    try {
+      console.log('🔄 Reintentando edición de producto con ID:', productId);
+      
+      // Obtener el producto actualizado por ID desde el backend
+      const result = await window.electronAPI.productos.obtenerPorId(productId);
+      
+      if (result && result.product && result.product.slug) {
+        const validSlug = result.product.slug;
+        console.log('✅ Slug válido obtenido:', validSlug);
+        
+        // Navegar a la página de edición con el slug válido
+        navigate(`/product/edit/${validSlug}`);
+        toast.success('Producto encontrado', 'Redirigiendo a la página de edición...');
+      } else {
+        throw new Error('No se pudo obtener un slug válido para el producto');
+      }
+    } catch (error) {
+      console.error('❌ Error reintentando edición:', error);
+      toast.error('Error de recuperación', 'No se pudo recuperar el identificador del producto. Intenta recargar la página.');
+    }
+  }, [navigate, toast]);
+
   // Función para ordenar
   const requestSort = (key) => {
     let direction = 'asc';

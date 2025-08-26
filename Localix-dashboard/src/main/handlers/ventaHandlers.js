@@ -202,6 +202,35 @@ ipcMain.handle('ventas:obtener-resumen', async () => {
   }
 });
 
+// Obtener estadísticas de ventas
+ipcMain.handle('ventas:obtener-estadisticas', async () => {
+  try {
+    // Verificar caché
+    const cacheKey = 'ventas-estadisticas';
+    const cachedData = dashboardCache.get(cacheKey);
+    if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
+      return cachedData.data;
+    }
+
+    const config = await createAuthenticatedConfig();
+    const response = await axios.get(`${API_BASE_URL}/api/ventas/ventas/estadisticas/`, config);
+    const result = { success: true, data: response.data };
+    
+    // Guardar en caché
+    dashboardCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
+    
+    return result;
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error.response?.data?.error || 'Error al obtener estadísticas de ventas' 
+    };
+  }
+});
+
 // ✅ Handlers de Reservas
 ipcMain.handle('reservas:crear', async (event, data) => {
   try {

@@ -112,7 +112,7 @@ const ProductInfoTab = ({ product, loading = false }) => {
                   <div>
                     <span className="text-theme-textSecondary">{translations.es.price}</span>
                     <p className="font-medium">
-                      ${safeProduct.precio?.toLocaleString('es-CO') || '0'}
+                      ${((safeProduct.precio || 0) / 100).toLocaleString('es-CO')}
                     </p>
                   </div>
 
@@ -120,7 +120,7 @@ const ProductInfoTab = ({ product, loading = false }) => {
                     <span className="text-theme-textSecondary">{translations.es.comparePrice}</span>
                     <p className="text-theme-textSecondary">
                       {safeProduct.precio_comparacion
-                        ? `$${safeProduct.precio_comparacion}`
+                        ? `$${(safeProduct.precio_comparacion / 100).toLocaleString('es-CO')}`
                         : '-'}
                     </p>
                   </div>

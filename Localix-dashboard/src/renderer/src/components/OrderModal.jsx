@@ -46,7 +46,7 @@ const OrderModal = ({ isOpen, onClose, order }) => {
   const calculateTotal = () => {
     return selectedProducts.reduce((total, item) => {
       return total + (item.price * item.quantity);
-    }, 0).toFixed(2);
+    }, 0) / 100).toFixed(2);
   };
 
   if (!isOpen) return null;
@@ -128,7 +128,7 @@ const OrderModal = ({ isOpen, onClose, order }) => {
                   <div key={product.id} className="flex justify-between items-center p-3 border-b hover:bg-theme-background">
                     <div>
                       <p className="font-medium">{product.name}</p>
-                      <p className="text-sm text-theme-textSecondary">${product.price.toFixed(2)} | Stock: {product.stock}</p>
+                      <p className="text-sm text-theme-textSecondary">${(product.price / 100).toFixed(2)} | Stock: {product.stock}</p>
                     </div>
                     <button
                       onClick={() => handleAddProduct(product)}
@@ -154,7 +154,7 @@ const OrderModal = ({ isOpen, onClose, order }) => {
                   <div key={item.id} className="flex justify-between items-center p-3 border-b">
                     <div className="flex-1">
                       <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-theme-textSecondary">${item.price.toFixed(2)} c/u</p>
+                      <p className="text-sm text-theme-textSecondary">${(item.price / 100).toFixed(2)} c/u</p>
                     </div>
                     
                     <div className="flex items-center">
@@ -173,7 +173,7 @@ const OrderModal = ({ isOpen, onClose, order }) => {
                       </button>
                       
                       <span className="mx-4 font-medium w-20 text-right">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ${((item.price * item.quantity) / 100).toFixed(2)}
                       </span>
                       
                       <button

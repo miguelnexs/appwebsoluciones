@@ -255,15 +255,15 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
     const color = item.color?.nombre || '';
     const cantidad = item.cantidad || 0;
     const precio = parseFloat(item.precio_unitario || 0);
-    const total = parseFloat(item.subtotal || 0);
+      const total = parseFloat(item.subtotal || 0);
     const nombreCompleto = color ? `${nombre} (${color})` : nombre;
     
     return `
       <tr>
         <td class="producto-nombre">${nombreCompleto}</td>
         <td class="cantidad">${cantidad}</td>
-        <td class="precio">$${precio.toFixed(2)}</td>
-        <td class="total">$${total.toFixed(2)}</td>
+        <td class="precio">$${(precio / 100).toFixed(2)}</td>
+              <td class="total">$${(total / 100).toFixed(2)}</td>
       </tr>
     `;
   }).join('') || '';
@@ -698,26 +698,26 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
                 <div class="totales-grid">
                     <div class="total-item">
                         <span class="total-label">Subtotal:</span>
-                        <span class="total-valor">$${subtotal.toFixed(2)}</span>
+                        <span class="total-valor">$${(subtotal / 100).toFixed(2)}</span>
                     </div>
                     
                     ${venta.porcentaje_descuento && venta.porcentaje_descuento > 0 ? `
                     <div class="total-item">
                         <span class="total-label">Descuento (${venta.porcentaje_descuento}%):</span>
-                        <span class="total-valor">-$${((subtotal * venta.porcentaje_descuento) / 100).toFixed(2)}</span>
+                        <span class="total-valor">-$${(((subtotal * venta.porcentaje_descuento) / 100) / 100).toFixed(2)}</span>
                     </div>
                     ` : ''}
                     
                     ${venta.precio_envio && venta.precio_envio > 0 ? `
                     <div class="total-item">
                         <span class="total-label">Envío:</span>
-                        <span class="total-valor">$${venta.precio_envio.toFixed(2)}</span>
+                        <span class="total-valor">$${(venta.precio_envio / 100).toFixed(2)}</span>
                     </div>
                     ` : ''}
                     
                     <div class="total-item total-final">
                         <span class="total-label">TOTAL:</span>
-                        <span class="total-valor">$${venta.total.toFixed(2)}</span>
+                        <span class="total-valor">$${(venta.total / 100).toFixed(2)}</span>
                     </div>
                 </div>
             </div>

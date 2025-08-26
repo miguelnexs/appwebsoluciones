@@ -3,9 +3,7 @@ from productos.models import VarianteProducto
 from decimal import Decimal
 
 class VarianteProductoSerializer(serializers.ModelSerializer):
-    precio_final = serializers.DecimalField(
-        max_digits=12, 
-        decimal_places=2,
+    precio_final = serializers.IntegerField(
         read_only=True
     )
     sku = serializers.CharField(

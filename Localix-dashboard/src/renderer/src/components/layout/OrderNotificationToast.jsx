@@ -68,7 +68,7 @@ const OrderNotificationToast = ({ order, onDismiss, autoHideDuration = 5000 }) =
               </div>
                               <div className="flex items-center text-blue-600 font-bold">
                 <DollarSign size={16} className="mr-1" />
-                <span>${parseFloat(order.total).toFixed(2)}</span>
+                <span>${(parseFloat(order.total) / 100).toFixed(2)}</span>
               </div>
             </div>
             
@@ -92,4 +92,4 @@ const OrderNotificationToast = ({ order, onDismiss, autoHideDuration = 5000 }) =
   );
 };
 
-export default OrderNotificationToast; 
+export default OrderNotificationToast;

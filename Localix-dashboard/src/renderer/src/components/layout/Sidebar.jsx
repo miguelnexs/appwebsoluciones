@@ -373,7 +373,7 @@ const Sidebar = ({ collapsed = false, onToggle }) => {
                       <span className="font-bold">#{order.numero_venta}</span>
                     </div>
                     <span className="text-blue-300 text-xs font-bold">
-                      ${parseFloat(order.total).toFixed(2)}
+                      ${(parseFloat(order.total) / 100).toFixed(2)}
                     </span>
                   </div>
                   

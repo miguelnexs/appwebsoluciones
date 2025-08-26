@@ -195,7 +195,7 @@ const DashboardPage = React.memo(() => {
       const dateObj = new Date(fecha);
       if (isNaN(dateObj)) return;
       const key = `${dateObj.getFullYear()}-${(dateObj.getMonth()+1).toString().padStart(2, '0')}`;
-      meses[key] = (meses[key] || 0) + parseFloat(v?.total || 0);
+      meses[key] = (meses[key] || 0) + (parseFloat(v?.total || 0) / 100);
     });
 
     const labels = Object.keys(meses).sort();
@@ -574,13 +574,13 @@ const DashboardPage = React.memo(() => {
                     .filter(producto => producto.precio && producto.costo)
                     .sort((a, b) => {
                       const gananciaA = parseFloat(a.precio) - parseFloat(a.costo);
-                      const gananciaB = parseFloat(b.precio) - parseFloat(b.costo);
+      const gananciaB = parseFloat(b.precio) - parseFloat(b.costo);
                       return gananciaB - gananciaA;
                     })
                     .slice(0, 5)
                     .map(producto => {
                       const precio = parseFloat(producto.precio);
-                      const costo = parseFloat(producto.costo);
+      const costo = parseFloat(producto.costo);
                       const ganancia = precio - costo;
                       const margen = costo > 0 ? ((ganancia / costo) * 100) : 0;
                       
@@ -588,13 +588,13 @@ const DashboardPage = React.memo(() => {
                         <tr key={producto.id} className="hover:bg-theme-secondary cursor-pointer transition-colors" onClick={() => navigate(`/products/${producto.id}`)}>
                           <td className="px-6 py-4 text-sm font-medium text-theme-text">{producto.nombre}</td>
                           <td className="px-6 py-4 text-sm text-theme-textSecondary">
-                            ${precio.toLocaleString('es-CO', {minimumFractionDigits: 2})}
+                            ${(precio / 100).toLocaleString('es-CO', {minimumFractionDigits: 2})}
                           </td>
                           <td className="px-6 py-4 text-sm text-theme-textSecondary">
-                            ${costo.toLocaleString('es-CO', {minimumFractionDigits: 2})}
+                            ${(costo / 100).toLocaleString('es-CO', {minimumFractionDigits: 2})}
                           </td>
                           <td className="px-6 py-4 text-sm font-medium text-green-600">
-                            ${ganancia.toLocaleString('es-CO', {minimumFractionDigits: 2})}
+                            ${(ganancia / 100).toLocaleString('es-CO', {minimumFractionDigits: 2})}
                           </td>
                           <td className="px-6 py-4 text-sm font-medium text-green-600">
                             {margen.toFixed(1)}%
@@ -658,7 +658,7 @@ const DashboardPage = React.memo(() => {
                         {new Date(order.date).toLocaleDateString('es-ES')}
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-theme-text">
-                        ${typeof order.amount === 'number' ? order.amount.toFixed(2) : (parseFloat(order.amount) || 0).toFixed(2)}
+                        ${typeof order.amount === 'number' ? (order.amount / 100).toFixed(2) : ((parseFloat(order.amount) || 0) / 100).toFixed(2)}
                       </td>
                       <td className="px-6 py-4">
                         <OrderStatusBadge status={order.status} />

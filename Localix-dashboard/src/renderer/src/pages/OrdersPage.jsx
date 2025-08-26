@@ -156,11 +156,11 @@ const OrdersPage = () => {
       render: (pedido) => (
         <div className="text-right">
           <p className="text-sm font-medium text-theme-text">
-            ${parseFloat(pedido.total_pedido || 0).toFixed(2)}
+            ${(parseFloat(pedido.total_pedido || 0) / 100).toFixed(2)}
           </p>
           {pedido.estado_pedido === 'separado' ? (
             <p className="text-xs text-teal-700">
-              Abono: ${parseFloat(pedido.monto_abono || 0).toFixed(2)} · Saldo: ${parseFloat(pedido.monto_pendiente || 0).toFixed(2)}
+              Abono: ${(parseFloat(pedido.monto_abono || 0) / 100).toFixed(2)} · Saldo: ${(parseFloat(pedido.monto_pendiente || 0) / 100).toFixed(2)}
             </p>
           ) : (
             <p className="text-xs text-theme-textSecondary">
@@ -347,8 +347,8 @@ const OrdersPage = () => {
           numero_pedido: orderData.numero_venta,
           numero_venta: orderData.numero_venta,
           fecha_creacion: orderData.timestamp,
-          total_pedido: parseFloat(orderData.total),
-          total: parseFloat(orderData.total),
+          total_pedido: Math.round(parseFloat(orderData.total) * 100),
+        total: Math.round(parseFloat(orderData.total) * 100),
           cliente: {
             nombre: orderData.cliente
           },
@@ -698,7 +698,7 @@ const OrdersPage = () => {
       
       <td className="px-6 py-4 whitespace-nowrap text-right">
         <div className="text-sm font-medium text-theme-text">
-          $ {parseFloat(pedido.total_pedido || 0).toFixed(2)}
+          $ {(parseFloat(pedido.total_pedido || 0) / 100).toFixed(2)}
         </div>
       </td>
       

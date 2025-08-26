@@ -123,7 +123,7 @@ const FloatingCart = ({
                         </button>
                       </div>
                       <p className="font-semibold text-theme-text">
-                        ${(item.precio * item.cantidad).toFixed(2)}
+                        ${((item.precio * item.cantidad) / 100).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -137,11 +137,11 @@ const FloatingCart = ({
             <div className="border-t border-theme-border p-3 bg-theme-background">
               <div className="flex justify-between mb-2">
                 <span className="text-theme-textSecondary">Subtotal:</span>
-                <span className="font-medium">${calcularSubtotal().toFixed(2)}</span>
+                <span className="font-medium">${(calcularSubtotal() / 100).toFixed(2)}</span>
               </div>
               <div className="flex justify-between mb-3">
                 <span className="text-theme-textSecondary">Total:</span>
-                <span className="font-bold text-lg text-blue-600">${calcularTotal().toFixed(2)}</span>
+                <span className="font-bold text-lg text-blue-600">${(calcularTotal() / 100).toFixed(2)}</span>
               </div>
               <button
                 onClick={finalizarVenta}

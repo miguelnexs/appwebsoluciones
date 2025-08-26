@@ -269,7 +269,7 @@ const PedidoDetailModal = ({ pedido, isOpen, onClose, onEstadoCambiado }) => {
                 <div className="flex justify-between">
                   <span className="text-sm font-medium text-theme-textSecondary">Total:</span>
                   <span className="text-sm font-semibold text-theme-text">
-                    $ {parseFloat(pedido.total_pedido || 0).toFixed(2)}
+                    $ {(parseFloat(pedido.total_pedido || 0) / 100).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -374,10 +374,10 @@ const PedidoDetailModal = ({ pedido, isOpen, onClose, onEstadoCambiado }) => {
                         {/* Precios */}
                         <div className="flex-shrink-0 text-right">
                           <div className="text-sm text-theme-textSecondary">
-                            $ {parseFloat(item.precio_unitario || 0).toFixed(2)} c/u
+                            $ {(parseFloat(item.precio_unitario || 0) / 100).toFixed(2)} c/u
                           </div>
                           <div className="text-sm font-semibold text-theme-text">
-                            $ {parseFloat(item.subtotal || 0).toFixed(2)}
+                            $ {(parseFloat(item.subtotal || 0) / 100).toFixed(2)}
                           </div>
                         </div>
                       </div>

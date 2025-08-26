@@ -788,7 +788,7 @@ const VentasPage = () => {
                 {porcentajeDescuento > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-theme-textSecondary">Descuento ({porcentajeDescuento}%):</span>
-                    <span className="font-medium text-theme-error">-${calcularDescuento().toFixed(2)}</span>
+                    <span className="font-medium text-theme-error">-${(calcularDescuento() / 100).toFixed(2)}</span>
                   </div>
                 )}
                 {tipoVenta === 'envio' && (
@@ -872,8 +872,8 @@ const VentasPage = () => {
                   </label>
                   <input
                     type="number"
-                    value={precioEnvio}
-                    onChange={(e) => setPrecioEnvio(parseFloat(e.target.value) || 0)}
+                    value={precioEnvio / 100}
+                    onChange={(e) => setPrecioEnvio(Math.round((parseFloat(e.target.value) || 0) * 100))}
                     className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-sm"
                     min="0"
                     step="0.01"
@@ -899,7 +899,7 @@ const VentasPage = () => {
                 />
                 {porcentajeDescuento > 0 && (
                   <p className="text-sm text-theme-textSecondary mt-1">
-                    Descuento: ${calcularDescuento().toFixed(2)}
+                    Descuento: ${(calcularDescuento() / 100).toFixed(2)}
                   </p>
                 )}
               </div>

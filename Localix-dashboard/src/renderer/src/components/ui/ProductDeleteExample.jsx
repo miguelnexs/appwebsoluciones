@@ -91,7 +91,7 @@ const ProductDeleteExample = () => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP'
-    }).format(price);
+    }).format(price / 100);
   };
 
   return (
@@ -185,4 +185,4 @@ const ProductDeleteExample = () => {
   );
 };
 
-export default ProductDeleteExample; 
+export default ProductDeleteExample;

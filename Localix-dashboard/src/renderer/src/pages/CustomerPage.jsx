@@ -650,7 +650,7 @@ const CustomersPage = () => {
                         </div>
                         <p className="text-xs text-theme-textSecondary mb-1">Total Gastado</p>
                         <p className="text-xl font-semibold text-theme-text">
-                          $ {calcularTotalGastado(clienteSeleccionado.id).toFixed(2)}
+                          $ {(calcularTotalGastado(clienteSeleccionado.id) / 100).toFixed(2)}
                         </p>
                       </div>
                       <div className="text-center">
@@ -660,7 +660,7 @@ const CustomersPage = () => {
                         <p className="text-xs text-theme-textSecondary mb-1">Promedio por Compra</p>
                         <p className="text-xl font-semibold text-theme-text">
                           $ {obtenerVentasCliente(clienteSeleccionado.id).length > 0 
-                            ? (calcularTotalGastado(clienteSeleccionado.id) / obtenerVentasCliente(clienteSeleccionado.id).length).toFixed(2)
+                            ? ((calcularTotalGastado(clienteSeleccionado.id) / 100) / obtenerVentasCliente(clienteSeleccionado.id).length).toFixed(2)
                             : '0.00'}
                         </p>
                       </div>
@@ -773,7 +773,7 @@ const CustomersPage = () => {
                             </div>
                             <div className="text-right">
                               <p className="text-xl font-semibold text-theme-text">
-                                $ {parseFloat(venta.total).toFixed(2)}
+                                $ {(parseFloat(venta.total) / 100).toFixed(2)}
                               </p>
                             </div>
                           </div>
@@ -835,10 +835,10 @@ const CustomersPage = () => {
                                       {/* Precios */}
                                       <div className="flex-shrink-0 text-right">
                                         <div className="text-sm text-theme-textSecondary">
-                                          $ {parseFloat(item.precio_unitario).toFixed(2)} c/u
+                                          $ {(parseFloat(item.precio_unitario) / 100).toFixed(2)} c/u
                                         </div>
                                         <div className="text-sm font-semibold text-theme-text">
-                                          $ {parseFloat(item.subtotal).toFixed(2)}
+                                          $ {(parseFloat(item.subtotal) / 100).toFixed(2)}
                                         </div>
                                       </div>
                                     </div>

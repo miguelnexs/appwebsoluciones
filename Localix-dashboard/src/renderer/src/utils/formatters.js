@@ -4,14 +4,39 @@
 
 /**
  * Formatea un precio de manera segura con símbolo de moneda
- * @param {number|string|null|undefined} price - El precio a formatear
+ * @param {number|string|null|undefined} price - El precio a formatear (en centavos)
  * @param {string} currency - Símbolo de moneda (por defecto '$')
  * @returns {string} El precio formateado como string con símbolo de moneda
  */
 export const formatPrice = (price, currency = '$') => {
   if (price === null || price === undefined) return `${currency} 0.00`;
-  const numPrice = typeof price === 'number' ? price : parseFloat(price);
-  return isNaN(numPrice) ? `${currency} 0.00` : `${currency} ${numPrice.toFixed(2)}`;
+  const numPrice = typeof price === 'number' ? price : parseInt(price);
+  if (isNaN(numPrice)) return `${currency} 0.00`;
+  // Convertir de centavos a pesos dividiendo por 100
+  const priceInPesos = numPrice / 100;
+  return `${currency} ${priceInPesos.toFixed(2)}`;
+};
+
+/**
+ * Convierte un valor en pesos a centavos
+ * @param {number|string} value - El valor en pesos
+ * @returns {number} El valor en centavos
+ */
+export const pesosToInteger = (value) => {
+  if (value === null || value === undefined || value === '') return 0;
+  const numValue = typeof value === 'number' ? value : parseFloat(value);
+  return isNaN(numValue) ? 0 : Math.round(numValue * 100);
+};
+
+/**
+ * Convierte un valor en centavos a pesos
+ * @param {number|string} value - El valor en centavos
+ * @returns {number} El valor en pesos
+ */
+export const integerToPesos = (value) => {
+  if (value === null || value === undefined) return 0;
+  const numValue = typeof value === 'number' ? value : parseInt(value);
+  return isNaN(numValue) ? 0 : numValue / 100;
 };
 
 /**
@@ -85,4 +110,4 @@ export const formatDateTime = (date) => {
  */
 export const formatPriceCOP = (price) => {
   return formatPrice(price, '$');
-}; 
+};

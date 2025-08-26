@@ -116,15 +116,32 @@ const generateFileHash = (buffer) => {
  */
 const processImage = async (imageBuffer) => {
   try {
-    return await sharp(imageBuffer)
+    const image = sharp(imageBuffer);
+    const metadata = await image.metadata();
+    
+    // Configurar el procesamiento base
+    let processedImage = image
       .rotate() // Corrige orientación EXIF
       .resize({
         width: IMAGE_CONFIG.TARGET_DIMENSION,
         height: IMAGE_CONFIG.TARGET_DIMENSION,
         fit: 'inside',
         withoutEnlargement: true
-      })
-      .jpeg({ quality: IMAGE_CONFIG.QUALITY }) // Convertir a JPEG y aplicar calidad
+      });
+    
+    // Manejar imágenes con transparencia (RGBA)
+    if (metadata.channels === 4 || metadata.hasAlpha) {
+      // Para imágenes con transparencia, crear fondo blanco y componer
+      processedImage = processedImage
+        .flatten({ background: { r: 255, g: 255, b: 255 } })
+        .jpeg({ quality: IMAGE_CONFIG.QUALITY });
+    } else {
+      // Para imágenes sin transparencia, convertir directamente
+      processedImage = processedImage
+        .jpeg({ quality: IMAGE_CONFIG.QUALITY });
+    }
+    
+    return await processedImage
       .withMetadata()
       .toBuffer();
   } catch (error) {
@@ -394,7 +411,7 @@ module.exports = function setupProductHandlers() {
     }
   });
 
-  // Obtener un producto específico
+  // Obtener un producto específico por slug
   ipcMain.handle('productos:obtener', async (_, slug) => {
     try {
       const config = await createAuthenticatedConfig();
@@ -404,6 +421,37 @@ module.exports = function setupProductHandlers() {
       );
       return response.data;
     } catch (error) {
+      throw new Error(await handleApiError(error));
+    }
+  });
+
+  // Obtener un producto específico por ID
+  ipcMain.handle('productos:obtenerPorId', async (_, productId) => {
+    try {
+      console.log('🔍 Obteniendo producto por ID:', productId);
+      
+      const config = await createAuthenticatedConfig();
+      
+      // Primero intentar obtener la lista de productos y buscar por ID
+      const listResponse = await axios.get(
+        `${API_BASE_URL}/api/productos/productos/`, 
+        {
+          ...config,
+          params: {
+            id: productId
+          }
+        }
+      );
+      
+      if (listResponse.data && listResponse.data.results && listResponse.data.results.length > 0) {
+        const product = listResponse.data.results[0];
+        console.log('✅ Producto encontrado por ID:', product.slug);
+        return { product };
+      }
+      
+      throw new Error('Producto no encontrado');
+    } catch (error) {
+      console.error('❌ Error obteniendo producto por ID:', error.message);
       throw new Error(await handleApiError(error));
     }
   });

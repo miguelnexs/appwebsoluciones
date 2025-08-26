@@ -175,23 +175,28 @@ const ProductFormWithPreload = () => {
       errors.push('La descripción larga es obligatoria');
     }
 
-    if (!formData.precio || parseFloat(formData.precio) <= 0) {
+    if (!formData.precio || parseInt(formData.precio) <= 0) {
       errors.push('El precio debe ser mayor a 0');
     }
 
-    if (formData.precio && !Number.isInteger(parseFloat(formData.precio))) {
+    if (formData.precio && !Number.isInteger(parseInt(formData.precio))) {
       errors.push('El precio debe ser un número entero');
     }
 
-    if (!formData.costo || parseFloat(formData.costo) < 0) {
+    if (!formData.costo || parseInt(formData.costo) < 0) {
       errors.push('El costo debe ser mayor o igual a 0');
     }
 
-    if (formData.costo && !Number.isInteger(parseFloat(formData.costo))) {
+    if (formData.costo && !Number.isInteger(parseInt(formData.costo))) {
       errors.push('El costo debe ser un número entero');
     }
 
-    if (formData.precio_comparacion && !Number.isInteger(parseFloat(formData.precio_comparacion))) {
+    // Validar que el precio sea mayor o igual al costo
+    if (formData.precio && formData.costo && parseInt(formData.precio) < parseInt(formData.costo)) {
+      errors.push('El precio de venta no puede ser menor que el costo del producto');
+    }
+
+    if (formData.precio_comparacion && !Number.isInteger(parseInt(formData.precio_comparacion))) {
       errors.push('El precio de comparación debe ser un número entero');
     }
 

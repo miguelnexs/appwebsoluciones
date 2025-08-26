@@ -79,17 +79,17 @@ const CartSummary = ({
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>Subtotal:</span>
-            <span>$ {calcularSubtotal().toFixed(2)}</span>
+            <span>$ {(calcularSubtotal() / 100).toFixed(2)}</span>
           </div>
           {tipoVenta === 'envio' && (
             <div className="flex justify-between text-sm">
               <span>Envío:</span>
-              <span>$ {precioEnvio.toFixed(2)}</span>
+              <span>$ {(precioEnvio / 100).toFixed(2)}</span>
             </div>
           )}
           <div className="flex justify-between text-lg font-semibold border-t border-theme-border pt-2">
             <span>Total:</span>
-            <span>$ {calcularTotal().toFixed(2)}</span>
+            <span>$ {(calcularTotal() / 100).toFixed(2)}</span>
           </div>
         </div>
       </div>

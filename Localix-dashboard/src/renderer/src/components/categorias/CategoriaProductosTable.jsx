@@ -86,7 +86,7 @@ const CategoriaProductosTable = ({ categoriaSlug, readOnlyProductos, productos, 
       const stock = parseInt(p.stock_total_calculado || p.stock) || 0;
       const precio = parseFloat(p.precio) || 0;
       return sum + (stock * precio);
-    }, 0);
+    }, 0) / 100;
     
     return { totalProductos, stockTotal, valorInventario };
   };
@@ -247,7 +247,7 @@ const CategoriaProductosTable = ({ categoriaSlug, readOnlyProductos, productos, 
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">{producto.nombre}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{producto.sku}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">${producto.precio?.toLocaleString('es-CO')}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">${((producto.precio || 0) / 100).toLocaleString('es-CO')}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className={parseInt(producto.stock_total_calculado || producto.stock) > 0 ? 'text-blue-600' : 'text-red-600'}>
                           {parseInt(producto.stock_total_calculado || producto.stock) || 0}

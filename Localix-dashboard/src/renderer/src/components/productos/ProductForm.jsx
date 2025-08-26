@@ -43,9 +43,9 @@ export default function ProductForm({ productToEdit, onSuccess, onCancel, compac
 
   const parsePriceInput = (value) => {
     if (!value || value === '') return 0;
-    // Remover cualquier carácter que no sea número o punto decimal
-    const cleanValue = value.toString().replace(/[^\d.]/g, '');
-    const parsed = parseFloat(cleanValue);
+    // Remover cualquier carácter que no sea número
+    const cleanValue = value.toString().replace(/[^\d]/g, '');
+    const parsed = parseInt(cleanValue);
     return isNaN(parsed) ? 0 : parsed;
   };
 
@@ -156,13 +156,18 @@ export default function ProductForm({ productToEdit, onSuccess, onCancel, compac
     }
     
     // Validar precio (obligatorio y mayor a 0)
-    if (!data.precio || parseFloat(data.precio) <= 0) {
+    if (!data.precio || parseInt(data.precio) <= 0) {
       errors.push('El precio debe ser mayor a 0');
     }
     
     // Validar costo (obligatorio y no negativo)
-    if (data.costo === undefined || data.costo === null || parseFloat(data.costo) < 0) {
+    if (data.costo === undefined || data.costo === null || parseInt(data.costo) < 0) {
       errors.push('El costo no puede ser negativo');
+    }
+    
+    // Validar que el precio sea mayor o igual al costo
+    if (data.precio && data.costo && parseInt(data.precio) < parseInt(data.costo)) {
+      errors.push('El precio de venta no puede ser menor que el costo del producto');
     }
     
     // Validar stock si la gestión está habilitada
@@ -264,9 +269,9 @@ export default function ProductForm({ productToEdit, onSuccess, onCancel, compac
             ...product,
             nombre: product.nombre || '',
             categoria_id: product.categoria?.id || generalCategory?.id || null,
-            precio: parseFloat(product.precio || 0),
-            precio_comparacion: product.precio_comparacion ? parseFloat(product.precio_comparacion) : null,
-            costo: parseFloat(product.costo || 0),
+            precio: parseInt(product.precio || 0),
+            precio_comparacion: product.precio_comparacion ? parseInt(product.precio_comparacion) : null,
+            costo: parseInt(product.costo || 0),
             stock_minimo: product.stock_minimo || 5,
             peso: product.peso || 0
           });
@@ -323,6 +328,31 @@ export default function ProductForm({ productToEdit, onSuccess, onCancel, compac
     });
     return () => subscription.unsubscribe();
   }, [watch, formatPrice]);
+
+  // Efecto para revalidar campos cruzados (precio vs costo)
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === 'precio' || name === 'costo') {
+        // Revalidar ambos campos cuando cualquiera cambie
+        setTimeout(() => {
+          if (name === 'precio') {
+            // Si cambió el precio, revalidar el costo
+            const costoValue = watch('costo');
+            if (costoValue) {
+              setValue('costo', costoValue, { shouldValidate: true });
+            }
+          } else if (name === 'costo') {
+            // Si cambió el costo, revalidar el precio
+            const precioValue = watch('precio');
+            if (precioValue) {
+              setValue('precio', precioValue, { shouldValidate: true });
+            }
+          }
+        }, 100);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
 
   // Función de utilidad para limpiar categorías duplicadas (disponible en window para debugging)
   useEffect(() => {
@@ -697,7 +727,13 @@ const onSubmit = async (data) => {
                             required: 'El precio es obligatorio',
                             valueAsNumber: true,
                             min: { value: 0, message: 'El precio no puede ser negativo' },
-                            validate: value => Number.isInteger(value) || 'Debe ser un número entero'
+                            validate: {
+                              isInteger: value => Number.isInteger(value) || 'Debe ser un número entero',
+                              greaterThanCost: value => {
+                                const costo = watch('costo');
+                                return !costo || value >= costo || 'El precio no puede ser menor que el costo';
+                              }
+                            }
                           })}
                           onFocus={handlePriceFocus}
                           onBlur={handlePriceBlur('precio')}
@@ -743,7 +779,13 @@ const onSubmit = async (data) => {
                           {...register('costo', { 
                             valueAsNumber: true,
                             min: { value: 0, message: 'Debe ser un valor positivo' },
-                            validate: value => Number.isInteger(value) || 'Debe ser un número entero'
+                            validate: {
+                              isInteger: value => Number.isInteger(value) || 'Debe ser un número entero',
+                              lessThanPrice: value => {
+                                const precio = watch('precio');
+                                return !precio || !value || precio >= value || 'El costo no puede ser mayor que el precio';
+                              }
+                            }
                           })}
                           onFocus={handlePriceFocus}
                           onBlur={handlePriceBlur('costo')}

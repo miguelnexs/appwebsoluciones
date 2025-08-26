@@ -81,7 +81,7 @@ const ProductListWithPreload = () => {
     const total = products.length;
     const active = products.filter(p => p.activo).length;
     const inactive = total - active;
-    const averagePrice = products.reduce((sum, p) => sum + (parseFloat(p.precio) || 0), 0) / total;
+    const averagePrice = products.reduce((sum, p) => sum + (parseFloat(p.precio) || 0), 0) / total / 100;
     
     return { total, active, inactive, averagePrice: averagePrice.toFixed(2) };
   }, [products]);
@@ -155,11 +155,11 @@ const ProductListWithPreload = () => {
         <div className="flex flex-col items-end space-y-2">
           <div className="text-right">
             <div className="text-2xl font-bold text-theme-text">
-              ${parseFloat(product.precio).toFixed(2)}
+              ${(parseFloat(product.precio) / 100).toFixed(2)}
             </div>
             {product.precio_anterior && (
               <div className="text-sm text-theme-textSecondary line-through">
-                ${parseFloat(product.precio_anterior).toFixed(2)}
+                ${(parseFloat(product.precio_anterior) / 100).toFixed(2)}
               </div>
             )}
           </div>

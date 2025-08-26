@@ -257,7 +257,7 @@ const SmartFloatingCart = ({
                       </p>
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-sm font-semibold text-theme-text">
-                          €{(item.producto.precio * item.cantidad).toFixed(2)}
+                          €{((item.producto.precio * item.cantidad) / 100).toFixed(2)}
                         </span>
                         
                         {/* Controles de cantidad */}
@@ -302,7 +302,7 @@ const SmartFloatingCart = ({
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold text-theme-text">Total:</span>
                 <span className="font-bold text-lg text-theme-text">
-                  €{totalPrice.toFixed(2)}
+                  €{(totalPrice / 100).toFixed(2)}
                 </span>
               </div>
               
@@ -331,4 +331,4 @@ const SmartFloatingCart = ({
   );
 };
 
-export default SmartFloatingCart; 
+export default SmartFloatingCart;

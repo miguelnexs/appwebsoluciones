@@ -377,6 +377,7 @@ contextBridge.exposeInMainWorld('ventasAPI', {
   crearVenta: (ventaData) => ipcRenderer.invoke('ventas:crear-venta', ventaData),
   obtenerVentas: () => ipcRenderer.invoke('ventas:obtener-ventas'),
   obtenerResumen: () => ipcRenderer.invoke('ventas:obtener-resumen'),
+  obtenerEstadisticas: () => ipcRenderer.invoke('ventas:obtener-estadisticas'),
 });
 
 // APIs de clientes

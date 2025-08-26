@@ -96,29 +96,25 @@ class Producto(models.Model):
         verbose_name=_("Categoría principal")
     )
     
-    # Precios
-    precio = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
+    # Precios (en centavos para evitar decimales)
+    precio = models.IntegerField(
         validators=[MinValueValidator(0)],
         verbose_name=_("Precio de venta"),
-        help_text=_("Precio actual de venta al público")
+        help_text=_("Precio actual de venta al público (en centavos)")
     )
     
-    precio_comparacion = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
+    precio_comparacion = models.IntegerField(
         null=True,
         blank=True,
+        validators=[MinValueValidator(0)],
         verbose_name=_("Precio original"),
-        help_text=_("Precio tachado para mostrar descuentos (opcional)")
+        help_text=_("Precio tachado para mostrar descuentos (en centavos, opcional)")
     )
     
-    costo = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
+    costo = models.IntegerField(
+        validators=[MinValueValidator(0)],
         verbose_name=_("Costo"),
-        help_text=_("Costo para cálculo de márgenes")
+        help_text=_("Costo para cálculo de márgenes (en centavos)")
     )
     
     # Inventario
@@ -147,12 +143,11 @@ class Producto(models.Model):
     )
     
     # Envío
-    peso = models.DecimalField(
-        max_digits=8,
-        decimal_places=3,
+    peso = models.IntegerField(
         default=0,
-        verbose_name=_("Peso (kg)"),
-        help_text=_("Peso en kilogramos para cálculo de envío")
+        validators=[MinValueValidator(0)],
+        verbose_name=_("Peso (gramos)"),
+        help_text=_("Peso en gramos para cálculo de envío")
     )
     
     dimensiones = models.CharField(
@@ -197,9 +192,9 @@ class Producto(models.Model):
 
     @property
     def margen_ganancia(self):
-        """Calcula el porcentaje de ganancia de forma segura"""
-        if self.costo is None or self.precio is None or self.costo == 0:
-            return Decimal('0.00')
+        """Calcula el margen de ganancia como porcentaje"""
+        if self.costo == 0:
+            return 0
         return ((self.precio - self.costo) / self.costo) * 100
 
     def disponible_para_venta(self):
@@ -313,12 +308,11 @@ class VarianteProducto(models.Model):
         help_text=_("Código único para esta combinación")
     )
     
-    precio_extra = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
+    precio_extra = models.IntegerField(
         default=0,
+        validators=[MinValueValidator(0)],
         verbose_name=_("Precio adicional"),
-        help_text=_("Se suma al precio base del producto")
+        help_text=_("Se suma al precio base del producto (en centavos)")
     )
     
     stock = models.IntegerField(

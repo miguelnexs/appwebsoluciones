@@ -27,9 +27,7 @@ class ProductoSerializer(serializers.ModelSerializer):
     )
     
     # Campos calculados
-    margen_ganancia = serializers.DecimalField(
-        max_digits=5, 
-        decimal_places=2,
+    margen_ganancia = serializers.IntegerField(
         read_only=True
     )
     disponible_para_venta = serializers.BooleanField(read_only=True)
@@ -367,11 +365,18 @@ class ProductoSerializer(serializers.ModelSerializer):
             except Exception:
                 pass  # Si falla la corrección EXIF, continuar con la imagen original
             
-            # Convertir a formato adecuado
-            if img.format in ['JPEG', 'JFIF', 'WEBP']:  # type: ignore
+            # Convertir a formato adecuado según el modo de color
+            if img.mode in ['RGBA', 'LA']:  # type: ignore
+                # Para imágenes con transparencia, crear fondo blanco y componer
+                background = Image.new('RGB', img.size, (255, 255, 255))  # type: ignore
+                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)  # type: ignore
+                img = background
+            elif img.mode == 'P':  # type: ignore
+                # Convertir paleta a RGB
                 img = img.convert('RGB')  # type: ignore
-            elif img.format == 'PNG' and img.mode == 'P':  # type: ignore
-                img = img.convert('RGBA')  # type: ignore
+            elif img.mode not in ['RGB', 'L']:  # type: ignore
+                # Convertir otros modos a RGB
+                img = img.convert('RGB')  # type: ignore
             
             # Optimizar tamaño (máximo 2000px en el lado más largo)
             max_size = 2000
@@ -381,18 +386,20 @@ class ProductoSerializer(serializers.ModelSerializer):
             # Guardar en buffer
             output = BytesIO()
             
-            # Determinar formato de salida
-            if img.format in ['JPEG', 'JFIF']:  # type: ignore
+            # Determinar formato de salida basado en el formato original
+            original_format = img.format  # type: ignore
+            if original_format in ['JPEG', 'JFIF']:
                 img.save(output, format='JPEG', quality=85, optimize=True)  # type: ignore
                 ext = '.jpg'
-            elif img.format == 'PNG':  # type: ignore
+            elif original_format == 'PNG':
+                # Para PNG, mantener como PNG para preservar calidad
                 img.save(output, format='PNG', optimize=True)  # type: ignore
                 ext = '.png'
-            elif img.format == 'WEBP':  # type: ignore
+            elif original_format == 'WEBP':
                 img.save(output, format='WEBP', quality=85)  # type: ignore
                 ext = '.webp'
             else:
-                # Por defecto guardar como JPEG
+                # Por defecto guardar como JPEG (ahora seguro porque img está en RGB)
                 img.save(output, format='JPEG', quality=85, optimize=True)  # type: ignore
                 ext = '.jpg'
             

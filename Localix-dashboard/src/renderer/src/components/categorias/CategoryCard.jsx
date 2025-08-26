@@ -45,7 +45,7 @@ const CategoryCard = ({ categoria, onViewProducts }) => {
           const stock = parseInt(p.stock_total_calculado || p.stock) || 0;
           const precio = parseFloat(p.precio) || 0;
           return sum + (stock * precio);
-        }, 0);
+        }, 0) / 100;
         
         // Calcular productos activos/inactivos
         const productosActivos = productos.filter(p => p.estado === 'publicado').length;
@@ -230,7 +230,7 @@ const CategoryCard = ({ categoria, onViewProducts }) => {
                     </h5>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-theme-accent font-medium">
-                        ${parseFloat(producto.precio || 0).toLocaleString('es-CO')}
+                        ${(parseFloat(producto.precio || 0) / 100).toLocaleString('es-CO')}
                       </span>
                       <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
                         (parseInt(producto.stock_total_calculado || producto.stock) || 0) > 0

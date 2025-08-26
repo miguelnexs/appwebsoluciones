@@ -44,7 +44,7 @@ class ItemVentaSerializer(serializers.ModelSerializer):
     producto_detalle = serializers.SerializerMethodField()
     variante = serializers.StringRelatedField(read_only=True)
     color = ColorProductoSerializer(read_only=True)
-    precio_unitario = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    precio_unitario = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = ItemVenta
@@ -59,9 +59,9 @@ class ItemVentaSerializer(serializers.ModelSerializer):
             return {
                 'id': obj.producto.id,
                 'nombre': obj.producto.nombre,
-                'precio': str(obj.producto.precio),
-                'costo': str(obj.producto.costo),
-                'margen_ganancia': str(obj.producto.margen_ganancia)
+                'precio': obj.producto.precio,
+                'costo': obj.producto.costo,
+                'margen_ganancia': obj.producto.margen_ganancia
             }
         return None
 
@@ -108,9 +108,9 @@ class ItemReservaSerializer(serializers.ModelSerializer):
             return {
                 'id': obj.producto.id,
                 'nombre': obj.producto.nombre,
-                'precio': str(obj.producto.precio),
-                'costo': str(obj.producto.costo),
-                'margen_ganancia': str(obj.producto.margen_ganancia)
+                'precio': obj.producto.precio,
+                'costo': obj.producto.costo,
+                'margen_ganancia': obj.producto.margen_ganancia
             }
         return None
 
