@@ -45,6 +45,7 @@ async function createAuthenticatedConfig() {
   return config;
 }
 
+// Configuración base de axios sin autenticación
 const AXIOS_CONFIG = {
   headers: {
     'Accept': 'application/json',

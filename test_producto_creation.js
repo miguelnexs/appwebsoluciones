@@ -2,7 +2,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 
 // Configuración de la API
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://softwarebycg.shop';
 
 // Función para probar la creación de productos
 async function testProductCreation() {
