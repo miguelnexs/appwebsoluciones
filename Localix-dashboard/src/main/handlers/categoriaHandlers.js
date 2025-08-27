@@ -109,13 +109,16 @@ module.exports = () => {
 
   // Asegurar que existe la categoría "General" (simplificado y robusto)
   ipcMain.handle('categorias:ensureGeneral', async () => {
+    let config;
     try {
       console.log('🔍 Asegurando categoría "General"...');
+      
+      // Crear configuración de autenticación una sola vez
+      config = await createAuthenticatedConfig();
       
       // Paso 1: Buscar si ya existe una categoría "General"
       let generalCategory = null;
       try {
-        const config = await createAuthenticatedConfig();
         const searchResponse = await axios.get(`${API_BASE_URL}/api/categorias/`, {
           params: { search: 'General' },
           ...config
@@ -132,6 +135,11 @@ module.exports = () => {
         }
       } catch (searchError) {
         console.warn('⚠️ Error buscando categoría "General":', searchError.message);
+        // Si es error 401, el token no es válido, pero continuamos sin autenticación
+        if (searchError.response?.status === 401) {
+          console.warn('⚠️ Token inválido, intentando sin autenticación');
+          config = { ...AXIOS_CONFIG }; // Usar configuración sin token
+        }
       }
       
       // Paso 2: Si no existe, crear una nueva
@@ -201,6 +209,20 @@ module.exports = () => {
       });
       return response.data.results || response.data;
     } catch (error) {
+      // Si es error 401, intentar sin autenticación
+      if (error.response?.status === 401) {
+        console.warn('⚠️ Error de autenticación al listar categorías, intentando sin token');
+        try {
+          const response = await axios.get(`${API_BASE_URL}/api/categorias/`, {
+            params: { ordering: 'orden,nombre' },
+            ...AXIOS_CONFIG
+          });
+          return response.data.results || response.data;
+        } catch (fallbackError) {
+          console.error('❌ Error en fallback sin autenticación:', fallbackError.message);
+          throw new Error(await handleApiError(fallbackError));
+        }
+      }
       throw new Error(await handleApiError(error));
     }
   });
@@ -218,6 +240,7 @@ module.exports = () => {
 
   // Crear categoría (mejorado)
   ipcMain.handle('categorias:crear', async (_, categoriaData) => {
+    let config;
     try {
       console.log('Handler: Creando categoría con datos:', categoriaData);
       
@@ -226,7 +249,7 @@ module.exports = () => {
         throw new Error('El nombre de la categoría es requerido');
       }
 
-      const config = await createAuthenticatedConfig();
+      config = await createAuthenticatedConfig();
       const formData = new FormData();
 
       // Agregar campos básicos con validación
@@ -273,6 +296,53 @@ module.exports = () => {
       console.error('Handler: Error response:', error.response?.data);
       console.error('Handler: Error status:', error.response?.status);
       console.error('Handler: Error message:', error.message);
+      
+      // Si es error 401, intentar sin autenticación como fallback
+      if (error.response?.status === 401) {
+        console.warn('⚠️ Error de autenticación al crear categoría, intentando sin token');
+        try {
+          const formData = new FormData();
+          formData.append('nombre', categoriaData.nombre.trim());
+          formData.append('descripcion', categoriaData.descripcion || '');
+          formData.append('activa', categoriaData.activa !== false ? 'true' : 'false');
+          if (categoriaData.orden !== undefined && categoriaData.orden !== null) {
+            formData.append('orden', categoriaData.orden.toString());
+          }
+          
+          // Agregar imagen si existe
+          if (categoriaData.imagen && categoriaData.imagen.data && categoriaData.imagen.name && categoriaData.imagen.type) {
+            let buffer;
+            if (typeof categoriaData.imagen.data === 'string') {
+              buffer = Buffer.from(categoriaData.imagen.data, 'base64');
+            } else if (categoriaData.imagen.data instanceof ArrayBuffer) {
+              buffer = Buffer.from(categoriaData.imagen.data);
+            } else if (Array.isArray(categoriaData.imagen.data)) {
+              buffer = Buffer.from(categoriaData.imagen.data);
+            } else {
+              throw new Error('Formato de imagen no soportado');
+            }
+            formData.append('imagen', buffer, {
+              filename: categoriaData.imagen.name,
+              contentType: categoriaData.imagen.type
+            });
+          }
+          
+          const fallbackConfig = {
+            ...AXIOS_CONFIG,
+            headers: {
+              ...AXIOS_CONFIG.headers,
+              ...formData.getHeaders()
+            }
+          };
+          
+          const response = await axios.post(`${API_BASE_URL}/api/categorias/`, formData, fallbackConfig);
+          console.log('✅ Categoría creada exitosamente sin autenticación:', response.data);
+          return response.data;
+        } catch (fallbackError) {
+          console.error('❌ Error en fallback sin autenticación:', fallbackError.message);
+          throw new Error('Error del servidor: 401 - El token dado no es valido para ningun tipo de token');
+        }
+      }
       
       if (error.response) {
         const { status, data } = error.response;

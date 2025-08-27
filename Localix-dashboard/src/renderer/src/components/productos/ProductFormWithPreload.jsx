@@ -308,6 +308,7 @@ const ProductFormWithPreload = () => {
           type={type}
           value={formData[field]}
           onChange={(e) => handleInputChange(field, e.target.value)}
+          onWheel={type === 'number' ? (e) => e.target.blur() : undefined}
           className={`w-full px-3 py-2 border border-theme-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
             type === 'number' && ['precio', 'precio_comparacion', 'costo'].includes(field) 
               ? '[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]' 

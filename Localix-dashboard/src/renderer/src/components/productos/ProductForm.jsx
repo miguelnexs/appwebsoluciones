@@ -33,46 +33,7 @@ export default function ProductForm({ productToEdit, onSuccess, onCancel, compac
   }, [productToEdit, activeTab]);
   const [productId, setProductId] = useState(null);
 
-  // Funciones para formatear precios sin decimales innecesarios
-  const formatPrice = (value) => {
-    if (!value || value === '' || isNaN(value)) return '';
-    const num = parseFloat(value);
-    // Solo mostrar decimales si no es un número entero
-    return num % 1 === 0 ? num.toString() : num.toFixed(2);
-  };
-
-  const parsePriceInput = (value) => {
-    if (!value || value === '') return 0;
-    // Remover cualquier carácter que no sea número
-    const cleanValue = value.toString().replace(/[^\d]/g, '');
-    const parsed = parseInt(cleanValue);
-    return isNaN(parsed) ? 0 : parsed;
-  };
-
-  const handlePriceBlur = (fieldName) => (e) => {
-    const value = e.target.value;
-    if (value && value !== '') {
-      const parsedValue = parsePriceInput(value);
-      const formattedValue = formatPrice(parsedValue);
-      setValue(fieldName, parsedValue);
-      e.target.value = formattedValue;
-    } else {
-      // Para campos opcionales como precio_comparacion, permitir que queden vacíos
-      if (fieldName === 'precio_comparacion') {
-        setValue(fieldName, null);
-        e.target.value = '';
-      } else {
-        setValue(fieldName, 0);
-        e.target.value = '0';
-      }
-    }
-  };
-
-  const handlePriceFocus = (e) => {
-    if (e.target.value === '0' || e.target.value === '0.00' || e.target.value === '') {
-      e.target.value = '';
-    }
-  };
+  // Sin funciones de formateo automático - solo campos básicos
 
   const {
     register,
@@ -310,49 +271,7 @@ export default function ProductForm({ productToEdit, onSuccess, onCancel, compac
     };
   }, [productToEdit, slugFromParams, reset]);
 
-  // Efecto para formatear precios cuando se cargan los datos
-  useEffect(() => {
-    const subscription = watch((value, { name }) => {
-      if (name === 'precio' || name === 'precio_comparacion' || name === 'costo') {
-        // Formatear el valor en el DOM después de un pequeño delay
-        setTimeout(() => {
-          const input = document.querySelector(`input[name="${name}"]`);
-          if (input && value[name] !== null && value[name] !== undefined && value[name] !== '') {
-            const formattedValue = formatPrice(value[name]);
-            if (input.value !== formattedValue) {
-              input.value = formattedValue;
-            }
-          }
-        }, 100);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [watch, formatPrice]);
-
-  // Efecto para revalidar campos cruzados (precio vs costo)
-  useEffect(() => {
-    const subscription = watch((value, { name }) => {
-      if (name === 'precio' || name === 'costo') {
-        // Revalidar ambos campos cuando cualquiera cambie
-        setTimeout(() => {
-          if (name === 'precio') {
-            // Si cambió el precio, revalidar el costo
-            const costoValue = watch('costo');
-            if (costoValue) {
-              setValue('costo', costoValue, { shouldValidate: true });
-            }
-          } else if (name === 'costo') {
-            // Si cambió el costo, revalidar el precio
-            const precioValue = watch('precio');
-            if (precioValue) {
-              setValue('precio', precioValue, { shouldValidate: true });
-            }
-          }
-        }, 100);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [watch, setValue]);
+  // Eliminados useEffect de formateo automático que causaban autocompletado
 
   // Función de utilidad para limpiar categorías duplicadas (disponible en window para debugging)
   useEffect(() => {
@@ -705,77 +624,130 @@ const onSubmit = async (data) => {
 
               {/* Sección de Precios */}
               <div className="bg-theme-surface rounded-xl shadow-sm border border-theme-border overflow-hidden">
-                <div className="bg-theme-primary bg-opacity-5 px-6 py-4 border-b border-theme-border">
-                  <h2 className="text-xl font-semibold text-theme-text flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-theme-primary" />
-                    Precios y Costos
-                  </h2>
+                <div className="bg-gradient-to-r from-theme-primary/5 to-theme-primary/10 px-6 py-5 border-b border-theme-border">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-theme-text flex items-center gap-3">
+                      <div className="p-2 bg-theme-primary/10 rounded-lg">
+                        <DollarSign className="h-5 w-5 text-theme-primary" />
+                      </div>
+                      Precios y Costos
+                    </h2>
+                    <div className="text-xs text-theme-textSecondary bg-theme-surface px-3 py-1 rounded-full border">
+                      Valores en COP
+                    </div>
+                  </div>
                 </div>
-                <div className="p-6">
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    <div>
-                      <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Precio de Venta *</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-textSecondary">$</span>
+                <div className="p-8">
+                  <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                    {/* Precio de Venta */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-semibold text-theme-text">Precio de Venta</label>
+                        <span className="text-xs text-theme-error">*</span>
+                      </div>
+                      <div className="relative group">
+                        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-theme-textSecondary font-medium">
+                          $
+                        </div>
                         <input 
                           type="number"
-                          step="1" 
-                          min="0"
-                          className="w-full pl-8 pr-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" 
-                          placeholder="0"
+                          className="w-full pl-10 pr-4 py-4 bg-theme-surface border-2 border-theme-border text-theme-text rounded-xl focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all duration-200 text-lg font-medium group-hover:border-theme-primary/30 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" 
+                          placeholder="Ingresa el precio"
+                          onWheel={(e) => e.target.blur()}
                           {...register('precio', { 
                             required: 'El precio es obligatorio',
                             valueAsNumber: true,
-                            min: { value: 0, message: 'El precio no puede ser negativo' },
+                            min: { value: 1, message: 'El precio debe ser mayor a 0' },
                             validate: {
                               isInteger: value => Number.isInteger(value) || 'Debe ser un número entero',
                               greaterThanCost: value => {
                                 const costo = watch('costo');
                                 return !costo || value >= costo || 'El precio no puede ser menor que el costo';
+                              },
+                              lessThanComparisonPrice: value => {
+                                const precioComparacion = watch('precio_comparacion');
+                                // Solo validar si el precio de comparación tiene un valor válido
+                                if (precioComparacion && !isNaN(precioComparacion) && precioComparacion > 0 && value >= precioComparacion) {
+                                  return 'El precio de venta debe ser menor que el precio anterior para mostrar descuentos correctamente';
+                                }
+                                return true;
                               }
                             }
                           })}
-                          onFocus={handlePriceFocus}
-                          onBlur={handlePriceBlur('precio')}
                         />
                       </div>
-                      <span className="text-xs text-theme-textSecondary mt-1 block">Precio en números enteros (ej: 120000)</span>
-                      {errors.precio && <p className="mt-2 text-sm text-theme-error flex items-center gap-1">
-                        <AlertCircle className="h-4 w-4" />
+                      <p className="text-xs text-theme-textSecondary flex items-center gap-1">
+                        <Info className="h-3 w-3" />
+                        Precio de venta del producto
+                      </p>
+                      {errors.precio && <p className="text-sm text-theme-error flex items-center gap-2 bg-theme-error/5 p-3 rounded-lg border border-theme-error/20">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
                         {errors.precio.message}
                       </p>}
                     </div>
-                    <div>
-                      <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Precio de Comparación <span className='text-xs text-theme-textSecondary'>(opcional)</span></label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-textSecondary">$</span>
+
+                    {/* Precio de Comparación */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-semibold text-theme-text">Precio Anterior</label>
+                        <span className="text-xs text-theme-textSecondary bg-theme-textSecondary/10 px-2 py-0.5 rounded-full">opcional</span>
+                      </div>
+                      <div className="relative group">
+                        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-theme-textSecondary font-medium">
+                          $
+                        </div>
                         <input 
                           type="number"
-                          step="1" 
-                          min="0"
-                          className="w-full pl-8 pr-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" 
-                          placeholder="0"
+                          className="w-full pl-10 pr-4 py-4 bg-theme-surface border-2 border-theme-border text-theme-text rounded-xl focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all duration-200 text-lg font-medium group-hover:border-theme-primary/30 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" 
+                          placeholder="Precio anterior"
+                          onWheel={(e) => e.target.blur()}
                           {...register('precio_comparacion', { 
-                            valueAsNumber: true,
-                            min: { value: 0, message: 'Debe ser un valor positivo' },
-                            validate: value => value === null || value === undefined || value === '' || Number.isInteger(value) || 'Debe ser un número entero'
+                            setValueAs: value => value === '' || value === null || value === undefined ? null : Number(value),
+                            validate: {
+                              isPositive: value => {
+                                if (value === null || value === undefined || value === '') return true;
+                                return value >= 0 || 'Debe ser un valor positivo';
+                              },
+                              isInteger: value => {
+                                if (value === null || value === undefined || value === '') return true;
+                                return Number.isInteger(Number(value)) || 'Debe ser un número entero';
+                              },
+                              greaterThanPrice: value => {
+                                if (value === null || value === undefined || value === '' || value === 0) return true;
+                                const precio = watch('precio');
+                                if (precio && Number(value) <= Number(precio)) {
+                                  return 'El precio anterior debe ser mayor que el precio de venta para mostrar descuentos correctamente';
+                                }
+                                return true;
+                              }
+                            }
                           })}
-                          onFocus={handlePriceFocus}
-                          onBlur={handlePriceBlur('precio_comparacion')}
                         />
                       </div>
-                      <span className="text-xs text-theme-textSecondary mt-1 block">Precio anterior en números enteros (ej: 150000)</span>
+                      <p className="text-xs text-theme-textSecondary flex items-center gap-1">
+                        <Info className="h-3 w-3" />
+                        Para mostrar descuentos (opcional)
+                      </p>
+                      {errors.precio_comparacion && <p className="text-sm text-theme-error flex items-center gap-2 bg-theme-error/5 p-3 rounded-lg border border-theme-error/20">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                        {errors.precio_comparacion.message}
+                      </p>}
                     </div>
-                    <div>
-                      <label className="block mb-2 text-sm font-semibold text-theme-textSecondary">Costo</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-textSecondary">$</span>
+
+                    {/* Costo */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-semibold text-theme-text">Costo del Producto</label>
+                      </div>
+                      <div className="relative group">
+                        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-theme-textSecondary font-medium">
+                          $
+                        </div>
                         <input 
                           type="number"
-                          step="1" 
-                          min="0"
-                          className="w-full pl-8 pr-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" 
-                          placeholder="0"
+                          className="w-full pl-10 pr-4 py-4 bg-theme-surface border-2 border-theme-border text-theme-text rounded-xl focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all duration-200 text-lg font-medium group-hover:border-theme-primary/30 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" 
+                          placeholder="Costo de adquisición"
+                          onWheel={(e) => e.target.blur()}
                           {...register('costo', { 
                             valueAsNumber: true,
                             min: { value: 0, message: 'Debe ser un valor positivo' },
@@ -787,13 +759,47 @@ const onSubmit = async (data) => {
                               }
                             }
                           })}
-                          onFocus={handlePriceFocus}
-                          onBlur={handlePriceBlur('costo')}
                         />
                       </div>
-                      <span className="text-xs text-theme-textSecondary mt-1 block">Costo en números enteros (ej: 80000)</span>
+                      <p className="text-xs text-theme-textSecondary flex items-center gap-1">
+                        <Info className="h-3 w-3" />
+                        Costo de adquisición del producto
+                      </p>
+                      {errors.costo && <p className="text-sm text-theme-error flex items-center gap-2 bg-theme-error/5 p-3 rounded-lg border border-theme-error/20">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                        {errors.costo.message}
+                      </p>}
                     </div>
                   </div>
+
+                  {/* Información de Margen */}
+                  {watch('precio') > 0 && watch('costo') > 0 && (
+                    <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-green-100 rounded-lg">
+                            <DollarSign className="h-4 w-4 text-green-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-green-800">Análisis de Rentabilidad</h3>
+                            <p className="text-xs text-green-600">Margen de ganancia calculado automáticamente</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-green-700">
+                            {watch('precio') && watch('costo') ? 
+                              `${(((watch('precio') - watch('costo')) / watch('precio')) * 100).toFixed(1)}%` : '0%'
+                            }
+                          </div>
+                          <div className="text-xs text-green-600">
+                            Ganancia: ${watch('precio') && watch('costo') ? 
+                              (watch('precio') - watch('costo')).toLocaleString('es-CO') : '0'
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -814,6 +820,7 @@ const onSubmit = async (data) => {
                         min="0"
                         className="w-full px-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-warning focus:border-theme-warning transition-colors" 
                         placeholder="0"
+                        onWheel={(e) => e.target.blur()}
                         {...register('stock', { 
                           valueAsNumber: true, 
                           min: { value: 0, message: 'El stock no puede ser negativo' },
@@ -832,6 +839,7 @@ const onSubmit = async (data) => {
                         min="0"
                         className="w-full px-4 py-3 bg-theme-surface border border-theme-border text-theme-text rounded-lg focus:ring-2 focus:ring-theme-warning focus:border-theme-warning transition-colors" 
                         placeholder="5"
+                        onWheel={(e) => e.target.blur()}
                         {...register('stock_minimo', { 
                           valueAsNumber: true, 
                           min: { value: 0, message: 'El stock mínimo no puede ser negativo' },
