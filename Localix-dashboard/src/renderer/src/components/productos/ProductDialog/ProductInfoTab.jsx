@@ -1,5 +1,6 @@
 import React from 'react';
 import { Category, Info } from '@mui/icons-material';
+import { formatPrice } from '../../../utils/formatters';
 
 // Componentes reutilizables
 import ProductStatusChip from '../ProductStatusChip';
@@ -112,7 +113,7 @@ const ProductInfoTab = ({ product, loading = false }) => {
                   <div>
                     <span className="text-theme-textSecondary">{translations.es.price}</span>
                     <p className="font-medium">
-                      ${((safeProduct.precio || 0) / 100).toLocaleString('es-CO')}
+                      {formatPrice(safeProduct.precio)}
                     </p>
                   </div>
 
@@ -120,7 +121,7 @@ const ProductInfoTab = ({ product, loading = false }) => {
                     <span className="text-theme-textSecondary">{translations.es.comparePrice}</span>
                     <p className="text-theme-textSecondary">
                       {safeProduct.precio_comparacion
-                        ? `$${(safeProduct.precio_comparacion / 100).toLocaleString('es-CO')}`
+                        ? formatPrice(safeProduct.precio_comparacion)
                         : '-'}
                     </p>
                   </div>

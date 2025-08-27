@@ -9,11 +9,16 @@
  * @returns {string} El precio formateado como string con símbolo de moneda
  */
 export const formatPrice = (price, currency = '$') => {
-  if (price === null || price === undefined) return `${currency} 0.00`;
+  if (price === null || price === undefined) return `${currency} 0`;
   const numPrice = typeof price === 'number' ? price : parseInt(price);
-  if (isNaN(numPrice)) return `${currency} 0.00`;
+  if (isNaN(numPrice)) return `${currency} 0`;
   // Convertir de centavos a pesos dividiendo por 100
   const priceInPesos = numPrice / 100;
+  // Si es un número entero, no mostrar decimales
+  if (priceInPesos % 1 === 0) {
+    return `${currency} ${priceInPesos.toLocaleString('es-CO')}`;
+  }
+  // Si tiene decimales, mostrarlos
   return `${currency} ${priceInPesos.toFixed(2)}`;
 };
 

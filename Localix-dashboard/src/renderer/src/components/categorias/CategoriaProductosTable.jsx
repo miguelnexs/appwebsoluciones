@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Package, Home, ChevronRight, Folder, TrendingUp, DollarSign, Archive } from 'lucide-react';
+import { formatPrice } from '../../utils/formatters';
 
 const CategoriaProductosTable = ({ categoriaSlug, readOnlyProductos, productos, productosVinculados }) => {
   const [productosState, setProductosState] = useState([]);
@@ -247,7 +248,7 @@ const CategoriaProductosTable = ({ categoriaSlug, readOnlyProductos, productos, 
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">{producto.nombre}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{producto.sku}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">${((producto.precio || 0) / 100).toLocaleString('es-CO')}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{formatPrice(producto.precio)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className={parseInt(producto.stock_total_calculado || producto.stock) > 0 ? 'text-blue-600' : 'text-red-600'}>
                           {parseInt(producto.stock_total_calculado || producto.stock) || 0}

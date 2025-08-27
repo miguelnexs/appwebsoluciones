@@ -14,6 +14,7 @@ import {
   Calendar,
   TrendingUp
 } from 'lucide-react';
+import { formatPrice } from '../../utils/formatters';
 
 // 🚀 COMPONENTE DE LISTA DE PRODUCTOS CON PRE-CARGA
 const ProductListWithPreload = () => {
@@ -155,11 +156,11 @@ const ProductListWithPreload = () => {
         <div className="flex flex-col items-end space-y-2">
           <div className="text-right">
             <div className="text-2xl font-bold text-theme-text">
-              ${(parseFloat(product.precio) / 100).toFixed(2)}
+              {formatPrice(product.precio)}
             </div>
             {product.precio_anterior && (
               <div className="text-sm text-theme-textSecondary line-through">
-                ${(parseFloat(product.precio_anterior) / 100).toFixed(2)}
+                {formatPrice(product.precio_anterior)}
               </div>
             )}
           </div>

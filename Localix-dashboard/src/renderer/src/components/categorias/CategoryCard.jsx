@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Eye, ArrowRight, TrendingUp, TrendingDown, DollarSign, CheckCircle, AlertTriangle } from 'lucide-react';
 import { RESOURCE_URL } from '../../api/apiConfig';
+import { formatPrice } from '../../utils/formatters';
 
 // Función para obtener URL de imagen
 function getImageUrl(url) {
@@ -230,7 +231,7 @@ const CategoryCard = ({ categoria, onViewProducts }) => {
                     </h5>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-theme-accent font-medium">
-                        ${(parseFloat(producto.precio || 0) / 100).toLocaleString('es-CO')}
+                        {formatPrice(producto.precio)}
                       </span>
                       <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
                         (parseInt(producto.stock_total_calculado || producto.stock) || 0) > 0
