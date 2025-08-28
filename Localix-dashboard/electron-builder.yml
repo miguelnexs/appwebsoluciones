@@ -30,12 +30,12 @@ removePackageKeywords: true
 
 win:
   target:
-    - target: nsis
+    - target: dir
       arch:
         - x64
   icon: resources/localix-logo.png
   requestedExecutionLevel: asInvoker
-  artifactName: "${productName} ${version}"
+  artifactName: "${productName} ${version} Portable"
   publisherName: Localix Dashboard
   verifyUpdateCodeSignature: false
   sign: false

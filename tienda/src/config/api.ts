@@ -1,7 +1,8 @@
 // Configuración centralizada de la API
 export const API_CONFIG = {
   BASE_URL: 'http://softwarebycg.shop',
-  TIMEOUT: 30000,
+  TIMEOUT: 10000, // Reducido de 30s a 10s para mejor UX
+  FAST_TIMEOUT: 5000, // Timeout rápido para operaciones críticas como login
   API_URL: 'http://softwarebycg.shop/api',
   
   // Endpoints específicos
@@ -10,6 +11,11 @@ export const API_CONFIG = {
     CATEGORIAS: '/api/categorias/',
     VENTAS: '/api/ventas/',
     PEDIDOS: '/api/pedidos/',
+    AUTH: {
+      LOGIN: '/auth/token/',
+      REFRESH: '/auth/token/refresh/',
+      PROFILE: '/auth/user/profile/'
+    }
   }
 };
 

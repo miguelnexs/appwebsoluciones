@@ -29,7 +29,7 @@ import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation';
 import DeleteConfirmationModal from '../ui/DeleteConfirmationModal';
 import { formatPrice } from '../../utils/formatters';
 import { RESOURCE_URL } from '../../api/apiConfig';
-import { useLoadingState, InlineLoading, ErrorState, CardSkeleton } from '../ui/LoadingComponents';
+import { InlineLoading, ErrorState, CardSkeleton } from '../ui/LoadingComponents';
 
 function getImageUrl(url) {
   if (!url) return '';
@@ -140,13 +140,13 @@ const ProductList = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const { deleteModal, hideDeleteConfirmation, confirmDeleteProduct } = useDeleteConfirmation();
-  const { isLoading, startLoading, stopLoading } = useLoadingState('products-main');
-  
   // Estados
   const [data, setData] = useState({
     products: [],
     selectedProduct: null
   });
+  
+
   
   const [ui, setUi] = useState({
     openDialog: false,
@@ -270,7 +270,29 @@ const ProductList = () => {
     }
   }, []);
 
+  // Estados para el tiempo de carga
+  const [loadingTime, setLoadingTime] = useState(0);
+  const [loadingStartTime, setLoadingStartTime] = useState(null);
+  const loadingIntervalRef = useRef(null);
 
+  // Función para iniciar el contador de tiempo
+  const startLoadingTimer = useCallback(() => {
+    const startTime = Date.now();
+    setLoadingStartTime(startTime);
+    setLoadingTime(0);
+    
+    loadingIntervalRef.current = setInterval(() => {
+      setLoadingTime(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+  }, []);
+
+  // Función para detener el contador de tiempo
+  const stopLoadingTimer = useCallback(() => {
+    if (loadingIntervalRef.current) {
+      clearInterval(loadingIntervalRef.current);
+      loadingIntervalRef.current = null;
+    }
+  }, []);
 
   // Fetch de productos con filtros mejorados
 
@@ -278,6 +300,8 @@ const ProductList = () => {
     try {
       if (page === 1) {
         setData(prev => ({ ...prev, products: [] }));
+        // Iniciar el contador de tiempo solo para la carga inicial
+        startLoadingTimer();
       }
       
       setPagination(prev => ({ ...prev, loading: true }));
@@ -366,9 +390,11 @@ const ProductList = () => {
       setUi(prev => ({ ...prev, error: err.message || 'Error al cargar los productos' })); 
       setData(prev => ({ ...prev, products: [] }));
     } finally {
-      stopLoading();
+      setPagination(prev => ({ ...prev, loading: false }));
+      // Detener el contador de tiempo
+      stopLoadingTimer();
     }
-  }, [pagination.pageSize, sortConfig, startLoading, stopLoading]);
+  }, [pagination.pageSize, sortConfig, startLoadingTimer, stopLoadingTimer]);
 
   // Manejar búsqueda inteligente
   const handleSmartSearch = useCallback((searchTerm) => {
@@ -428,6 +454,15 @@ const ProductList = () => {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  // Limpiar el intervalo al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (loadingIntervalRef.current) {
+        clearInterval(loadingIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Handlers optimizados
   const openDialogFor = useCallback(async (product, mode='view') => {
@@ -572,7 +607,6 @@ const ProductList = () => {
   // Función para exportar productos a Excel
   const handleExportToExcel = useCallback(async () => {
     try {
-      startLoading();
       
       // Preparar filtros para la exportación (excluir 'todos')
       const exportFilters = { ...filters };
@@ -705,9 +739,8 @@ const ProductList = () => {
       console.error('Error exportando productos:', error);
       toast.error('Error al exportar productos', error.message || 'Ocurrió un error inesperado');
     } finally {
-      stopLoading();
     }
-  }, [data.products, searchQuery, filters, startLoading, stopLoading, toast]);
+  }, [data.products, searchQuery, filters, toast]);
 
   // Ordenar productos - Solo aplicar ordenamiento si no se está usando drag-and-drop
   const sortedProducts = useMemo(() => {
@@ -732,9 +765,50 @@ const ProductList = () => {
   }, [data.products, sortConfig]);
 
   // Componentes renderizados condicionalmente
+
   const renderLoadingState = () => (
-    <div className="flex items-center justify-center h-screen">
-      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-600"></div>
+    <div className="flex flex-col items-center justify-center h-screen bg-theme-background">
+      <div className="bg-theme-surface rounded-lg p-8 shadow-lg border border-theme-border max-w-md w-full mx-4">
+        <div className="flex flex-col items-center space-y-4">
+          {/* Spinner animado */}
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-theme-border border-t-theme-accent"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Package className="h-6 w-6 text-theme-accent" />
+            </div>
+          </div>
+          
+          {/* Mensaje de carga */}
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-theme-text mb-2">
+              Cargando productos...
+            </h3>
+            <p className="text-theme-textSecondary text-sm mb-4">
+              Obteniendo la información más reciente de tu inventario
+            </p>
+            
+            {/* Contador de tiempo */}
+            <div className="flex items-center justify-center space-x-2 text-theme-textSecondary">
+              <div className="w-2 h-2 bg-theme-accent rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium">
+                Tiempo transcurrido: {loadingTime}s
+              </span>
+            </div>
+            
+            {/* Mensaje adicional después de cierto tiempo */}
+            {loadingTime > 5 && (
+              <div className="mt-3 p-3 bg-theme-secondary rounded-lg">
+                <p className="text-xs text-theme-textSecondary">
+                  {loadingTime > 10 
+                    ? "Esto está tomando más tiempo del esperado. Verificando conexión..."
+                    : "Procesando una gran cantidad de productos..."
+                  }
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -916,7 +990,7 @@ const ProductList = () => {
     </tr>
   );
 
-  if (isLoading.initialLoad) return renderLoadingState();
+
   if (ui.error) return renderErrorState();
 
   return (
@@ -1009,17 +1083,16 @@ const ProductList = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => fetchProducts(pagination.page, searchQuery, filters)}
-                disabled={isLoading}
-                className="flex items-center gap-2 px-3 py-2 bg-theme-secondary text-theme-textSecondary rounded-lg hover:bg-theme-border transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-2 bg-theme-secondary text-theme-textSecondary rounded-lg hover:bg-theme-border transition-colors"
                 title="Refrescar"
               >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className="w-4 h-4" />
                 <span className="text-sm">Refrescar</span>
               </button>
               
               <button
                 onClick={handleExportToExcel}
-                disabled={isLoading || data.products.length === 0}
+                disabled={data.products.length === 0}
                 className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                 title="Exportar a Excel"
               >
@@ -1058,7 +1131,7 @@ const ProductList = () => {
           data={sortedProducts}
           sortConfig={sortConfig}
           onSort={requestSort}
-          loading={isLoading}
+          loading={false}
           emptyMessage="No hay productos disponibles"
           size="md"
           striped={true}

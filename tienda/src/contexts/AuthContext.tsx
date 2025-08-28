@@ -136,11 +136,22 @@ export const useAuth = () => {
 
 // Configurar axios interceptors
 const setupAxiosInterceptors = (tokens: { access: string | null; refresh: string | null }, dispatch: React.Dispatch<AuthAction>) => {
+  // Limpiar interceptors existentes para evitar duplicados
+  axios.interceptors.request.clear();
+  axios.interceptors.response.clear();
+  
+  // Configurar timeout por defecto más corto
+  axios.defaults.timeout = 10000; // 10 segundos en lugar de 30
+  
   // Request interceptor
   axios.interceptors.request.use(
     (config) => {
       if (tokens.access) {
         config.headers.Authorization = `Bearer ${tokens.access}`;
+      }
+      // Asegurar que el timeout esté configurado
+      if (!config.timeout) {
+        config.timeout = 10000;
       }
       return config;
     },
@@ -157,11 +168,12 @@ const setupAxiosInterceptors = (tokens: { access: string | null; refresh: string
         originalRequest._retry = true;
         
         try {
-          const response = await axios.post(`${API_CONFIG.API_URL}/auth/token/refresh/`, {
+          // Usar timeout más corto para refresh token
+          const refreshResponse = await axios.post(`${API_CONFIG.API_URL}/auth/token/refresh/`, {
             refresh: tokens.refresh
-          });
+          }, { timeout: 5000 });
           
-          const newAccessToken = response.data.access;
+          const newAccessToken = refreshResponse.data.access;
           localStorage.setItem('tienda_access_token', newAccessToken);
           
           // Actualizar el token en el header
@@ -192,12 +204,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setupAxiosInterceptors(state.tokens, dispatch);
   }, [state.tokens]);
 
-  // Verificar autenticación al cargar
+  // Verificar autenticación al cargar con optimizaciones
   useEffect(() => {
     const checkAuth = async () => {
       if (state.tokens.access) {
         try {
-          const response = await axios.get(`${API_CONFIG.API_URL}/auth/user/profile/`);
+          // Crear una instancia de axios con timeout reducido para verificación inicial
+          const axiosInstance = axios.create({
+            timeout: 5000, // 5 segundos en lugar de 30
+            baseURL: API_CONFIG.API_URL
+          });
+          
+          const response = await axiosInstance.get('/auth/user/profile/');
           dispatch({
             type: AUTH_ACTIONS.LOGIN_SUCCESS,
             payload: {
@@ -216,16 +234,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    checkAuth();
+    // Usar setTimeout para no bloquear el renderizado inicial
+    const timeoutId = setTimeout(checkAuth, 100);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const login = async (username: string, password: string) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
     
     try {
-      const response = await axios.post(`${API_CONFIG.API_URL}/auth/token/`, {
+      // Usar timeout rápido para login
+      const response = await axios.post(`${API_CONFIG.API_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`, {
         username,
         password
+      }, {
+        timeout: API_CONFIG.FAST_TIMEOUT // 5 segundos para login
       });
       
       const { access, refresh, user } = response.data;
@@ -242,12 +265,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       
-      // Redirigir al inicio
-      navigate('/');
+      // Redirigir al inicio con un pequeño delay para mejor UX
+      setTimeout(() => navigate('/'), 100);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 
-                          error.response?.data?.message || 
-                          'Error de autenticación';
+      let errorMessage = 'Error de autenticación';
+      
+      if (error.code === 'ECONNABORTED') {
+        errorMessage = 'La conexión tardó demasiado. Verifica tu conexión a internet.';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Usuario o contraseña incorrectos';
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       dispatch({ type: AUTH_ACTIONS.LOGIN_FAILURE, payload: errorMessage });
     }
   };

@@ -1,8 +1,16 @@
 import axios from 'axios';
 import { API_URL } from './apiConfig';
 
+// Limpiar interceptors existentes para evitar duplicados
+axios.interceptors.request.clear();
+axios.interceptors.response.clear();
+
+// Configurar timeout por defecto más bajo
+axios.defaults.timeout = 10000; // 10 segundos
+
 const api = axios.create({
   baseURL: API_URL(''),
+  timeout: 10000, // 10 segundos por defecto
   headers: {
     'Content-Type': 'application/json',
   },
@@ -14,6 +22,11 @@ api.interceptors.request.use(
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // Asegurar que siempre haya un timeout configurado
+    if (!config.timeout) {
+      config.timeout = 10000;
     }
     
     // No establecer Content-Type para FormData, dejar que el navegador lo maneje

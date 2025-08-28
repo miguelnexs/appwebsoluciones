@@ -82,7 +82,7 @@ const ProductListWithPreload = () => {
     const total = products.length;
     const active = products.filter(p => p.activo).length;
     const inactive = total - active;
-    const averagePrice = products.reduce((sum, p) => sum + (parseFloat(p.precio) || 0), 0) / total / 100;
+    const averagePrice = products.reduce((sum, p) => sum + (parseFloat(p.precio) || 0), 0) / total;
     
     return { total, active, inactive, averagePrice: averagePrice.toFixed(2) };
   }, [products]);

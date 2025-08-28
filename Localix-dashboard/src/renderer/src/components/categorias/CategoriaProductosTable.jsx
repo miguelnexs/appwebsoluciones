@@ -87,7 +87,7 @@ const CategoriaProductosTable = ({ categoriaSlug, readOnlyProductos, productos, 
       const stock = parseInt(p.stock_total_calculado || p.stock) || 0;
       const precio = parseFloat(p.precio) || 0;
       return sum + (stock * precio);
-    }, 0) / 100;
+    }, 0);
     
     return { totalProductos, stockTotal, valorInventario };
   };

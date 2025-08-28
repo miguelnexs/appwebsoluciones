@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePreloadedCategories } from '../../context/PreloadContext';
+// Importaciones de formatters removidas - ahora manejamos precios directamente
 import { 
   Save, 
   ArrowLeft, 

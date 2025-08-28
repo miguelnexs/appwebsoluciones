@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import api from '../api/axios';
 
 // Estado inicial
@@ -211,13 +212,18 @@ export const AuthProvider = ({ children }) => {
         try {
           dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
           
-          // Intentar obtener el perfil del usuario con timeout
-          const response = await Promise.race([
-            api.get('usuarios/profile/'),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Timeout')), 10000)
-            )
-          ]);
+          // Crear instancia axios con timeout reducido para verificación inicial
+          const fastApi = axios.create({
+            baseURL: api.defaults.baseURL,
+            timeout: 5000, // 5 segundos en lugar de 10
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+          
+          // Intentar obtener el perfil del usuario con timeout reducido
+          const response = await fastApi.get('usuarios/profile/');
           
           dispatch({
             type: AUTH_ACTIONS.LOGIN_SUCCESS,
@@ -236,20 +242,26 @@ export const AuthProvider = ({ children }) => {
           if (error.response?.status === 401 && refreshToken && refreshToken.trim() !== '') {
             try {
               console.log('Attempting to refresh token...');
-              const refreshResponse = await Promise.race([
-                api.post('usuarios/refresh/', {
-                  refresh: refreshToken,
-                }),
-                new Promise((_, reject) => 
-                  setTimeout(() => reject(new Error('Timeout')), 10000)
-                )
-              ]);
+              
+              // Crear instancia para refresh con timeout reducido
+              const refreshApi = axios.create({
+                baseURL: api.defaults.baseURL,
+                timeout: 5000,
+                headers: { 'Content-Type': 'application/json' }
+              });
+              
+              const refreshResponse = await refreshApi.post('usuarios/refresh/', {
+                refresh: refreshToken,
+              });
               
               const { access } = refreshResponse.data;
               localStorage.setItem('access_token', access);
               
               // Intentar obtener el perfil nuevamente con el nuevo token
-              const profileResponse = await api.get('usuarios/profile/');
+              const profileResponse = await api.get('usuarios/profile/', {
+                headers: { 'Authorization': `Bearer ${access}` },
+                timeout: 5000
+              });
               
               dispatch({
                 type: AUTH_ACTIONS.LOGIN_SUCCESS,
@@ -285,7 +297,10 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    verifyToken();
+    // Hacer la verificación asíncrona para no bloquear el renderizado inicial
+    setTimeout(() => {
+      verifyToken();
+    }, 100);
   }, []);
 
   // Función de login
@@ -293,7 +308,14 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: AUTH_ACTIONS.LOGIN_START });
       
-      const response = await api.post('usuarios/login/', {
+      // Crear instancia axios con timeout reducido para login
+      const loginApi = axios.create({
+        baseURL: api.defaults.baseURL,
+        timeout: 5000, // 5 segundos para login
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const response = await loginApi.post('usuarios/login/', {
         username,
         password,
       });
@@ -311,7 +333,18 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, tokens, user };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Error en el login';
+      let errorMessage = 'Error en el login';
+      
+      if (error.code === 'ECONNABORTED' || error.message === 'timeout of 5000ms exceeded') {
+        errorMessage = 'Tiempo de conexión agotado. Verifica tu conexión a internet.';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Credenciales incorrectas. Verifica tu usuario y contraseña.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (!navigator.onLine) {
+        errorMessage = 'Sin conexión a internet. Verifica tu conexión.';
+      }
+      
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: errorMessage,

@@ -4,22 +4,22 @@
 
 /**
  * Formatea un precio de manera segura con símbolo de moneda
- * @param {number|string|null|undefined} price - El precio a formatear (en centavos)
+ * @param {number|string|null|undefined} price - El precio a formatear
  * @param {string} currency - Símbolo de moneda (por defecto '$')
  * @returns {string} El precio formateado como string con símbolo de moneda
  */
 export const formatPrice = (price, currency = '$') => {
-  if (price === null || price === undefined) return `${currency} 0`;
-  const numPrice = typeof price === 'number' ? price : parseInt(price);
-  if (isNaN(numPrice)) return `${currency} 0`;
-  // Convertir de centavos a pesos dividiendo por 100
-  const priceInPesos = numPrice / 100;
-  // Si es un número entero, no mostrar decimales
-  if (priceInPesos % 1 === 0) {
-    return `${currency} ${priceInPesos.toLocaleString('es-CO')}`;
+  if (price === null || price === undefined || price === '') {
+    return `${currency} 0`;
   }
-  // Si tiene decimales, mostrarlos
-  return `${currency} ${priceInPesos.toFixed(2)}`;
+  
+  const numPrice = parseFloat(price);
+  if (isNaN(numPrice)) {
+    return `${currency} 0`;
+  }
+  
+  // Mostrar el precio tal como viene de la base de datos, sin división
+  return `${currency} ${numPrice.toLocaleString('es-CO')}`;
 };
 
 /**

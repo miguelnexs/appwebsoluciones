@@ -588,13 +588,13 @@ const DashboardPage = React.memo(() => {
                         <tr key={producto.id} className="hover:bg-theme-secondary cursor-pointer transition-colors" onClick={() => navigate(`/products/${producto.id}`)}>
                           <td className="px-6 py-4 text-sm font-medium text-theme-text">{producto.nombre}</td>
                           <td className="px-6 py-4 text-sm text-theme-textSecondary">
-                            ${(precio / 100).toLocaleString('es-CO', {minimumFractionDigits: 2})}
+                            ${precio.toLocaleString('es-CO', {minimumFractionDigits: 2})}
                           </td>
                           <td className="px-6 py-4 text-sm text-theme-textSecondary">
-                            ${(costo / 100).toLocaleString('es-CO', {minimumFractionDigits: 2})}
+                            ${costo.toLocaleString('es-CO', {minimumFractionDigits: 2})}
                           </td>
                           <td className="px-6 py-4 text-sm font-medium text-green-600">
-                            ${(ganancia / 100).toLocaleString('es-CO', {minimumFractionDigits: 2})}
+                            ${ganancia.toLocaleString('es-CO', {minimumFractionDigits: 2})}
                           </td>
                           <td className="px-6 py-4 text-sm font-medium text-green-600">
                             {margen.toFixed(1)}%
