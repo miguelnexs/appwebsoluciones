@@ -17,8 +17,8 @@ export const allProducts: Product[] = [
   { 
     id: 1, 
     name: "Caipe", 
-    price: "€150", 
-    priceNumber: 150,
+    price: "$600.000 COP", 
+    priceNumber: 600000,
     category: "Bolsos grandes", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop"] },
@@ -29,8 +29,8 @@ export const allProducts: Product[] = [
   { 
     id: 2, 
     name: "Milano", 
-    price: "€175", 
-    priceNumber: 175,
+    price: "$700.000 COP", 
+    priceNumber: 700000,
     category: "Bolsos grandes", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop"] },
@@ -40,8 +40,8 @@ export const allProducts: Product[] = [
   { 
     id: 3, 
     name: "Ventura", 
-    price: "€195", 
-    priceNumber: 195,
+    price: "$780.000 COP", 
+    priceNumber: 780000,
     category: "Bolsos grandes", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop"] },
@@ -53,8 +53,8 @@ export const allProducts: Product[] = [
   { 
     id: 4, 
     name: "Pagaporte", 
-    price: "€85", 
-    priceNumber: 85,
+    price: "$340.000 COP", 
+    priceNumber: 340000,
     category: "Bolsos pequeños", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop"] },
@@ -64,8 +64,8 @@ export const allProducts: Product[] = [
   { 
     id: 5, 
     name: "Mini Clara", 
-    price: "€65", 
-    priceNumber: 65,
+    price: "$260.000 COP", 
+    priceNumber: 260000,
     category: "Bolsos pequeños", 
     colors: [
       { name: "Rosa", images: ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=600&h=600&fit=crop"] },
@@ -75,8 +75,8 @@ export const allProducts: Product[] = [
   { 
     id: 6, 
     name: "Pocket", 
-    price: "€75", 
-    priceNumber: 75,
+    price: "$300.000 COP", 
+    priceNumber: 300000,
     category: "Bolsos pequeños", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=600&h=600&fit=crop"] },
@@ -88,8 +88,8 @@ export const allProducts: Product[] = [
   { 
     id: 7, 
     name: "Sport", 
-    price: "€45", 
-    priceNumber: 45,
+    price: "$180.000 COP", 
+    priceNumber: 180000,
     category: "Canguros", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop"] },
@@ -99,8 +99,8 @@ export const allProducts: Product[] = [
   { 
     id: 8, 
     name: "Urban", 
-    price: "€55", 
-    priceNumber: 55,
+    price: "$220.000 COP", 
+    priceNumber: 220000,
     category: "Canguros", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop"] },
@@ -110,8 +110,8 @@ export const allProducts: Product[] = [
   { 
     id: 9, 
     name: "Travel", 
-    price: "€65", 
-    priceNumber: 65,
+    price: "$260.000 COP", 
+    priceNumber: 260000,
     category: "Canguros", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=600&h=600&fit=crop"] },
@@ -123,8 +123,8 @@ export const allProducts: Product[] = [
   { 
     id: 10, 
     name: "Classic", 
-    price: "€35", 
-    priceNumber: 35,
+    price: "$140.000 COP", 
+    priceNumber: 140000,
     category: "Billeteras", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop"] },
@@ -134,8 +134,8 @@ export const allProducts: Product[] = [
   { 
     id: 11, 
     name: "Slim", 
-    price: "€40", 
-    priceNumber: 40,
+    price: "$160.000 COP", 
+    priceNumber: 160000,
     category: "Billeteras", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop"] },
@@ -145,8 +145,8 @@ export const allProducts: Product[] = [
   { 
     id: 12, 
     name: "Executive", 
-    price: "€55", 
-    priceNumber: 55,
+    price: "$220.000 COP", 
+    priceNumber: 220000,
     category: "Billeteras", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop"] },
@@ -158,8 +158,8 @@ export const allProducts: Product[] = [
   { 
     id: 19, 
     name: "Canceuas", 
-    price: "€120", 
-    priceNumber: 120,
+    price: "$480.000 COP", 
+    priceNumber: 480000,
     category: "Complementos", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop"] },
@@ -169,8 +169,8 @@ export const allProducts: Product[] = [
   { 
     id: 20, 
     name: "Elegante", 
-    price: "€95", 
-    priceNumber: 95,
+    price: "$380.000 COP", 
+    priceNumber: 380000,
     category: "Complementos", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop"] },
@@ -182,8 +182,8 @@ export const allProducts: Product[] = [
   { 
     id: 23, 
     name: "Executive", 
-    price: "€45", 
-    priceNumber: 45,
+    price: "$180.000 COP", 
+    priceNumber: 180000,
     category: "Carpetas", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop"] },
@@ -193,8 +193,8 @@ export const allProducts: Product[] = [
   { 
     id: 24, 
     name: "Professional", 
-    price: "€55", 
-    priceNumber: 55,
+    price: "$220.000 COP", 
+    priceNumber: 220000,
     category: "Carpetas", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop"] },
@@ -206,8 +206,8 @@ export const allProducts: Product[] = [
   { 
     id: 26, 
     name: "Travel Pro", 
-    price: "€25", 
-    priceNumber: 25,
+    price: "$100.000 COP", 
+    priceNumber: 100000,
     category: "Pasaporte/Guarda", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop"] },
@@ -217,8 +217,8 @@ export const allProducts: Product[] = [
   { 
     id: 27, 
     name: "Secure", 
-    price: "€30", 
-    priceNumber: 30,
+    price: "$120.000 COP", 
+    priceNumber: 120000,
     category: "Pasaporte/Guarda", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop"] },
@@ -230,8 +230,8 @@ export const allProducts: Product[] = [
   { 
     id: 29, 
     name: "Beauty Case", 
-    price: "€35", 
-    priceNumber: 35,
+    price: "$140.000 COP", 
+    priceNumber: 140000,
     category: "Cosmeteria", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop"] },
@@ -241,8 +241,8 @@ export const allProducts: Product[] = [
   { 
     id: 30, 
     name: "Travel Kit", 
-    price: "€42", 
-    priceNumber: 42,
+    price: "$168.000 COP", 
+    priceNumber: 168000,
     category: "Cosmeteria", 
     colors: [
       { name: "Negro", images: ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop", "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop"] },

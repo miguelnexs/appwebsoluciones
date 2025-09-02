@@ -25,7 +25,7 @@ const Ventas = () => {
               <p className="text-neutral-600 text-sm">Promoción por tiempo limitado</p>
             </div>
             <div className="pb-4">
-              <h3 className="font-medium text-neutral-900">Envío Gratuito en Compras Superiores a €300</h3>
+              <h3 className="font-medium text-neutral-900">Envío Gratuito en Compras Superiores a $1.200.000 COP</h3>
               <p className="text-neutral-600 text-sm">Entrega en 24-48 horas</p>
             </div>
           </div>

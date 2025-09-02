@@ -95,7 +95,7 @@ const CartDropdown = () => {
   }, [isOpen]);
 
   return (
-    <div className="relative">
+    <div className="relative z-50">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2.5 hover:bg-neutral-100 rounded-full transition-all duration-200 group"
@@ -131,26 +131,25 @@ const CartDropdown = () => {
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="fixed sm:absolute right-0 sm:right-2 top-4 sm:top-full sm:mt-2 w-full sm:w-96 max-h-[calc(100vh-2rem)] z-50 shadow-2xl rounded-lg overflow-hidden flex flex-col bg-white border border-neutral-200"
+              className="absolute right-0 top-full mt-2 w-96 max-w-[calc(100vw-2rem)] max-h-[80vh] z-[60] shadow-2xl rounded-lg overflow-hidden flex flex-col bg-gray-900 border border-gray-700"
               style={{
-                maxWidth: 'calc(100% - 1rem)',
-                height: 'auto',
-                maxHeight: 'calc(100vh - 2rem)'
+                minHeight: '200px',
+                height: 'auto'
               }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-neutral-100 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+              <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800 text-gray-100">
                 <div className="flex items-center space-x-2">
                   <ShoppingBag className="w-5 h-5" />
                   <h3 className="font-semibold">
-                    Tu carrito <span className="opacity-90">({totalItems})</span>
+                    Tu carrito <span className="opacity-70">({totalItems})</span>
                   </h3>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsOpen(false)}
-                  className="h-8 w-8 text-white hover:bg-white/10 rounded-full"
+                  className="h-8 w-8 text-gray-300 hover:bg-gray-700 hover:text-white rounded-full"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -160,15 +159,15 @@ const CartDropdown = () => {
               {items.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
                   <div className="relative mb-6">
-                    <ShoppingBag className="w-16 h-16 text-neutral-200 mx-auto" />
-                    <div className="absolute -inset-1 bg-blue-100 rounded-full opacity-50 blur"></div>
+                    <ShoppingBag className="w-16 h-16 text-gray-600 mx-auto" />
+                    <div className="absolute -inset-1 bg-gray-700 rounded-full opacity-30 blur"></div>
                   </div>
-                  <h4 className="text-lg font-medium text-neutral-800 mb-2">Tu carrito está vacío</h4>
-                  <p className="text-neutral-500 mb-6 max-w-xs">Añade algunos productos para comenzar tu compra</p>
+                  <h4 className="text-lg font-medium text-gray-200 mb-2">Tu carrito está vacío</h4>
+                  <p className="text-gray-400 mb-6 max-w-xs">Añade algunos productos para comenzar tu compra</p>
                   <Button
                     onClick={() => setIsOpen(false)}
                     variant="outline"
-                    className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500 hover:text-white"
                   >
                     Seguir comprando
                   </Button>
@@ -193,20 +192,20 @@ const CartDropdown = () => {
                             animate="visible"
                             exit="exit"
                             layout
-                            className={`relative group flex items-center gap-3 p-3 rounded-xl bg-white border border-neutral-100 hover:border-blue-100 transition-all duration-200 ${
+                            className={`relative group flex items-center gap-3 p-3 rounded-xl bg-gray-800 border border-gray-700 hover:border-gray-600 transition-all duration-200 ${
                               isItemRemoving ? 'opacity-0 h-0 p-0 border-0 overflow-hidden' : ''
                             }`}
                           >
                             {/* Loading Overlay */}
                             {isItemUpdating && (
-                              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-xl z-10">
-                                <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                              <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center rounded-xl z-10">
+                                <Loader2 className="w-5 h-5 text-gray-300 animate-spin" />
                               </div>
                             )}
 
                             {/* Product Image */}
                             <div className="relative flex-shrink-0">
-                              <div className="w-16 h-16 bg-neutral-50 rounded-lg overflow-hidden">
+                              <div className="w-16 h-16 bg-gray-700 rounded-lg overflow-hidden">
                                 <img
                                   src={item.image}
                                   alt={item.name}
@@ -227,19 +226,19 @@ const CartDropdown = () => {
 
                             {/* Product Info */}
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-neutral-900 truncate text-sm">
+                              <h4 className="font-medium text-gray-100 truncate text-sm">
                                 {item.name}
                               </h4>
-                              <p className="text-xs text-neutral-500 mb-1">
+                              <p className="text-xs text-gray-400 mb-1">
                                 Color: <span className="capitalize">{item.color}</span>
                               </p>
-                              <p className="text-sm font-semibold text-blue-600">
+                              <p className="text-sm font-semibold text-gray-300">
                                 {formatCOP(item.priceNumber)}
                               </p>
                               {item.quantity > 1 && (
-                                <p className="text-xs text-neutral-500 mt-0.5">
+                                <p className="text-xs text-gray-400 mt-0.5">
                                   {item.quantity} × {formatCOP(item.priceNumber)} ={' '}
-                                  <span className="font-medium text-neutral-900">
+                                  <span className="font-medium text-gray-200">
                                     {formatCOP(itemTotal)}
                                   </span>
                                 </p>
@@ -247,23 +246,23 @@ const CartDropdown = () => {
                             </div>
 
                             {/* Quantity Selector */}
-                            <div className="flex items-center gap-1 bg-neutral-50 rounded-lg p-0.5 border border-neutral-200">
+                            <div className="flex items-center gap-1 bg-gray-700 rounded-lg p-0.5 border border-gray-600">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 w-7 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 rounded-md"
+                                className="h-7 w-7 hover:bg-gray-600 text-gray-300 hover:text-gray-100 rounded-md"
                                 onClick={() => handleUpdateQuantity(item.id, item.color, item.quantity - 1)}
                                 disabled={isItemUpdating}
                               >
                                 <Minus className="w-3 h-3" />
                               </Button>
-                              <span className="text-sm w-8 text-center font-medium text-neutral-900">
+                              <span className="text-sm w-8 text-center font-medium text-gray-100">
                                 {item.quantity}
                               </span>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 w-7 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 rounded-md"
+                                className="h-7 w-7 hover:bg-gray-600 text-gray-300 hover:text-gray-100 rounded-md"
                                 onClick={() => handleUpdateQuantity(item.id, item.color, item.quantity + 1)}
                                 disabled={isItemUpdating}
                               >
@@ -277,21 +276,21 @@ const CartDropdown = () => {
                   </div>
 
                   {/* Summary */}
-                  <div className="border-t border-neutral-100 bg-gradient-to-b from-white to-neutral-50 p-4">
+                  <div className="border-t border-gray-700 bg-gradient-to-b from-gray-800 to-gray-900 p-4">
                     {/* Free Shipping Progress */}
                     {!hasFreeShipping && (
                       <div className="mb-4 space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-neutral-600">
+                          <span className="text-gray-300">
                             {totalPrice < 300000 
                               ? `Faltan ${formatCOP(300000 - totalPrice)} para envío gratuito`
                               : '¡Envío gratuito desbloqueado!'}
                           </span>
-                          <span className="font-medium">{progressPercentage.toFixed(0)}%</span>
+                          <span className="font-medium text-gray-200">{progressPercentage.toFixed(0)}%</span>
                         </div>
-                        <div className="w-full bg-neutral-200 rounded-full h-1.5">
+                        <div className="w-full bg-gray-700 rounded-full h-1.5">
                           <motion.div 
-                            className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
+                            className="h-full bg-gradient-to-r from-gray-500 to-gray-400 rounded-full"
                             initial={{ width: 0 }}
                             animate={{ width: `${progressPercentage}%` }}
                             transition={{ duration: 0.6, ease: "easeOut" }}
@@ -302,11 +301,11 @@ const CartDropdown = () => {
 
                     {/* Free Shipping Banner */}
                     {hasFreeShipping && (
-                      <div className="mb-4 p-3 bg-green-50 border border-green-100 rounded-lg flex items-center space-x-2">
-                        <div className="bg-green-100 p-1.5 rounded-full">
-                          <Sparkles className="w-4 h-4 text-green-600" />
+                      <div className="mb-4 p-3 bg-gray-800 border border-gray-600 rounded-lg flex items-center space-x-2">
+                        <div className="bg-gray-700 p-1.5 rounded-full">
+                          <Sparkles className="w-4 h-4 text-gray-300" />
                         </div>
-                        <p className="text-sm text-green-700">
+                        <p className="text-sm text-gray-200">
                           ¡Felicidades! Tienes envío gratuito
                         </p>
                       </div>
@@ -315,27 +314,27 @@ const CartDropdown = () => {
                     {/* Totals */}
                     <div className="space-y-3 mb-4">
                       <div className="flex justify-between text-sm">
-                        <span className="text-neutral-600">Subtotal</span>
-                        <span className="font-medium">{formatCOP(totalPrice)}</span>
+                        <span className="text-gray-400">Subtotal</span>
+                        <span className="font-medium text-gray-200">{formatCOP(totalPrice)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-neutral-600">Envío</span>
+                        <span className="text-gray-400">Envío</span>
                         <span className="font-medium">
                           {hasFreeShipping ? (
-                            <span className="text-green-600">Gratis</span>
+                            <span className="text-gray-300">Gratis</span>
                           ) : (
-                            <span className="text-neutral-900">Calculado en el pago</span>
+                            <span className="text-gray-200">Calculado en el pago</span>
                           )}
                         </span>
                       </div>
-                      <div className="h-px bg-neutral-100 my-1"></div>
+                      <div className="h-px bg-gray-700 my-1"></div>
                       <div className="flex justify-between text-base font-semibold">
-                        <span>Total</span>
+                        <span className="text-gray-200">Total</span>
                         <motion.span
                           key={`total-${totalPrice}`}
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="text-blue-600"
+                          className="text-gray-100"
                         >
                           {formatCOP(totalPrice)}
                         </motion.span>
@@ -345,7 +344,7 @@ const CartDropdown = () => {
                     {/* Checkout Button */}
                     <Link to="/checkout" onClick={() => setIsOpen(false)} className="block">
                       <Button 
-                        className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5"
+                        className="w-full h-12 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-gray-100 font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5"
                         size="lg"
                       >
                         <span>Pagar ahora</span>
@@ -355,8 +354,8 @@ const CartDropdown = () => {
 
                     {/* Secure Checkout */}
                     <div className="mt-3 text-center">
-                      <p className="text-xs text-neutral-500 flex items-center justify-center space-x-1">
-                        <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <p className="text-xs text-gray-400 flex items-center justify-center space-x-1">
+                        <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                         </svg>
                         <span>Pago seguro • Cifrado SSL</span>

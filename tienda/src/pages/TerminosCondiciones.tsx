@@ -33,8 +33,8 @@ const TerminosCondiciones = () => {
             
             <h2 className="text-2xl font-light text-neutral-900 mb-6 mt-8">4. Envíos y Entregas</h2>
             <p className="text-neutral-600 mb-4">
-              Ofrecemos envío gratuito para pedidos superiores a €300. Los tiempos de entrega estimados 
-              son de 24-48 horas para la península ibérica. Los envíos internacionales pueden tomar más tiempo.
+              Ofrecemos envío gratuito para pedidos superiores a $1.200.000 COP. Los tiempos de entrega estimados 
+              son de 24-48 horas para las principales ciudades de Colombia. Los envíos a zonas rurales pueden tomar más tiempo.
             </p>
             
             <h2 className="text-2xl font-light text-neutral-900 mb-6 mt-8">5. Devoluciones y Reembolsos</h2>
@@ -58,8 +58,8 @@ const TerminosCondiciones = () => {
             
             <h2 className="text-2xl font-light text-neutral-900 mb-6 mt-8">8. Ley Aplicable</h2>
             <p className="text-neutral-600 mb-4">
-              Estos términos se regirán por las leyes de España. Cualquier disputa será resuelta 
-              en los tribunales competentes de Madrid.
+              Estos términos se regirán por las leyes de Colombia. Cualquier disputa será resuelta 
+              en los tribunales competentes de Bogotá.
             </p>
           </div>
         </div>

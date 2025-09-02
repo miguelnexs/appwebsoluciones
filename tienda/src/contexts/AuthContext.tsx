@@ -204,7 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setupAxiosInterceptors(state.tokens, dispatch);
   }, [state.tokens]);
 
-  // Verificar autenticación al cargar con optimizaciones
+  // Verificar autenticación al cargar con optimizaciones y auto-login
   useEffect(() => {
     const checkAuth = async () => {
       if (state.tokens.access) {
@@ -224,12 +224,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           });
         } catch (error) {
-          // Token inválido, limpiar
+          // Token inválido, limpiar e intentar auto-login
           localStorage.removeItem('tienda_access_token');
           localStorage.removeItem('tienda_refresh_token');
           dispatch({ type: AUTH_ACTIONS.LOGOUT });
+          
+          // Intentar auto-login con credenciales predefinidas
+          await attemptAutoLogin();
         }
       } else {
+        // No hay tokens, intentar auto-login
+        await attemptAutoLogin();
+      }
+    };
+
+    const attemptAutoLogin = async () => {
+      try {
+        // Siempre intentar login automático con credenciales predefinidas
+        await login('miguel', 'migel1457');
+      } catch (error) {
+        console.log('Auto-login falló:', error);
         dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
       }
     };

@@ -41,7 +41,15 @@ export function useProductos() {
           headers['Authorization'] = `Bearer ${tokens.access}`;
         }
         
-        const res = await fetch(`${API_CONFIG.API_URL}/productos/productos/?publicos=true`, {
+        // Construir URL con filtros según el estado de autenticación
+        let url = `${API_CONFIG.API_URL}/productos/productos/?publicos=true`;
+        
+        // Si el usuario está autenticado, filtrar solo productos digitales y publicados
+        if (tokens?.access) {
+          url += '&tipo=digital&estado=publicado';
+        }
+        
+        const res = await fetch(url, {
           headers,
         });
         if (!res.ok) throw new Error("Error al obtener productos");
@@ -53,7 +61,7 @@ export function useProductos() {
         const mapped: Product[] = productosRaw.map((p: any) => ({
           id: p.id,
           name: p.nombre,
-          price: `€${p.precio}`,
+          price: `$${new Intl.NumberFormat('es-CO').format(p.precio)} COP`,
           priceNumber: Number(p.precio),
           category: p.categoria?.nombre || "Sin categoría",
           colors: [

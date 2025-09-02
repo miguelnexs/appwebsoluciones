@@ -55,7 +55,7 @@ export function useOptimizedProducts(options?: {
   const mapProduct = React.useCallback((p: any): Product => ({
     id: p.id,
     name: p.nombre,
-    price: `€${p.precio}`,
+    price: `$${new Intl.NumberFormat('es-CO').format(p.precio)} COP`,
     priceNumber: Number(p.precio),
     category: p.categoria?.nombre || "Sin categoría",
     colors: [
@@ -101,6 +101,12 @@ export function useOptimizedProducts(options?: {
         page: pageNum.toString(),
         page_size: PRODUCTS_PER_PAGE.toString(),
       });
+
+      // Si el usuario está autenticado, filtrar solo productos digitales y publicados
+      if (tokens?.access) {
+        params.append('tipo', 'digital');
+        params.append('estado', 'publicado');
+      }
 
       if (categoryFilter) {
         params.append('categoria__nombre', categoryFilter);
@@ -292,8 +298,16 @@ export function useProductPreloader() {
         headers['Authorization'] = `Bearer ${tokens.access}`;
       }
 
+      // Construir URL con filtros para precarga
+      let preloadUrl = `${API_CONFIG.API_URL}/productos/productos/?publicos=true&page_size=50`;
+      
+      // Si el usuario está autenticado, filtrar solo productos digitales y publicados
+      if (tokens?.access) {
+        preloadUrl += '&tipo=digital&estado=publicado';
+      }
+      
       const res = await fetch(
-        `${API_CONFIG.API_URL}/productos/productos/?publicos=true&page_size=50`,
+        preloadUrl,
         { headers, signal: AbortSignal.timeout(10000) }
       );
       
@@ -305,7 +319,7 @@ export function useProductPreloader() {
           const mappedProducts = productosRaw.map((p: any) => ({
             id: p.id,
             name: p.nombre,
-            price: `€${p.precio}`,
+            price: `$${new Intl.NumberFormat('es-CO').format(p.precio)} COP`,
             priceNumber: Number(p.precio),
             category: p.categoria?.nombre || "Sin categoría",
             colors: [{

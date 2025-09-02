@@ -33,7 +33,7 @@ const Header = () => {
         </div>
         
         {/* Carrito y Usuario */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 relative">
           <CartDropdown />
           
           {isAuthenticated ? (

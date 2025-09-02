@@ -60,7 +60,7 @@ const Checkout = () => {
             </div>
             <div className="flex items-center gap-2 text-blue-700">
               <Truck className="w-4 h-4" />
-              <span className="font-medium">Envío Gratis +€300</span>
+              <span className="font-medium">Envío Gratis +$1.200.000 COP</span>
             </div>
             <div className="flex items-center gap-2 text-purple-700">
               <CreditCard className="w-4 h-4" />

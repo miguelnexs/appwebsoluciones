@@ -62,7 +62,7 @@ const BolsosPequenos = () => {
           {products.map((product) => (
             <Link 
               key={product.id}
-              to={`/producto/${product.id}`}
+              to={`/producto/${product.slug}`}
               className="group block"
             >
               <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer">
@@ -71,7 +71,7 @@ const BolsosPequenos = () => {
                     <img 
                       src={product.image} 
                       alt={product.name}
-                      className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-300 group-hover:scale-105"
+                      className="w-full h-full object-contain grayscale-[20%] group-hover:grayscale-0 transition-all duration-300 group-hover:scale-105 bg-gray-50"
                     />
                   </div>
                   <div className="p-6 space-y-3">

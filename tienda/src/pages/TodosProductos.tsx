@@ -65,24 +65,80 @@ export default function TodosProductos() {
   };
   
   const ProductCard = ({ product }: { product: Product }) => {
-    const mainImage = product.colors[0]?.images[0];
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isHovering, setIsHovering] = useState(false);
+    
+    // Crear array de todas las imágenes disponibles de todos los colores
+    const allImages = useMemo(() => {
+      const images: { url: string; colorName: string; colorIndex: number }[] = [];
+      product.colors.forEach((color, colorIndex) => {
+        if (color.images && color.images.length > 0) {
+          images.push({
+            url: color.images[0], // Tomar la primera imagen de cada color
+            colorName: color.name,
+            colorIndex
+          });
+        }
+      });
+      return images;
+    }, [product.colors]);
+    
+    const currentImage = allImages[currentImageIndex]?.url || product.colors[0]?.images[0];
+    
+    // Función para cambiar a la siguiente imagen al hacer hover
+    const handleMouseEnter = () => {
+      setIsHovering(true);
+      if (allImages.length > 1) {
+        const nextIndex = (currentImageIndex + 1) % allImages.length;
+        setCurrentImageIndex(nextIndex);
+      }
+    };
+    
+    const handleMouseLeave = () => {
+      setIsHovering(false);
+      // Volver a la primera imagen después de un pequeño delay
+      setTimeout(() => {
+        if (!isHovering) {
+          setCurrentImageIndex(0);
+        }
+      }, 150);
+    };
     
     if (viewMode === 'list') {
       return (
         <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 mb-4" 
-              onClick={() => navigate(`/producto/${product.id}`)}>
+              onClick={() => navigate(`/producto/${product.slug}`)}>
           <CardContent className="p-4 flex items-center gap-4">
-            <img 
-              src={mainImage} 
-              alt={product.name}
-              className="w-24 h-24 object-cover rounded-md"
-            />
+            <div 
+              className="relative overflow-hidden rounded-md bg-gray-50"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <img 
+                src={currentImage} 
+                alt={product.name}
+                className="w-24 h-24 object-contain transition-all duration-500 ease-in-out transform hover:scale-105"
+              />
+              {allImages.length > 1 && (
+                <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {currentImageIndex + 1}/{allImages.length}
+                </div>
+              )}
+            </div>
             <div className="flex-1">
               <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
               <p className="text-muted-foreground mb-2">{product.category}</p>
               <div className="flex items-center gap-2 mb-2">
                 {product.colors.map((color, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs">
+                  <Badge 
+                    key={index} 
+                    variant={index === allImages[currentImageIndex]?.colorIndex ? "default" : "secondary"} 
+                    className={`text-xs transition-all duration-300 ${
+                      index === allImages[currentImageIndex]?.colorIndex 
+                        ? 'ring-2 ring-primary ring-offset-1' 
+                        : ''
+                    }`}
+                  >
                     {color.name}
                   </Badge>
                 ))}
@@ -99,23 +155,45 @@ export default function TodosProductos() {
     
     return (
       <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 group" 
-            onClick={() => navigate(`/producto/${product.id}`)}>
+            onClick={() => navigate(`/producto/${product.slug}`)}>
         <CardContent className="p-0">
-          <div className="relative overflow-hidden rounded-t-lg">
+          <div 
+            className="relative overflow-hidden rounded-t-lg"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
             <img 
-              src={mainImage} 
+              src={currentImage} 
               alt={product.name}
-              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+              className="w-full h-48 object-contain group-hover:scale-105 transition-all duration-500 ease-in-out bg-gray-50"
             />
             <div className="absolute top-2 right-2">
               <Badge variant="secondary">{product.category}</Badge>
             </div>
+            {allImages.length > 1 && (
+              <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                {allImages[currentImageIndex]?.colorName || 'Color'}
+              </div>
+            )}
+            {allImages.length > 1 && (
+              <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                {currentImageIndex + 1}/{allImages.length}
+              </div>
+            )}
           </div>
           <div className="p-4">
             <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
             <div className="flex items-center gap-1 mb-2">
               {product.colors.map((color, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
+                <Badge 
+                  key={index} 
+                  variant={index === allImages[currentImageIndex]?.colorIndex ? "default" : "outline"} 
+                  className={`text-xs transition-all duration-300 ${
+                    index === allImages[currentImageIndex]?.colorIndex 
+                      ? 'ring-2 ring-primary ring-offset-1 scale-105' 
+                      : ''
+                  }`}
+                >
                   {color.name}
                 </Badge>
               ))}

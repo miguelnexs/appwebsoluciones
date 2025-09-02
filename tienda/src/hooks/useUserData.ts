@@ -146,9 +146,9 @@ export const usePersonalizedProducts = () => {
         return response.data;
       }
 
-      // Si está autenticado, obtener productos personalizados
+      // Si está autenticado, obtener productos digitales y publicados
       const response = await axios.get(
-        `${API_CONFIG.API_URL}/productos/personalized/`,
+        `${API_CONFIG.API_URL}/productos/productos/?publicos=true&tipo=digital&estado=publicado`,
         {
           headers: {
             'Authorization': `Bearer ${tokens.access}`,

@@ -46,7 +46,7 @@ const Carpetas = () => {
           {products.map((product) => (
             <Link 
               key={product.id}
-              to={`/producto/${product.id}`}
+              to={`/producto/${product.slug}`}
               className="group block"
             >
               <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer">

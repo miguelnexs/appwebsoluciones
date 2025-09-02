@@ -58,7 +58,7 @@ const Index = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold mb-1">
-                  ¡Hola, {user.first_name || user.username}! 👋
+                  ¡Hola, {user.first_name || user.username}!
                 </h2>
                 <p className="text-blue-100">
                   Bienvenido de vuelta a {user.tienda?.nombre || 'tu tienda personalizada'}
@@ -91,34 +91,30 @@ const Index = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {recommendations.slice(0, 4).map((producto: any) => (
-              <Card key={producto.id} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-sm">
-                <CardContent className="p-0">
-                  <Link to={`/producto/${producto.slug}`}>
-                    <div className="aspect-square overflow-hidden rounded-t-lg">
+              <div key={producto.id} className="group">
+                <Link to={`/producto/${producto.slug}`}>
+                  <div className="aspect-square overflow-hidden bg-gray-50 mb-3">
                       <img 
                         src={producto.imagen ? getImageUrl(producto.imagen) : '/placeholder-product.jpg'} 
                         alt={producto.nombre}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                    </div>
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
-                          Recomendado
-                        </Badge>
-                      </div>
-                      <h3 className="font-medium text-neutral-900 mb-2 line-clamp-2">{producto.nombre}</h3>
-                      <p className="text-lg font-bold text-neutral-900">
-                        {new Intl.NumberFormat('es-CO', {
-                          style: 'currency',
-                          currency: 'COP',
-                          minimumFractionDigits: 0,
-                        }).format(producto.precio)}
-                      </p>
-                    </div>
-                  </Link>
-                </CardContent>
-              </Card>
+                  </div>
+                  <div className="space-y-2">
+                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                      Recomendado
+                    </Badge>
+                    <h3 className="font-medium text-neutral-900 line-clamp-2">{producto.nombre}</h3>
+                    <p className="text-lg font-bold text-neutral-900">
+                      {new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0,
+                      }).format(producto.precio)}
+                    </p>
+                  </div>
+                </Link>
+              </div>
             ))}
           </div>
           
@@ -133,59 +129,112 @@ const Index = () => {
       )}
 
       {/* Categories Grid (catálogos visuales) */}
-      <section className="container mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-light text-neutral-900 tracking-wide mb-4">
-            {isAuthenticated && user?.tienda ? `Productos de ${user.tienda.nombre}` : 'Tus CG Indispensables'}
-          </h2>
-          <div className="w-24 h-px bg-neutral-300 mx-auto mb-6"></div>
-          <Link to="/todos-productos">
-            <Button className="bg-neutral-900 hover:bg-neutral-800 text-white px-8 py-3 text-sm font-medium tracking-wider rounded-sm">
-              VER TODOS LOS PRODUCTOS
-            </Button>
-          </Link>
-        </div>
-        {loadingCategorias && <div className="text-center text-neutral-500 py-8">Cargando categorías...</div>}
-        {errorCategorias && <div className="text-center text-red-500 py-8">{errorCategorias}</div>}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-          {categorias.slice(0, 4).map((cat) => (
-            <Link
-              key={cat.slug}
-              to={`/categoria/${cat.slug}`}
-            >
-              {/* El div y img están correctamente usados en JSX, pero asegúrate de que no haya errores de sintaxis ni etiquetas mal cerradas */}
-              <div className={`group relative h-80 rounded-lg overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 shadow-sm hover:shadow-md transition-all duration-300`}>
-                {cat.imagen_url && (
-                  <img
-                    src={cat.imagen_url}
-                    alt={cat.nombre}
-                    className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110"
-                  />
-                )}
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-all duration-300">
-                  <div className="absolute bottom-6 left-6">
-                    <h3 className="text-2xl font-medium text-white tracking-wide mb-2">
-                      {cat.nombre}
-                    </h3>
-                    <span className="inline-block bg-white/90 text-neutral-900 px-4 py-1 text-sm font-medium tracking-wider rounded-sm">
-                      VER COLECCIÓN
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-        {categorias.length > 4 && (
-          <div className="text-center mb-8">
-            <Link to="/todas-categorias">
-              <Button className="bg-neutral-900 hover:bg-neutral-800 text-white px-8 py-3 text-sm font-medium tracking-wider rounded-sm">
-                VER TODAS LAS CATEGORÍAS
+      <section className="relative py-20 bg-gradient-to-br from-slate-50 via-white to-blue-50">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.05),transparent_50%)] pointer-events-none"></div>
+        <div className="container mx-auto px-6 relative">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+              Explora Nuestras Colecciones
+            </div>
+            <h2 className="text-5xl font-light text-neutral-900 tracking-wide mb-6">
+              {isAuthenticated && user?.tienda ? `Productos de ${user.tienda.nombre}` : 'Tus CG Indispensables'}
+            </h2>
+            <p className="text-lg text-neutral-600 max-w-2xl mx-auto mb-8">
+              Descubre nuestras categorías cuidadosamente seleccionadas para ofrecerte la mejor experiencia de compra
+            </p>
+            <div className="w-32 h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent mx-auto mb-8"></div>
+            <Link to="/todos-productos">
+              <Button className="bg-gradient-to-r from-neutral-900 to-neutral-700 hover:from-neutral-800 hover:to-neutral-600 text-white px-10 py-4 text-sm font-medium tracking-wider rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                VER TODOS LOS PRODUCTOS
               </Button>
             </Link>
           </div>
-        )}
+          
+          {loadingCategorias && (
+            <div className="text-center py-12">
+              <div className="inline-flex items-center gap-3 text-neutral-500">
+                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                Cargando categorías...
+              </div>
+            </div>
+          )}
+          
+          {errorCategorias && (
+            <div className="text-center py-12">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+                <p className="text-red-600">{errorCategorias}</p>
+              </div>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 mb-16">
+            {categorias.slice(0, 4).map((cat, index) => (
+              <Link
+                key={cat.slug}
+                to={`/categoria/${cat.slug}`}
+                className="group block"
+              >
+                <div className="relative h-80 rounded-2xl overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
+                  {cat.imagen_url && (
+                    <img
+                      src={cat.imagen_url}
+                      alt={cat.nombre}
+                      className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/70 transition-all duration-300">
+                    <div className="absolute bottom-6 left-6 right-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">{index + 1}</span>
+                        </div>
+                        <div className="h-px bg-white/30 flex-1"></div>
+                      </div>
+                      <h3 className="text-2xl font-semibold text-white tracking-wide mb-3 group-hover:text-blue-100 transition-colors duration-300">
+                        {cat.nombre}
+                      </h3>
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm text-neutral-900 px-4 py-2 text-sm font-medium tracking-wider rounded-lg group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
+                          VER COLECCIÓN
+                          <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          
+          {categorias.length > 4 && (
+            <div className="text-center mb-8">
+              <Link to="/todas-categorias">
+                <Button className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-10 py-4 text-sm font-medium tracking-wider rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                  <span className="flex items-center gap-2">
+                    VER TODAS LAS CATEGORÍAS
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </span>
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
 
+      {/* Products Section */}
+      <section className="container mx-auto px-6 py-12">
         {loading && <div className="text-center text-neutral-500 py-12">Cargando productos...</div>}
         {error && <div className="text-center text-red-500 py-12">{error}</div>}
         {!loading && !error && categories.length === 0 && (
@@ -195,42 +244,36 @@ const Index = () => {
         {/* Products by Category */}
         {categories.map((category) => (
           <div key={category} className="mb-16">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-light text-neutral-900 tracking-wide mb-4">
+            <div className="text-center mb-12">
+              <h3 className="text-3xl font-extralight text-neutral-800 tracking-wider mb-6 relative">
                 {category}
+                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-20 h-0.5 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
               </h3>
-              <div className="w-16 h-px bg-neutral-300 mx-auto"></div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               {grouped[category].map((product) => (
-                <Link 
-                  key={product.id}
-                  to={`/producto/${product.slug}`}
-                  className="group block"
-                >
-                  <Card className="border-0 shadow-none group cursor-pointer">
-                    <CardContent className="p-0">
-                      <div className="aspect-square bg-neutral-100 mb-4 overflow-hidden rounded-lg">
+                <div key={product.id} className="group">
+                  <Link to={`/producto/${product.slug}`}>
+                    <div className="aspect-square overflow-hidden bg-gray-50 mb-3">
                         <img 
-                          src={product.colors[0]?.images[0] || ''} 
+                          src={product.colors[0]?.images[0] || '/placeholder-product.jpg'} 
                           alt={product.name}
-                          className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300 group-hover:scale-105"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
-                      </div>
-                      <div className="space-y-1 text-center">
-                        <h4 className="text-sm font-medium text-neutral-900 tracking-wide">
-                          {product.name}
-                        </h4>
-                        <p className="text-xs text-neutral-500 uppercase tracking-wider">
-                          {category}
-                        </p>
-                        <p className="text-sm font-semibold text-neutral-900">
-                          {product.price}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                    </div>
+                    <div className="space-y-2 text-center">
+                      <h4 className="text-base font-medium text-neutral-800 tracking-wide group-hover:text-neutral-900 transition-colors duration-300">
+                        {product.name}
+                      </h4>
+                      <p className="text-xs text-neutral-400 uppercase tracking-widest font-light">
+                        {category}
+                      </p>
+                      <p className="text-lg font-semibold text-neutral-900">
+                        {product.price}
+                      </p>
+                    </div>
+                  </Link>
+                </div>
               ))}
             </div>
           </div>
@@ -278,7 +321,7 @@ const Index = () => {
                 Envíos Gratuitos
               </h3>
               <p className="text-xs text-neutral-600 leading-relaxed">
-                Entrega en 24-48h para pedidos superiores a €300
+                Entrega en 24-48h para pedidos superiores a $1.200.000 COP
               </p>
               <div className="text-xs text-neutral-400 font-mono">
                 Metric heathesion: 0.95
@@ -389,7 +432,7 @@ const Index = () => {
               © 2024 cgcaroGonzalez. Todos los derechos reservados.
             </p>
             <div className="text-xs text-neutral-600 font-mono mt-2">
-              Technical coefficient: α = 1.618 | Performance index: 94.2%
+              Technical coefficient: alpha = 1.618 | Performance index: 94.2%
             </div>
           </div>
         </div>

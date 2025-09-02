@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useParams, Link } from "react-router-dom";
 import { API_CONFIG, getImageUrlWithFallback } from '../config/api';
+import { useAuth } from '../contexts/AuthContext';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ interface Categoria {
 
 const CategoriaPage = () => {
   const { slug } = useParams();
+  const { tokens } = useAuth();
   const [categoria, setCategoria] = React.useState<Categoria | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -38,7 +40,24 @@ const CategoriaPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_CONFIG.API_URL}/categorias/${slug}/`);
+        // Construir URL con filtros según el estado de autenticación
+        let url = `${API_CONFIG.API_URL}/categorias/${slug}/`;
+        
+        // Si el usuario está autenticado, agregar filtros para productos digitales
+        if (tokens?.access) {
+          url += '?tipo_producto=digital&estado_producto=publicado';
+        }
+        
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Agregar token de autenticación si está disponible
+        if (tokens?.access) {
+          headers['Authorization'] = `Bearer ${tokens.access}`;
+        }
+        
+        const res = await fetch(url, { headers });
         if (!res.ok) throw new Error("No se pudo cargar la categoría");
         const data = await res.json();
         setCategoria(data);
@@ -49,7 +68,7 @@ const CategoriaPage = () => {
       }
     }
     if (slug) fetchCategoria();
-  }, [slug]);
+  }, [slug, tokens?.access]);
 
   // Filtrado de productos
   const productosFiltrados = React.useMemo(() => {
@@ -137,7 +156,7 @@ const CategoriaPage = () => {
                         <OptimizedImage
                           src={prod.imagen_principal_url}
                           alt={prod.nombre}
-                          className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-300 group-hover:scale-105"
+                          className="w-full h-full object-contain grayscale-[20%] group-hover:grayscale-0 transition-all duration-300 group-hover:scale-105"
                           fallbackSrc="/placeholder-product.jpg"
                         />
                       )}
@@ -147,7 +166,7 @@ const CategoriaPage = () => {
                         {prod.nombre}
                       </h4>
                       <p className="text-lg font-semibold text-neutral-900">
-                        €{prod.precio}
+                        ${new Intl.NumberFormat('es-CO').format(Number(prod.precio))} COP
                       </p>
                     </div>
                   </CardContent>
@@ -161,4 +180,4 @@ const CategoriaPage = () => {
   );
 };
 
-export default CategoriaPage; 
+export default CategoriaPage;

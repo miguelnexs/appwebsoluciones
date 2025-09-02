@@ -7,8 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, Heart, Share2, Star, Truck, Shield, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import FreeShippingBar from "@/components/FreeShippingBar";
-import CartDropdown from "@/components/CartDropdown";
 
 interface ImagenColor {
   id: number;
@@ -41,6 +41,7 @@ const ProductoDetalle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addItem } = useCart();
+  const { tokens } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +55,17 @@ const ProductoDetalle = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_CONFIG.API_URL}/productos/productos/${slug}/`);
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+        
+        if (tokens?.access) {
+          headers['Authorization'] = `Bearer ${tokens.access}`;
+        }
+        
+        const res = await fetch(`${API_CONFIG.API_URL}/productos/productos/${slug}/`, {
+          headers
+        });
         const data = await res.json();
         if (!res.ok || data.error) {
           setError(data.error || "No se pudo cargar el producto");
@@ -79,7 +90,7 @@ const ProductoDetalle = () => {
       }
     }
     if (slug) fetchProducto();
-  }, [slug]);
+  }, [slug, tokens?.access]);
 
   // Cambia el color seleccionado y navega a la imagen principal de ese color
   const handleColorSelect = (colorId: number) => {
@@ -199,9 +210,9 @@ const ProductoDetalle = () => {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Header simple */}
+      {/* Botón de volver */}
       <div className="bg-white border-b border-neutral-200 py-4 px-6">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <Button 
             variant="ghost" 
             onClick={() => navigate('/')} 
@@ -210,10 +221,6 @@ const ProductoDetalle = () => {
             <ArrowLeft className="w-4 h-4" />
             Volver
           </Button>
-          <h1 className="text-xl font-light tracking-wide text-neutral-900">
-            cgcaroGonzalez
-          </h1>
-          <CartDropdown />
         </div>
       </div>
 
@@ -229,7 +236,7 @@ const ProductoDetalle = () => {
                     key={selectedImageIdx}
                     src={galleryImages[selectedImageIdx].url}
                     alt={producto.nombre}
-                    className={`w-full h-full object-cover transition-opacity duration-500 ease-in-out ${fade ? 'opacity-0' : 'opacity-100'}`}
+                    className={`w-full h-full object-contain transition-opacity duration-500 ease-in-out ${fade ? 'opacity-0' : 'opacity-100'}`}
                     onLoad={() => setFade(false)}
                     fallbackSrc="/placeholder-product.jpg"
                   />
@@ -282,7 +289,7 @@ const ProductoDetalle = () => {
                     <OptimizedImage
                       src={thumb.url}
                       alt={`Miniatura ${idx + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain bg-gray-50"
                       fallbackSrc="/placeholder-thumbnail.jpg"
                     />
                   </button>
@@ -301,7 +308,7 @@ const ProductoDetalle = () => {
                 {producto.nombre}
               </h1>
               <p className="text-2xl font-semibold text-neutral-900 mb-6">
-                €{producto.precio}
+                ${new Intl.NumberFormat('es-CO').format(Number(producto.precio))} COP
               </p>
             </div>
 
@@ -371,7 +378,7 @@ const ProductoDetalle = () => {
                   className="w-full bg-neutral-900 hover:bg-neutral-800 text-white py-3"
                   disabled={producto.stock === 0}
                 >
-                  Agregar al carrito - €{producto.precio}
+                  Agregar al carrito - ${new Intl.NumberFormat('es-CO').format(Number(producto.precio))} COP
                 </Button>
               </div>
             </div>
