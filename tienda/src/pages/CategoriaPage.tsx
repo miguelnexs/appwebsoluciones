@@ -7,6 +7,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, DollarSign } from "lucide-react";
+import ColorDisplay from '../components/ColorDisplay';
+import { productService, ColorProducto } from '../services/productService';
+import { ProductColor } from '../hooks/useProductos';
 
 interface ProductoVinculado {
   id: number;
@@ -14,6 +17,7 @@ interface ProductoVinculado {
   nombre: string;
   precio: string;
   imagen_principal_url?: string;
+  colors?: ProductColor[];
 }
 
 interface Categoria {
@@ -60,6 +64,55 @@ const CategoriaPage = () => {
         const res = await fetch(url, { headers });
         if (!res.ok) throw new Error("No se pudo cargar la categoría");
         const data = await res.json();
+        
+        // Obtener colores para cada producto
+        if (data.productos_vinculados && data.productos_vinculados.length > 0) {
+          const productosConColores = await Promise.all(
+            data.productos_vinculados.map(async (producto: ProductoVinculado) => {
+              try {
+                const colores = await productService.obtenerColoresPublicos(producto.id);
+                
+                let productColors: ProductColor[] = [];
+                
+                if (colores && colores.length > 0) {
+                  productColors = colores.map((color: ColorProducto) => ({
+                    name: color.nombre,
+                    hex_code: color.hex_code,
+                    images: color.imagenes && color.imagenes.length > 0 
+                      ? color.imagenes.map(img => img.url_imagen)
+                      : producto.imagen_principal_url ? [producto.imagen_principal_url] : []
+                  }));
+                } else {
+                  productColors = [
+                    {
+                      name: "Único",
+                      images: producto.imagen_principal_url ? [producto.imagen_principal_url] : [],
+                    },
+                  ];
+                }
+                
+                return {
+                  ...producto,
+                  colors: productColors
+                };
+              } catch (error) {
+                console.warn(`Error obteniendo colores para producto ${producto.id}:`, error);
+                return {
+                  ...producto,
+                  colors: [
+                    {
+                      name: "Único",
+                      images: producto.imagen_principal_url ? [producto.imagen_principal_url] : [],
+                    },
+                  ]
+                };
+              }
+            })
+          );
+          
+          data.productos_vinculados = productosConColores;
+        }
+        
         setCategoria(data);
       } catch (e: any) {
         setError(e.message);
@@ -146,34 +199,47 @@ const CategoriaPage = () => {
         {productosFiltrados.length === 0 ? (
           <div className="text-neutral-500 text-lg">No hay productos que coincidan con los filtros.</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            {productosFiltrados.map((prod) => (
-              <Link key={prod.id} to={`/producto/${prod.slug}`} className="group block">
-                <Card className="border-0 shadow-md group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white/95">
-                  <CardContent className="p-0">
-                    <div className="aspect-square bg-neutral-100 mb-4 overflow-hidden rounded-t-lg">
-                      {prod.imagen_principal_url && (
-                        <OptimizedImage
-                          src={prod.imagen_principal_url}
-                          alt={prod.nombre}
-                          className="w-full h-full object-contain grayscale-[20%] group-hover:grayscale-0 transition-all duration-300 group-hover:scale-105"
-                          fallbackSrc="/placeholder-product.jpg"
-                        />
-                      )}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {productosFiltrados.map((prod) => (
+            <div key={prod.id} className="group">
+              <Link to={`/producto/${prod.slug}`}>
+                <div className="aspect-square overflow-hidden bg-gray-50 mb-3">
+                  {prod.imagen_principal_url ? (
+                    <OptimizedImage
+                      src={prod.imagen_principal_url}
+                      alt={prod.nombre}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-50 flex items-center justify-center">
+                      <span className="text-gray-400">Sin imagen</span>
                     </div>
-                    <div className="p-6 space-y-2 text-center">
-                      <h4 className="text-lg font-medium text-neutral-900 tracking-wide group-hover:text-neutral-700 transition-colors">
-                        {prod.nombre}
-                      </h4>
-                      <p className="text-lg font-semibold text-neutral-900">
-                        ${new Intl.NumberFormat('es-CO').format(Number(prod.precio))} COP
-                      </p>
+                  )}
+                </div>
+                <div className="space-y-2 text-center">
+                  <h4 className="text-base font-medium text-neutral-800 tracking-wide group-hover:text-neutral-900 transition-colors duration-300">
+                    {prod.nombre}
+                  </h4>
+                  <p className="text-xs text-neutral-400 uppercase tracking-widest font-light">
+                    {categoria?.nombre || 'Producto'}
+                  </p>
+                  <p className="text-lg font-semibold text-neutral-900">
+                    {new Intl.NumberFormat('es-CO', {
+                      style: 'currency',
+                      currency: 'COP',
+                      minimumFractionDigits: 0,
+                    }).format(prod.precio)}
+                  </p>
+                  {prod.colors && (
+                    <div className="flex justify-center mt-2">
+                      <ColorDisplay colors={prod.colors} maxColors={4} size="sm" />
                     </div>
-                  </CardContent>
-                </Card>
+                  )}
+                </div>
               </Link>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
         )}
       </div>
     </div>

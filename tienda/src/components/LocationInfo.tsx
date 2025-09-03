@@ -11,10 +11,10 @@ const LocationInfo = () => {
           <div className="flex items-start gap-3">
             <MapPin className="w-5 h-5 text-neutral-600 mt-1" />
             <div>
-              <h3 className="font-semibold text-neutral-900 mb-1">Nuestra Tienda</h3>
+              <h3 className="font-semibold text-neutral-900 mb-1">Carolina González Sarta</h3>
               <p className="text-neutral-700 text-sm leading-relaxed">
-                Carrera 7 #17-45<br />
-                Pereira, Risaralda<br />
+                NIT: 1088297299-0<br />
+                Cra 7 # 15-57, Local 101<br />
                 Colombia
               </p>
             </div>
@@ -36,13 +36,13 @@ const LocationInfo = () => {
             <Phone className="w-5 h-5 text-neutral-600 mt-1" />
             <div>
               <h4 className="font-medium text-neutral-900 mb-1">Contacto</h4>
-              <p className="text-sm text-neutral-700">+57 300 123 4567</p>
+              <p className="text-sm text-neutral-700">314 7435305</p>
             </div>
           </div>
 
           <div className="pt-3 border-t border-neutral-200">
             <a
-              href="https://maps.google.com?q=Carrera+7+17-45+Pereira+Colombia"
+              href="https://maps.google.com?q=Cra+7+15-57+Local+101+Colombia"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm font-medium text-neutral-900 hover:text-neutral-700 transition-colors"

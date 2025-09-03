@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Menu, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -8,7 +8,7 @@ import { useCategorias } from "../hooks/useCategorias";
 
 const HamburgerMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isComplementosOpen, setIsComplementosOpen] = useState(false);
+
   const { categorias, loading } = useCategorias();
 
   const closeMenu = () => setIsOpen(false);
@@ -44,62 +44,7 @@ const HamburgerMenu = () => {
                   </Link>
                 </li>
               ))}
-              {/* Complementos con submenú */}
-              <li>
-                <div className="space-y-1">
-                  <button
-                    onClick={() => setIsComplementosOpen(!isComplementosOpen)}
-                    className="w-full flex items-center justify-between py-3 px-2 text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 rounded-md transition-colors"
-                  >
-                    <span>Complementos</span>
-                    {isComplementosOpen ? (
-                      <ChevronDown className="w-4 h-4" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4" />
-                    )}
-                  </button>
-                  {isComplementosOpen && (
-                    <ul className="ml-4 space-y-1 border-l border-neutral-200 pl-4">
-                      <li>
-                        <Link 
-                          to="/carpetas" 
-                          className="block py-2 px-2 text-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 rounded-md transition-colors"
-                          onClick={closeMenu}
-                        >
-                          Carpetas
-                        </Link>
-                      </li>
-                      <li>
-                        <Link 
-                          to="/pasaporte-guarda" 
-                          className="block py-2 px-2 text-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 rounded-md transition-colors"
-                          onClick={closeMenu}
-                        >
-                          Pasaporte Guarda
-                        </Link>
-                      </li>
-                      <li>
-                        <Link 
-                          to="/cosmeteria" 
-                          className="block py-2 px-2 text-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 rounded-md transition-colors"
-                          onClick={closeMenu}
-                        >
-                          Cosmetería
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
-                </div>
-              </li>
-              <li>
-                <Link 
-                  to="/ventas" 
-                  className="block py-3 px-2 text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 rounded-md transition-colors"
-                  onClick={closeMenu}
-                >
-                  Ventas
-                </Link>
-              </li>
+
             </ul>
             
             <div className="mt-8 pt-6 border-t border-neutral-200">

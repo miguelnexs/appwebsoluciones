@@ -54,7 +54,7 @@ const CheckoutForm = () => {
   const { crearVentaRapida, isLoading } = useVentaRapida();
   
   const subtotal = getTotalPrice();
-  const deliveryCost = deliveryMethod === 'home' ? (subtotal >= 300 ? 0 : 15) : 0;
+  const deliveryCost = deliveryMethod === 'home' ? (subtotal >= 300000 ? 0 : 10000) : 0;
   const total = subtotal + deliveryCost;
 
   const validateField = (name: string, value: string) => {
@@ -261,10 +261,10 @@ const CheckoutForm = () => {
                         <div>
                           <p className="font-medium text-sm">Envío a domicilio</p>
                           <p className="text-xs text-neutral-500">
-                            {subtotal >= 300 ? (
+                            {subtotal >= 300000 ? (
                               <span className="text-green-600">Gratis</span>
                             ) : (
-                              <span>$60.000 COP</span>
+                              <span>$10.000 COP</span>
                             )} - Entrega en 24-48h
                           </p>
                         </div>
@@ -336,7 +336,7 @@ const CheckoutForm = () => {
                     <span className="text-neutral-600">Envío:</span>
                     <span className={`font-medium ${deliveryCost === 0 ? 'text-green-600' : ''}`}>{deliveryCost === 0 ? 'Gratis' : `$${new Intl.NumberFormat('es-CO').format(deliveryCost)} COP`}</span>
                   </div>
-                  {subtotal >= 300 && deliveryMethod === 'home' && (
+                  {subtotal >= 300000 && deliveryMethod === 'home' && (
                     <div className="text-xs text-green-700 bg-green-50 p-2 rounded border border-green-200">
                       Envío gratuito aplicado
                     </div>

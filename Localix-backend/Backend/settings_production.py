@@ -25,11 +25,18 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Solo para desarrollo local
     "http://127.0.0.1:3000",
+    "http://localhost:5173",  # Vite por defecto
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",  # Vite puerto alternativo
+    "http://127.0.0.1:5174",
     "http://72.60.7.133",  # IP del servidor VPS
     "https://72.60.7.133",  # IP del servidor VPS con HTTPS
     "http://www.72.60.7.133",
     "https://www.72.60.7.133",
-    # Agregar aquí tu dominio real cuando lo tengas
+    "http://softwarebycg.shop",  # URL de producción
+    "https://softwarebycg.shop",  # URL de producción con HTTPS
+    "http://www.softwarebycg.shop",
+    "https://www.softwarebycg.shop",
 ]
 
 # Headers CORS más restrictivos
@@ -186,8 +193,8 @@ SIMPLE_JWT = {
 
 # Configuración de archivos más restrictiva
 FILE_UPLOAD_PERMISSIONS = 0o600  # Más restrictivo
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB máximo
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB máximo
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB máximo
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB máximo
 
 # Configuración de caché para producción (usar Redis en producción real)
 CACHES = {

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import FreeShippingBar from "@/components/FreeShippingBar";
+import ProductSpecifications from "@/components/ProductSpecifications";
 
 interface ImagenColor {
   id: number;
@@ -32,7 +33,7 @@ interface ProductoBackend {
   descripcion_larga: string;
   imagen_principal_url?: string;
   stock: number;
-  categoria?: { nombre: string };
+  categoria?: { nombre: string; slug: string };
   colores?: ColorProducto[];
 }
 
@@ -210,17 +211,30 @@ const ProductoDetalle = () => {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Botón de volver */}
+      {/* Breadcrumb */}
       <div className="bg-white border-b border-neutral-200 py-4 px-6">
         <div className="max-w-7xl mx-auto">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/')} 
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Volver
-          </Button>
+          <nav className="flex items-center space-x-2 text-sm text-neutral-600">
+             <button 
+               onClick={() => navigate('/')}
+               className="hover:text-neutral-900 transition-colors cursor-pointer"
+             >
+               Home
+             </button>
+             <span>/</span>
+             {producto?.categoria && (
+               <>
+                 <button 
+                   onClick={() => navigate(`/categoria/${producto.categoria.slug}`)}
+                   className="text-neutral-900 hover:text-neutral-700 transition-colors cursor-pointer"
+                 >
+                   {producto.categoria.nombre}
+                 </button>
+                 <span>/</span>
+               </>
+             )}
+             <span className="text-neutral-900 font-medium">{producto?.nombre}</span>
+           </nav>
         </div>
       </div>
 
@@ -315,23 +329,19 @@ const ProductoDetalle = () => {
             {/* Selector de colores */}
             {producto.colores && producto.colores.length > 0 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-neutral-900">Color:</h3>
+                <h3 className="text-lg font-medium text-neutral-900">Color</h3>
                 <div className="flex gap-3">
                   {producto.colores.map((color) => (
                     <button
                       key={color.id}
                       onClick={() => handleColorSelect(color.id)}
-                      className={`px-4 py-2 rounded-md border-2 flex items-center gap-2 transition-colors ${
+                      className={`w-8 h-8 rounded-full transition-all ${
                         selectedColorId === color.id
-                          ? 'border-neutral-900 bg-neutral-900 text-white'
-                          : 'border-neutral-300 bg-white text-neutral-900 hover:border-neutral-500'
+                          ? 'ring-2 ring-neutral-900 ring-offset-2'
+                          : 'hover:ring-2 hover:ring-neutral-400 hover:ring-offset-1'
                       }`}
+                      style={{ backgroundColor: color.hex_code }}
                     >
-                      <span
-                        className="inline-block w-5 h-5 rounded-full border border-neutral-300"
-                        style={{ backgroundColor: color.hex_code }}
-                      ></span>
-                      {color.nombre}
                     </button>
                   ))}
                 </div>
@@ -345,10 +355,13 @@ const ProductoDetalle = () => {
               </p>
             </div>
 
+            {/* Especificaciones del producto */}
+            <ProductSpecifications productoId={producto.id} />
+
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-neutral-900">Stock disponible</h3>
               <p className={producto.stock > 0 ? "text-green-600" : "text-red-500"}>
-                {producto.stock > 0 ? `En stock (${producto.stock} disponibles)` : "Agotado"}
+                {producto.stock > 0 ? `${producto.stock} disponibles` : "Agotado"}
               </p>
             </div>
 
@@ -385,29 +398,7 @@ const ProductoDetalle = () => {
 
             {/* Información de envío */}
             <Card className="border-neutral-200">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Truck className="w-5 h-5 text-neutral-600" />
-                  <div>
-                    <p className="font-medium text-neutral-900">Envío gratuito</p>
-                    <p className="text-sm text-neutral-600">En pedidos superiores a $300.000 COP</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Shield className="w-5 h-5 text-neutral-600" />
-                  <div>
-                    <p className="font-medium text-neutral-900">Garantía extendida</p>
-                    <p className="text-sm text-neutral-600">3 meses de garantía incluida</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <RefreshCw className="w-5 h-5 text-neutral-600" />
-                  <div>
-                    <p className="font-medium text-neutral-900">Devoluciones fáciles</p>
-                    <p className="text-sm text-neutral-600">30 días para devoluciones</p>
-                  </div>
-                </div>
-              </CardContent>
+
             </Card>
           </div>
         </div>

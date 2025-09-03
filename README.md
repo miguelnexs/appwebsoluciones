@@ -140,7 +140,7 @@ ALLOWED_HOSTS=localhost,127.0.0.1
 ```
 
 ### Configuración del Frontend
-El frontend se conecta automáticamente al backend en `http://localhost:8000`. Para cambiar la URL, modificar `src/renderer/src/api/apiConfig.js`.
+El frontend se conecta automáticamente al backend en `http://softwarebycg.shop`. Para cambiar la URL, modificar `src/renderer/src/api/apiConfig.js`.
 
 ## 📖 Uso
 

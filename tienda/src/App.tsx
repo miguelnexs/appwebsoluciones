@@ -27,6 +27,10 @@ import Header from "./components/Header";
 import CookiesNotice from "./components/ui/CookiesNotice";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
+import DivDemo from "./pages/DivDemo";
+import DivCharacteristicsDemo from "./pages/DivCharacteristicsDemo";
+import DashboardDivAnalysisDemo from "./pages/DashboardDivAnalysisDemo";
+import ProductCharacteristicsDemo from "./pages/ProductCharacteristicsDemo";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -60,6 +64,9 @@ const App = () => {
                 <Route path="/terminos-condiciones" element={<TerminosCondiciones />} />
                 <Route path="/producto/:slug" element={<ProductoDetalle />} />
                 <Route path="/categoria/:slug" element={<CategoriaPage />} />
+                <Route path="/div-demo" element={<DivDemo />} />
+                <Route path="/dashboard-analysis" element={<DashboardDivAnalysisDemo />} />
+                <Route path="/product-characteristics" element={<ProductCharacteristicsDemo />} />
                 <Route 
                   path="/login" 
                   element={

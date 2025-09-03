@@ -144,6 +144,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8080",
     "http://localhost:5173",  # Vite por defecto
     "http://127.0.0.1:5173",
+    "http://localhost:5174",  # Vite puerto alternativo
+    "http://127.0.0.1:5174",
     "http://softwarebycg.shop",  # Nueva URL principal
     "https://softwarebycg.shop",  # Nueva URL principal con HTTPS
     "http://www.softwarebycg.shop",
@@ -198,7 +200,7 @@ SECURE_BROWSER_XSS_FILTER = False
 X_FRAME_OPTIONS = 'ALLOW'
 
 # URL del frontend para desarrollo local
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://softwarebycg.shop")
 
 # Configuración JWT
 from datetime import timedelta

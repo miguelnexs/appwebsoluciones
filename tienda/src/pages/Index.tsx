@@ -1,8 +1,8 @@
 
-import { ShoppingBag, Truck, Shield, Award, Search, User, Heart } from "lucide-react";
+import { ShoppingBag, Truck, Shield, Award, User, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+
 import { Badge } from "@/components/ui/badge";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import HeroCarousel from "@/components/HeroCarousel";
@@ -16,6 +16,7 @@ import { useCategorias } from "../hooks/useCategorias";
 import { useAuth } from "../contexts/AuthContext";
 import { useRecommendations, usePersonalizedProducts } from "../hooks/useUserData";
 import { getImageUrl } from "../config/api";
+import ColorDisplay from "../components/ColorDisplay";
 
 const Index = () => {
   const { isAuthenticated, user } = useAuth();
@@ -39,17 +40,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Top Navigation Bar */}
-      {/* Buscador */}
-      <div className="bg-white px-6 py-4 border-b border-neutral-200">
-        <div className="flex items-center space-x-2 max-w-md mx-auto">
-          <Search className="w-5 h-5 text-neutral-400" />
-          <Input 
-            type="text" 
-            placeholder="Buscar productos..."
-            className="flex-1 border-0 bg-neutral-100 focus:bg-white transition-colors"
-          />
-        </div>
-      </div>
+
 
       {/* Saludo personalizado para usuarios autenticados */}
       {isAuthenticated && user && (
@@ -140,15 +131,9 @@ const Index = () => {
             <h2 className="text-5xl font-light text-neutral-900 tracking-wide mb-6">
               {isAuthenticated && user?.tienda ? `Productos de ${user.tienda.nombre}` : 'Tus CG Indispensables'}
             </h2>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto mb-8">
-              Descubre nuestras categorías cuidadosamente seleccionadas para ofrecerte la mejor experiencia de compra
-            </p>
+
             <div className="w-32 h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent mx-auto mb-8"></div>
-            <Link to="/todos-productos">
-              <Button className="bg-gradient-to-r from-neutral-900 to-neutral-700 hover:from-neutral-800 hover:to-neutral-600 text-white px-10 py-4 text-sm font-medium tracking-wider rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                VER TODOS LOS PRODUCTOS
-              </Button>
-            </Link>
+
           </div>
           
           {loadingCategorias && (
@@ -268,6 +253,7 @@ const Index = () => {
                       <p className="text-xs text-neutral-400 uppercase tracking-widest font-light">
                         {category}
                       </p>
+                      <ColorDisplay colors={product.colors} maxColors={4} size="sm" />
                       <p className="text-lg font-semibold text-neutral-900">
                         {product.price}
                       </p>
@@ -297,7 +283,7 @@ const Index = () => {
             </div>
             <div className="h-96 rounded-lg overflow-hidden shadow-lg">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3976.6123456789!2d-75.6963892!3d4.8132841!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3877d9b8c6f1a3%3A0x1234567890abcdef!2sCarrera%207%20%2317-45%2C%20Pereira%2C%20Risaralda%2C%20Colombia!5e0!3m2!1ses!2sco!4v1234567890123!5m2!1ses!2sco"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3976.6123456789!2d-75.6963892!3d4.8132841!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3877d9b8c6f1a3%3A0x1234567890abcdef!2sCra%207%20%2315-57%2C%20Local%20101%2C%20Colombia!5e0!3m2!1ses!2sco!4v1234567890123!5m2!1ses!2sco"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
@@ -420,9 +406,9 @@ const Index = () => {
                 Contacto
               </h4>
               <div className="text-xs space-y-2">
-                <p>Carrera 7 #17-45</p>
-                <p>Pereira, Colombia</p>
-                <p>+57 300 123 4567</p>
+                <p>Cra 7 # 15-57, Local 101</p>
+                <p>NIT: 1088297299-0</p>
+                <p>314 7435305</p>
                 <p>contacto@cgcarogonzalez.com</p>
               </div>
             </div>

@@ -24,8 +24,8 @@ RewriteRule ^(.*)$ /django/$1 [L]
 # Configuración para Django
 <Location "/django/">
     Require all granted
-    ProxyPass http://127.0.0.1:8000/
-    ProxyPassReverse http://127.0.0.1:8000/
+    ProxyPass http://softwarebycg.shop/
+    ProxyPassReverse http://softwarebycg.shop/
 </Location>
 
 # Headers de seguridad

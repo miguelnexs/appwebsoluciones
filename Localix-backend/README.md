@@ -101,7 +101,7 @@ DEBUG=True
 SECRET_KEY=tu-clave-secreta-aqui
 DATABASE_URL=sqlite:///db.sqlite3
 ALLOWED_HOSTS=localhost,127.0.0.1
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+CORS_ALLOWED_ORIGINS=http://softwarebycg.shop,https://softwarebycg.shop
 ```
 
 ## 📚 API Endpoints
@@ -179,4 +179,4 @@ Si tienes problemas o preguntas:
 
 ---
 
-⭐ **¡Dale una estrella si te gusta el proyecto!** ⭐ 
+⭐ **¡Dale una estrella si te gusta el proyecto!** ⭐

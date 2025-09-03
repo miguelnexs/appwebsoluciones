@@ -51,7 +51,11 @@ const PoliticasPrivacidad = () => {
               <br />
               Email: info@cgcarogonzalez.com
               <br />
-              Teléfono: +34 xxx xxx xxx
+              Teléfono: 314 7435305
+              <br />
+              Dirección: Cra 7 # 15-57, Local 101
+              <br />
+              NIT: 1088297299-0
             </p>
           </div>
         </div>

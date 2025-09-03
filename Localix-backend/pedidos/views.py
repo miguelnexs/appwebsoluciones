@@ -9,7 +9,13 @@ from .serializers import (
     ItemPedidoSerializer, HistorialPedidoSerializer, EstadoPedidoSerializer,
     AbonoSerializer, AbonoCreateSerializer
 )
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
+from ventas.models import Cliente, Venta, ItemVenta
+from productos.models import Producto, ColorProducto
+from decimal import Decimal
+import uuid
 
 class PedidoViewSet(viewsets.ModelViewSet):
     queryset = Pedido.objects.all().select_related('cliente', 'venta')
@@ -386,3 +392,252 @@ class AbonoViewSet(viewsets.ModelViewSet):
                 }
         
         return Response(resumen)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def procesar_pedido(request):
+    """
+    Procesa un pedido completo con validación de cliente por DNI.
+    
+    Endpoint: POST /api/pedidos/procesar/
+    
+    Parámetros en el body (JSON):
+    {
+        "cliente": {
+            "nombre": "string",
+            "email": "string" (opcional),
+            "telefono": "string" (opcional),
+            "tipo_documento": "dni|ruc|ce|pasaporte" (default: "dni"),
+            "numero_documento": "string",
+            "direccion": "string" (opcional)
+        },
+        "pedido": {
+            "tipo_venta": "fisica|digital" (default: "digital"),
+            "direccion_entrega": "string" (opcional),
+            "telefono_contacto": "string" (opcional),
+            "instrucciones_entrega": "string" (opcional),
+            "metodo_pago": "efectivo|tarjeta|transferencia|yape|plin|otro" (default: "efectivo"),
+            "notas": "string" (opcional)
+        },
+        "items": [
+            {
+                "producto_id": int,
+                "color_id": int (opcional),
+                "cantidad": int,
+                "precio_unitario": float (opcional, se toma del producto si no se especifica)
+            }
+        ]
+    }
+    
+    Respuesta exitosa:
+    {
+        "success": true,
+        "cliente": {...},  // Datos del cliente (existente o creado)
+        "venta": {...},    // Datos de la venta creada
+        "pedido": {...}    // Datos del pedido creado
+    }
+    """
+    try:
+        with transaction.atomic():
+            data = request.data
+            
+            # Validar datos requeridos
+            if 'cliente' not in data:
+                return Response(
+                    {'error': 'Los datos del cliente son requeridos'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if 'items' not in data or not data['items']:
+                return Response(
+                    {'error': 'Los items del pedido son requeridos'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            cliente_data = data['cliente']
+            pedido_data = data.get('pedido', {})
+            items_data = data['items']
+            
+            # Validar datos mínimos del cliente
+            if not cliente_data.get('nombre'):
+                return Response(
+                    {'error': 'El nombre del cliente es requerido'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not cliente_data.get('numero_documento'):
+                return Response(
+                    {'error': 'El número de documento del cliente es requerido'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # 1. Verificar si el cliente ya existe por DNI
+            numero_documento = cliente_data['numero_documento']
+            tipo_documento = cliente_data.get('tipo_documento', 'dni')
+            
+            cliente = Cliente.objects.filter(
+                usuario=request.user,
+                numero_documento=numero_documento,
+                tipo_documento=tipo_documento
+            ).first()
+            
+            # 2. Crear cliente si no existe
+            if not cliente:
+                cliente = Cliente.objects.create(
+                    usuario=request.user,
+                    nombre=cliente_data['nombre'],
+                    email=cliente_data.get('email', ''),
+                    telefono=cliente_data.get('telefono', ''),
+                    tipo_documento=tipo_documento,
+                    numero_documento=numero_documento,
+                    direccion=cliente_data.get('direccion', '')
+                )
+            else:
+                # Actualizar datos del cliente existente si se proporcionan
+                if cliente_data.get('email'):
+                    cliente.email = cliente_data['email']
+                if cliente_data.get('telefono'):
+                    cliente.telefono = cliente_data['telefono']
+                if cliente_data.get('direccion'):
+                    cliente.direccion = cliente_data['direccion']
+                cliente.save()
+            
+            # 3. Validar y procesar items
+            items_venta = []
+            subtotal_centavos = 0
+            
+            for item_data in items_data:
+                if 'producto_id' not in item_data:
+                    return Response(
+                        {'error': 'El producto_id es requerido para cada item'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                if 'cantidad' not in item_data or item_data['cantidad'] <= 0:
+                    return Response(
+                        {'error': 'La cantidad debe ser mayor a 0 para cada item'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                try:
+                    producto = Producto.objects.get(
+                        id=item_data['producto_id'],
+                        usuario=request.user
+                    )
+                except Producto.DoesNotExist:
+                    return Response(
+                        {'error': f'Producto con ID {item_data["producto_id"]} no encontrado'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Validar color si se especifica
+                color = None
+                if item_data.get('color_id'):
+                    try:
+                        color = ColorProducto.objects.get(
+                            id=item_data['color_id'],
+                            producto=producto
+                        )
+                    except ColorProducto.DoesNotExist:
+                        return Response(
+                            {'error': f'Color con ID {item_data["color_id"]} no encontrado para el producto'}, 
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                
+                # Calcular precio unitario
+                precio_unitario = item_data.get('precio_unitario')
+                if precio_unitario is None:
+                    precio_unitario = producto.precio
+                
+                # Convertir a centavos
+                precio_unitario_centavos = int(precio_unitario * 100)
+                cantidad = item_data['cantidad']
+                subtotal_item_centavos = precio_unitario_centavos * cantidad
+                
+                items_venta.append({
+                    'producto': producto,
+                    'color': color,
+                    'cantidad': cantidad,
+                    'precio_unitario_centavos': precio_unitario_centavos,
+                    'subtotal_centavos': subtotal_item_centavos
+                })
+                
+                subtotal_centavos += subtotal_item_centavos
+            
+            # 4. Crear la venta
+            numero_venta = f'V-{uuid.uuid4().hex[:8].upper()}'
+            
+            venta = Venta.objects.create(
+                usuario=request.user,
+                numero_venta=numero_venta,
+                cliente=cliente,
+                subtotal=subtotal_centavos,
+                total=subtotal_centavos,
+                estado='completada',
+                metodo_pago=pedido_data.get('metodo_pago', 'efectivo')
+            )
+            
+            # 5. Crear items de venta
+            for item_data in items_venta:
+                ItemVenta.objects.create(
+                    venta=venta,
+                    producto=item_data['producto'],
+                    color=item_data['color'],
+                    cantidad=item_data['cantidad'],
+                    subtotal=item_data['subtotal_centavos']
+                )
+            
+            # 6. Crear el pedido
+            numero_pedido = f'PED-{uuid.uuid4().hex[:8].upper()}'
+            
+            pedido = Pedido.objects.create(
+                usuario=request.user,
+                numero_pedido=numero_pedido,
+                cliente=cliente,
+                venta=venta,
+                tipo_venta=pedido_data.get('tipo_venta', 'digital'),
+                estado_pago='pagado',
+                estado_pedido='confirmado',
+                direccion_entrega=pedido_data.get('direccion_entrega', ''),
+                telefono_contacto=pedido_data.get('telefono_contacto', ''),
+                instrucciones_entrega=pedido_data.get('instrucciones_entrega', ''),
+                metodo_pago=pedido_data.get('metodo_pago', 'efectivo'),
+                notas=pedido_data.get('notas', '')
+            )
+            
+            # 7. Crear items de pedido
+            for item_data in items_venta:
+                ItemPedido.objects.create(
+                    pedido=pedido,
+                    producto=item_data['producto'],
+                    color=item_data['color'],
+                    cantidad=item_data['cantidad'],
+                    precio_unitario=Decimal(item_data['precio_unitario_centavos']) / 100,
+                    subtotal=Decimal(item_data['subtotal_centavos']) / 100
+                )
+            
+            # 8. Crear historial inicial del pedido
+            HistorialPedido.objects.create(
+                pedido=pedido,
+                estado_nuevo='confirmado',
+                notas='Pedido creado y confirmado automáticamente',
+                usuario=request.user
+            )
+            
+            # 9. Serializar respuesta
+            from ventas.serializers import ClienteSerializer, VentaSerializer
+            
+            return Response({
+                'success': True,
+                'message': 'Pedido procesado exitosamente',
+                'cliente': ClienteSerializer(cliente).data,
+                'venta': VentaSerializer(venta).data,
+                'pedido': PedidoSerializer(pedido).data
+            }, status=status.HTTP_201_CREATED)
+            
+    except Exception as e:
+        return Response(
+            {'error': f'Error interno del servidor: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

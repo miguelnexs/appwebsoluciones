@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, Shield, Truck, CreditCard } from 'lucide-react';
+import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CheckoutForm from '@/components/CheckoutForm';
 import CartDropdown from '@/components/CartDropdown';
@@ -50,25 +50,7 @@ const Checkout = () => {
         </div>
       </div>
 
-      {/* Banner de seguridad */}
-      <div className="bg-gradient-to-r from-green-50 to-blue-50 border-b border-green-100 py-3 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center gap-6 text-sm">
-            <div className="flex items-center gap-2 text-green-700">
-              <Shield className="w-4 h-4" />
-              <span className="font-medium">Compra 100% Segura</span>
-            </div>
-            <div className="flex items-center gap-2 text-blue-700">
-              <Truck className="w-4 h-4" />
-              <span className="font-medium">Envío Gratis +$1.200.000 COP</span>
-            </div>
-            <div className="flex items-center gap-2 text-purple-700">
-              <CreditCard className="w-4 h-4" />
-              <span className="font-medium">Múltiples Métodos de Pago</span>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       {/* Contenido principal */}
       <div className="py-8">

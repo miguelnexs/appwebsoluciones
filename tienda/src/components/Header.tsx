@@ -11,7 +11,7 @@ const Header = () => {
   const { isAuthenticated, user } = useAuth();
 
   return (
-    <div className="bg-white border-b border-neutral-200 py-4 px-6">
+    <div className="bg-white border-b border-neutral-200 py-2 px-6">
       <div className="flex items-center justify-between">
         {/* Menu Hamburguesa */}
         <HamburgerMenu />
@@ -22,7 +22,7 @@ const Header = () => {
             <img 
               src={user?.tienda?.logo ? user.tienda.logo : logoImage} 
               alt={user?.tienda?.nombre || "CG by Caro Gonzalez"} 
-              className="w-24 h-24 mx-auto object-contain"
+              className="w-20 h-20 mx-auto object-contain"
             />
           </Link>
           {user?.tienda && (
