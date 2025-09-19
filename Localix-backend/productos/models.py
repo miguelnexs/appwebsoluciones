@@ -193,6 +193,9 @@ class Producto(models.Model):
     @property
     def margen_ganancia(self):
         """Calcula el margen de ganancia como porcentaje"""
+        # Verificar que precio y costo no sean None
+        if self.precio is None or self.costo is None:
+            return 0
         if self.costo == 0:
             return 0
         return ((self.precio - self.costo) / self.costo) * 100

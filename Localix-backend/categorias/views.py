@@ -25,14 +25,20 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     ordering = ['orden', 'nombre']
     lookup_field = 'slug'
     parser_classes = (MultiPartParser, FormParser, JSONParser)
+    permission_classes = [permissions.AllowAny]  # Permitir acceso sin autenticación para desarrollo
     
     def get_queryset(self):
         """
-        Filtra las categorías por usuario autenticado
+        Retorna todas las categorías para permitir acceso público.
+        En producción, esto debería filtrar por usuario autenticado.
         """
-        if self.request.user.is_authenticated:
-            return CategoriaProducto.objects.filter(usuario=self.request.user)
-        return CategoriaProducto.objects.none()
+        # Para desarrollo: mostrar todas las categorías
+        return CategoriaProducto.objects.all().order_by('nombre')
+        
+        # Para producción (comentado por ahora):
+        # if self.request.user.is_authenticated:
+        #     return CategoriaProducto.objects.filter(usuario=self.request.user)
+        # return CategoriaProducto.objects.none()
     
     def get_object(self):
         """

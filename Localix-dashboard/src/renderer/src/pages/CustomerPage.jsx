@@ -10,6 +10,7 @@ import CustomerModal from '../components/CustomerModal';
 import { toast } from 'react-toastify';
 import { useDeleteConfirmation } from '../hooks/useDeleteConfirmation';
 import DeleteConfirmationModal from '../components/ui/DeleteConfirmationModal';
+import { useSettings } from '../context/SettingsContext';
 
 const CustomersPage = () => {
   // Estados para el dashboard
@@ -26,8 +27,31 @@ const CustomersPage = () => {
   const [eliminandoCliente, setEliminandoCliente] = useState(null); // ID del cliente que se está eliminando
   const [clienteParaEditar, setClienteParaEditar] = useState(null); // Cliente seleccionado para editar
 
+  // Hook para configuración
+  const { settings } = useSettings();
+  const customerColors = settings.customerColors;
+
   // Hook para confirmación de eliminación
   const { deleteModal, hideDeleteConfirmation, confirmDeleteClient } = useDeleteConfirmation();
+
+  // Función para generar estilos dinámicos basados en la configuración
+  const getCustomerStyles = (isActive) => {
+    if (isActive) {
+      return {
+        iconBg: { backgroundColor: customerColors.activeBg },
+        iconColor: { color: customerColors.activeIcon },
+        badgeBg: { backgroundColor: customerColors.activeBadgeBg },
+        badgeText: { color: customerColors.activeBadgeText }
+      };
+    } else {
+      return {
+        iconBg: { backgroundColor: customerColors.inactiveBg },
+        iconColor: { color: customerColors.inactiveIcon },
+        badgeBg: { backgroundColor: customerColors.inactiveBg },
+        badgeText: { color: customerColors.inactiveText }
+      };
+    }
+  };
 
   // Cargar datos
   useEffect(() => {
@@ -460,27 +484,30 @@ const CustomersPage = () => {
                 {filteredClientes.map((cliente) => {
                   const ventasCliente = obtenerVentasCliente(cliente.id);
                   
+                  const styles = getCustomerStyles(cliente.activo);
+                  
                   return (
                     <tr key={cliente.id} className="hover:bg-theme-background transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
-                            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                              cliente.activo ? 'bg-blue-100' : 'bg-theme-secondary'
-                            }`}>
-                              <User className={`h-5 w-5 ${
-                                cliente.activo ? 'text-blue-600' : 'text-theme-textSecondary'
-                              }`} />
+                            <div 
+                              className="h-10 w-10 rounded-full flex items-center justify-center"
+                              style={styles.iconBg}
+                            >
+                              <User 
+                                className="h-5 w-5" 
+                                style={styles.iconColor}
+                              />
                             </div>
                           </div>
                           <div className="ml-3">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-medium text-theme-text">{cliente.nombre}</span>
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                cliente.activo 
-                                  ? 'bg-blue-100 text-blue-800' 
-                                  : 'bg-theme-secondary text-theme-text'
-                              }`}>
+                              <span 
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                                style={{ backgroundColor: styles.badgeBg.backgroundColor, color: styles.badgeText.color }}
+                              >
                                 {cliente.activo ? 'Activo' : 'Inactivo'}
                               </span>
                             </div>

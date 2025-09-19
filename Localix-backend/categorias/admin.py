@@ -10,7 +10,7 @@ class CategoriaAdmin(admin.ModelAdmin):
     list_editable = ('activa', 'orden')
     search_fields = ('nombre',)
     prepopulated_fields = {'slug': ('nombre',)}
-    readonly_fields = ('mostrar_productos', 'cantidad_productos', 'usuario')
+    readonly_fields = ('mostrar_productos', 'cantidad_productos')
     fieldsets = (
         (None, {
             'fields': ('nombre', 'slug', 'descripcion', 'activa', 'orden', 'imagen', 'usuario', 'mostrar_productos', 'cantidad_productos')

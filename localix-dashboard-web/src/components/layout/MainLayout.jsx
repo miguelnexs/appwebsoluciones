@@ -71,12 +71,10 @@ const MainLayout = ({ children }) => {
           <div className="lg:hidden bg-theme-surface border-b border-theme-border px-4 py-3 flex items-center justify-between sticky top-0 z-10">
             <h1 className="text-lg font-semibold text-theme-text">Dashboard</h1>
             <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-2 rounded-md text-theme-textSecondary hover:text-theme-text hover:bg-theme-primary"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 rounded-md text-theme-text hover:bg-theme-secondary transition-colors"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              Menú
             </button>
           </div>
         )}

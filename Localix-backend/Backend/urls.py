@@ -21,11 +21,13 @@ urlpatterns = [
     ])),
     
     path('api/', include('categorias.urls')),
-    path('api/productos/', include('productos.urls')),
+    path('api/', include('productos.urls')),
     path('api/ventas/', include('ventas.urls')),
     path('api/pedidos/', include('pedidos.urls')),
     path('api/usuarios/', include('usuarios.urls')),
-    path('api/tiendas/', include('tiendas.urls')),
+    
+    # API Pública
+    path('api/public/', include('api.urls')),
     
 ]
 

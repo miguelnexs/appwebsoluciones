@@ -55,6 +55,31 @@ const getBrandSettings = () => {
   };
 };
 
+// Función para obtener los colores de PDF desde localStorage
+const getPdfColors = () => {
+  try {
+    const settings = localStorage.getItem('localix-settings');
+    if (settings) {
+      const parsedSettings = JSON.parse(settings);
+      return parsedSettings.pdfColors || {
+        primary: '#e91e63',
+        secondary: '#f8bbd9',
+        accent: '#2196f3',
+        neutral: '#6b7280'
+      };
+    }
+  } catch (error) {
+    console.warn('Error al obtener configuración de colores PDF:', error);
+  }
+  
+  return {
+    primary: '#e91e63',
+    secondary: '#f8bbd9',
+    accent: '#2196f3',
+    neutral: '#6b7280'
+  };
+};
+
 // Función para cargar la imagen de fondo
 const loadBackgroundImage = async () => {
   try {
@@ -280,6 +305,7 @@ const createPedidoHTML = (pedido, logoImage, backgroundImage) => {
   // Obtener configuración de la tienda
   const TIENDA_CONFIG = getTiendaConfig();
   const brandSettings = getBrandSettings();
+  const pdfColors = getPdfColors();
   
   // Usar el nombre de la empresa personalizado si está disponible
   const companyName = brandSettings.showCompanyName ? 
@@ -391,7 +417,7 @@ const createPedidoHTML = (pedido, logoImage, backgroundImage) => {
                 font-size: 16px;
                 font-weight: 600;
                 margin-bottom: 4px;
-                color: #1e40af;
+                color: ${pdfColors.primary};
                 letter-spacing: -0.025em;
             }
             
@@ -402,60 +428,91 @@ const createPedidoHTML = (pedido, logoImage, backgroundImage) => {
                 font-weight: 500;
             }
             
-            /* Información del pedido */
+            /* Información del pedido - Diseño actualizado */
             .pedido-info {
-                background: #f0f9ff;
-                border-radius: 4px;
-                padding: 10px;
-                margin-bottom: 10px;
-                border: 1px solid #0ea5e9;
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border-radius: 12px;
+                padding: 16px;
+                margin-bottom: 16px;
+                border: 2px solid ${pdfColors.accent};
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .pedido-info::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, ${pdfColors.primary} 0%, ${pdfColors.accent} 100%);
             }
             
             .pedido-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 8px;
+                margin-bottom: 12px;
                 flex-wrap: wrap;
-                gap: 8px;
+                gap: 12px;
+                position: relative;
+                z-index: 1;
             }
             
             .pedido-numero {
-                font-size: 14px;
-                font-weight: 600;
-                color: #0c4a6e;
+                font-size: 16px;
+                font-weight: 700;
+                color: ${pdfColors.primary};
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                letter-spacing: 0.5px;
             }
             
             .pedido-fecha {
-                font-size: 11px;
-                color: #0369a1;
-                font-weight: 500;
-                background: white;
-                padding: 4px 8px;
-                border-radius: 4px;
+                font-size: 12px;
+                color: ${pdfColors.neutral};
+                font-weight: 600;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 6px 12px;
+                border-radius: 20px;
+                border: 1px solid ${pdfColors.secondary};
+                backdrop-filter: blur(4px);
             }
             
             .cliente-info {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 15px;
-                margin-bottom: 15px;
+                gap: 16px;
+                margin-bottom: 16px;
+                position: relative;
+                z-index: 1;
             }
             
             .cliente-item {
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 10px;
+                padding: 8px 12px;
+                background: rgba(255, 255, 255, 0.7);
+                border-radius: 8px;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                transition: all 0.2s ease;
             }
             
             .cliente-label {
-                font-weight: bold;
-                color: #333;
+                font-weight: 600;
+                color: ${pdfColors.primary};
                 min-width: 80px;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
             }
             
             .cliente-valor {
-                color: #333;
+                color: #374151;
+                font-weight: 500;
+                font-size: 12px;
             }
             
             /* Estado del pedido */
@@ -499,7 +556,7 @@ const createPedidoHTML = (pedido, logoImage, backgroundImage) => {
             }
             
             .productos-table th {
-                background: #3b82f6;
+                background: ${pdfColors.primary};
                 color: white;
                 padding: 6px 8px;
                 text-align: left;
@@ -507,7 +564,7 @@ const createPedidoHTML = (pedido, logoImage, backgroundImage) => {
                 font-size: 10px;
                 letter-spacing: 0.025em;
                 text-transform: uppercase;
-                border-bottom: 1px solid #1e40af;
+                border-bottom: 1px solid ${pdfColors.accent};
             }
             
             .productos-table td {
@@ -586,11 +643,11 @@ const createPedidoHTML = (pedido, logoImage, backgroundImage) => {
             }
             
             .total-final {
-                border-top: 2px solid #3b82f6;
+                border-top: 2px solid ${pdfColors.primary};
                 border-bottom: none;
                 padding: 8px 0 0 0;
                 margin-top: 8px;
-                background: white;
+                background: ${pdfColors.secondary};
                 border-radius: 4px;
                 padding: 8px;
             }
@@ -598,13 +655,13 @@ const createPedidoHTML = (pedido, logoImage, backgroundImage) => {
             .total-final .total-label {
                 font-size: 13px;
                 font-weight: 600;
-                color: #1e40af;
+                color: ${pdfColors.primary};
             }
             
             .total-final .total-valor {
                 font-size: 13px;
                 font-weight: 600;
-                color: #1e40af;
+                color: ${pdfColors.primary};
             }
             
             /* Información adicional */
@@ -782,16 +839,14 @@ const createPedidoHTML = (pedido, logoImage, backgroundImage) => {
             
             <!-- Totales -->
             <div class="totales-section">
-                <div class="totales-grid">
-                    <div class="total-item">
-                        <span class="total-label">Subtotal:</span>
-                        <span class="total-valor">$${(subtotal / 100).toFixed(2)}</span>
-                    </div>
-                    
-                    <div class="total-item total-final">
-                        <span class="total-label">TOTAL:</span>
-                        <span class="total-valor">$${(parseFloat(pedido.total_pedido || 0) / 100).toFixed(2)}</span>
-                    </div>
+                <div class="total-item">
+                    <span class="total-label">Subtotal:</span>
+                    <span class="total-valor">$${(subtotal / 100).toFixed(2)}</span>
+                </div>
+                
+                <div class="total-item total-final">
+                    <span class="total-label">TOTAL:</span>
+                    <span class="total-valor">$${(parseFloat(pedido.total_pedido || 0) / 100).toFixed(2)}</span>
                 </div>
             </div>
             

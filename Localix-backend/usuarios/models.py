@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+import secrets
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
@@ -25,6 +26,27 @@ class Usuario(AbstractUser):
     fecha_creacion = models.DateTimeField(_('fecha de creación'), auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(_('fecha de actualización'), auto_now=True)
     
+    # Campos para API pública
+    api_key = models.CharField(
+        _('API Key'), 
+        max_length=64, 
+        blank=True, 
+        null=True,
+        unique=True,
+        help_text=_('Clave API para acceso público a productos y categorías')
+    )
+    allow_public_access = models.BooleanField(
+        _('Permitir acceso público'),
+        default=False,
+        help_text=_('Permite que los productos y categorías sean accesibles públicamente con API key')
+    )
+    public_access_created_at = models.DateTimeField(
+        _('Fecha de creación de acceso público'),
+        null=True,
+        blank=True,
+        help_text=_('Fecha cuando se habilitó el acceso público')
+    )
+    
     # Campos requeridos para el login
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'nombre_completo']
@@ -42,6 +64,21 @@ class Usuario(AbstractUser):
     
     def get_short_name(self):
         return self.first_name or self.username
+    
+    def generate_api_key(self):
+        """Genera una nueva API key para el usuario"""
+        self.api_key = secrets.token_urlsafe(48)
+        self.allow_public_access = True
+        self.public_access_created_at = timezone.now()
+        self.save()
+        return self.api_key
+    
+    def revoke_api_access(self):
+        """Revoca el acceso público del usuario"""
+        self.api_key = None
+        self.allow_public_access = False
+        self.public_access_created_at = None
+        self.save()
 
 class UserUsagePlan(models.Model):
     PLAN_TYPES = [

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Integración API - Apsoluciones</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .api-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .api-section h2 {
+            color: #555;
+            margin-top: 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .response {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .info {
+            background-color: #e2e3e5;
+            border-color: #d6d8db;
+            color: #383d41;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Prueba de Integración API - Apsoluciones</h1>
+        
+        <div class="info">
+            <strong>API Key:</strong> BDT-6ABhFRmKKZnUMaJYXPoOldmu80WWz4Jy3pmB0EaofsXJlsra_kgKpaMwJbXq<br>
+            <strong>Base URL:</strong> http://localhost:8000/api/public/<br>
+            <strong>Usuario:</strong> apsoluciones
+        </div>
+
+        <div class="api-section">
+            <h2>👤 Información del Usuario</h2>
+            <button onclick="testUserInfo()">Obtener Info del Usuario</button>
+            <div id="userResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="api-section">
+            <h2>📊 Estadísticas del Catálogo</h2>
+            <button onclick="testStats()">Obtener Estadísticas</button>
+            <div id="statsResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="api-section">
+            <h2>📂 Categorías</h2>
+            <button onclick="testCategorias()">Listar Categorías</button>
+            <div id="categoriasResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="api-section">
+            <h2>🛍️ Productos</h2>
+            <button onclick="testProductos()">Listar Productos</button>
+            <button onclick="testProductosWithFilters()">Productos con Filtros</button>
+            <div id="productosResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="api-section">
+            <h2>🔧 Prueba de Autenticación</h2>
+            <button onclick="testInvalidAuth()">Probar API Key Inválida</button>
+            <button onclick="testNoAuth()">Probar Sin Autenticación</button>
+            <div id="authResponse" class="response" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/public';
+        const API_KEY = 'BDT-6ABhFRmKKZnUMaJYXPoOldmu80WWz4Jy3pmB0EaofsXJlsra_kgKpaMwJbXq';
+
+        function makeRequest(url, apiKey = API_KEY) {
+            const headers = {};
+            if (apiKey) {
+                headers['Authorization'] = `ApiKey ${apiKey}`;
+            }
+
+            return fetch(url, { headers })
+                .then(response => {
+                    return response.json().then(data => ({
+                        status: response.status,
+                        statusText: response.statusText,
+                        data: data
+                    }));
+                })
+                .catch(error => ({
+                    status: 'ERROR',
+                    statusText: error.message,
+                    data: null
+                }));
+        }
+
+        function displayResponse(elementId, response) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            
+            if (response.status === 200) {
+                element.className = 'response success';
+                element.textContent = `✅ Status: ${response.status}\n\n${JSON.stringify(response.data, null, 2)}`;
+            } else if (response.status === 'ERROR') {
+                element.className = 'response error';
+                element.textContent = `❌ Error: ${response.statusText}`;
+            } else {
+                element.className = 'response error';
+                element.textContent = `⚠️ Status: ${response.status} - ${response.statusText}\n\n${JSON.stringify(response.data, null, 2)}`;
+            }
+        }
+
+        async function testUserInfo() {
+            const response = await makeRequest(`${API_BASE}/user/`);
+            displayResponse('userResponse', response);
+        }
+
+        async function testStats() {
+            const response = await makeRequest(`${API_BASE}/stats/`);
+            displayResponse('statsResponse', response);
+        }
+
+        async function testCategorias() {
+            const response = await makeRequest(`${API_BASE}/categorias/`);
+            displayResponse('categoriasResponse', response);
+        }
+
+        async function testProductos() {
+            const response = await makeRequest(`${API_BASE}/productos/`);
+            displayResponse('productosResponse', response);
+        }
+
+        async function testProductosWithFilters() {
+            const response = await makeRequest(`${API_BASE}/productos/?search=test&ordering=-precio`);
+            displayResponse('productosResponse', response);
+        }
+
+        async function testInvalidAuth() {
+            const response = await makeRequest(`${API_BASE}/user/`, 'invalid-api-key');
+            displayResponse('authResponse', response);
+        }
+
+        async function testNoAuth() {
+            const response = await makeRequest(`${API_BASE}/user/`, null);
+            displayResponse('authResponse', response);
+        }
+
+        // Ejecutar prueba inicial al cargar la página
+        window.onload = function() {
+            console.log('🔧 Página de prueba cargada. API Base:', API_BASE);
+            console.log('🔑 API Key configurada:', API_KEY.substring(0, 20) + '...');
+        };
+    </script>
+</body>
+</html>

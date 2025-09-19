@@ -46,7 +46,7 @@ class ProductoAdmin(NestedModelAdmin):
     list_filter = ('estado', 'categoria', 'tipo', 'usuario')
     search_fields = ('nombre', 'sku', 'descripcion_corta')
     prepopulated_fields = {'slug': ('nombre',)}
-    readonly_fields = ('stock', 'vendidos', 'imagen_preview', 'margen_ganancia_display', 'fecha_creacion', 'fecha_actualizacion', 'colores_count', 'usuario')
+    readonly_fields = ('stock', 'vendidos', 'imagen_preview', 'margen_ganancia_display', 'fecha_creacion', 'fecha_actualizacion', 'colores_count')
     inlines = [ColorProductoInline, VarianteProductoInline]
     
     fieldsets = (

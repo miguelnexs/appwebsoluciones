@@ -35,6 +35,83 @@ const CompanySettings = () => {
     accent: '#2196f3',
     neutral: '#6b7280'
   });
+  const [themeMessage, setThemeMessage] = useState('');
+
+  // Temas prediseñados para colores PDF
+  const pdfThemes = {
+    rosa: {
+      name: 'Rosa Elegante',
+      colors: {
+        primary: '#e91e63',
+        secondary: '#f8bbd9',
+        accent: '#2196f3',
+        neutral: '#6b7280'
+      }
+    },
+    azul: {
+      name: 'Azul Profesional',
+      colors: {
+        primary: '#1976d2',
+        secondary: '#bbdefb',
+        accent: '#0d47a1',
+        neutral: '#546e7a'
+      }
+    },
+    verde: {
+      name: 'Verde Natural',
+      colors: {
+        primary: '#388e3c',
+        secondary: '#c8e6c9',
+        accent: '#1b5e20',
+        neutral: '#5d4037'
+      }
+    },
+    rojo: {
+      name: 'Rojo Moderno',
+      colors: {
+        primary: '#d32f2f',
+        secondary: '#ffcdd2',
+        accent: '#b71c1c',
+        neutral: '#616161'
+      }
+    },
+    morado: {
+      name: 'Morado Sofisticado',
+      colors: {
+        primary: '#7b1fa2',
+        secondary: '#e1bee7',
+        accent: '#4a148c',
+        neutral: '#5e35b1'
+      }
+    },
+    naranja: {
+      name: 'Naranja Vibrante',
+      colors: {
+        primary: '#f57c00',
+        secondary: '#ffe0b2',
+        accent: '#e65100',
+        neutral: '#6d4c41'
+      }
+    },
+    turquesa: {
+      name: 'Turquesa Fresco',
+      colors: {
+        primary: '#00acc1',
+        secondary: '#b2ebf2',
+        accent: '#006064',
+        neutral: '#455a64'
+      }
+    },
+    gris: {
+      name: 'Gris Corporativo',
+      colors: {
+        primary: '#424242',
+        secondary: '#e0e0e0',
+        accent: '#212121',
+        neutral: '#757575'
+      }
+    }
+  };
 
   // Actualizar formData cuando cambien los settings
   useEffect(() => {
@@ -54,6 +131,20 @@ const CompanySettings = () => {
       [colorType]: value
     }));
     updatePdfColor(colorType, value);
+  };
+
+  // Función para aplicar un tema prediseñado
+  const applyTheme = (themeKey) => {
+    const theme = pdfThemes[themeKey];
+    if (theme) {
+      setPdfColors(theme.colors);
+      // Actualizar cada color individualmente
+      Object.entries(theme.colors).forEach(([colorType, value]) => {
+        updatePdfColor(colorType, value);
+      });
+      setMessage({ type: 'success', text: `Tema "${theme.name}" aplicado correctamente` });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    }
   };
 
   const handleInputChange = (field, value) => {
@@ -430,11 +521,58 @@ const CompanySettings = () => {
           Colores para PDF
         </h4>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Mensaje de éxito */}
+        {themeMessage && (
+          <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg flex items-center gap-2">
+            <CheckCircle size={16} className="text-green-600" />
+            <span className="text-green-800 text-sm">{themeMessage}</span>
+          </div>
+        )}
+        
+        {/* Selector de temas prediseñados */}
+        <div className="mb-6">
+          <h5 className="text-sm font-medium text-theme-text mb-3">Temas Prediseñados</h5>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {Object.entries(pdfThemes).map(([key, theme]) => (
+              <button
+                key={key}
+                onClick={() => applyTheme(key)}
+                className="p-3 bg-theme-surface border border-theme-border rounded-lg hover:border-theme-accent transition-colors group"
+                title={`Aplicar tema ${theme.name}`}
+              >
+                <div className="flex gap-1 mb-2">
+                  <div 
+                    className="w-3 h-3 rounded-full border border-gray-300" 
+                    style={{ backgroundColor: theme.colors.primary }}
+                  ></div>
+                  <div 
+                    className="w-3 h-3 rounded-full border border-gray-300" 
+                    style={{ backgroundColor: theme.colors.secondary }}
+                  ></div>
+                  <div 
+                    className="w-3 h-3 rounded-full border border-gray-300" 
+                    style={{ backgroundColor: theme.colors.accent }}
+                  ></div>
+                  <div 
+                    className="w-3 h-3 rounded-full border border-gray-300" 
+                    style={{ backgroundColor: theme.colors.neutral }}
+                  ></div>
+                </div>
+                <span className="text-xs text-theme-textSecondary group-hover:text-theme-text transition-colors">
+                  {theme.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="border-t border-theme-border pt-6">
+          <h5 className="text-sm font-medium text-theme-text mb-4">Personalización Manual</h5>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-theme-text">
-              Color Principal (Rosa)
-            </label>
+              <label className="block text-sm font-medium text-theme-text">
+                Color Principal
+              </label>
             <div className="flex items-center gap-3">
               <input
                 type="color"
@@ -453,9 +591,9 @@ const CompanySettings = () => {
           </div>
           
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-theme-text">
-              Color Secundario (Rosa Claro)
-            </label>
+              <label className="block text-sm font-medium text-theme-text">
+                Color Secundario
+              </label>
             <div className="flex items-center gap-3">
               <input
                 type="color"
@@ -474,9 +612,9 @@ const CompanySettings = () => {
           </div>
           
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-theme-text">
-              Color de Acento (Azul)
-            </label>
+              <label className="block text-sm font-medium text-theme-text">
+                Color de Acento
+              </label>
             <div className="flex items-center gap-3">
               <input
                 type="color"
@@ -495,9 +633,9 @@ const CompanySettings = () => {
           </div>
           
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-theme-text">
-              Color Neutral (Gris)
-            </label>
+              <label className="block text-sm font-medium text-theme-text">
+                Color Neutral
+              </label>
             <div className="flex items-center gap-3">
               <input
                 type="color"
@@ -513,6 +651,7 @@ const CompanySettings = () => {
                 className="flex-1 px-3 py-2 bg-theme-surface border border-theme-border rounded-lg text-theme-text placeholder-theme-textSecondary focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
               />
             </div>
+          </div>
           </div>
         </div>
         

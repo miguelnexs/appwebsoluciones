@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valencia - Integración API Localix</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        .api-info {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .response {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌟 Valencia - API Localix</h1>
+            <p>Integración completa para acceder a productos y categorías</p>
+        </div>
+
+        <div class="api-info">
+            <h3>📋 Información de tu API</h3>
+            <p><strong>Usuario:</strong> valencia</p>
+            <p><strong>Email:</strong> info@valencia.com</p>
+            <p><strong>Contraseña:</strong> %7mEHZ97ppL^</p>
+            <p><strong>API Key:</strong> <code>fVdePFvNTzAkBRqv5Z2BPVEAIwQXZjwYxPo48L2ZNcyacU5diIjNcU5EZX30MxaC</code></p>
+            <p><strong>URL Base:</strong> http://localhost:8000/api/public/</p>
+        </div>
+
+        <h3>🎯 Prueba los Endpoints</h3>
+        
+        <div class="endpoint">
+            <h4>👤 Información del Usuario</h4>
+            <button class="btn" onclick="testUserInfo()">Probar GET /user/</button>
+            <div id="user-response" class="response"></div>
+        </div>
+
+        <div class="endpoint">
+            <h4>📊 Estadísticas</h4>
+            <button class="btn" onclick="testStats()">Probar GET /stats/</button>
+            <div id="stats-response" class="response"></div>
+        </div>
+
+        <div class="endpoint">
+            <h4>📂 Categorías</h4>
+            <button class="btn" onclick="testCategories()">Probar GET /categorias/</button>
+            <div id="categories-response" class="response"></div>
+        </div>
+
+        <div class="endpoint">
+            <h4>🛍️ Productos</h4>
+            <button class="btn" onclick="testProducts()">Probar GET /productos/</button>
+            <button class="btn" onclick="testProductsWithFilters()">Con Filtros</button>
+            <div id="products-response" class="response"></div>
+        </div>
+
+        <h3>💻 Código de Ejemplo para tu Página</h3>
+        
+        <h4>JavaScript Básico:</h4>
+        <div class="code-block">
+const API_KEY = 'fVdePFvNTzAkBRqv5Z2BPVEAIwQXZjwYxPo48L2ZNcyacU5diIjNcU5EZX30MxaC';
+const BASE_URL = 'http://localhost:8000/api/public/';
+
+// Función para hacer peticiones
+async function apiRequest(endpoint) {
+    try {
+        const response = await fetch(BASE_URL + endpoint, {
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error en la API:', error);
+        return null;
+    }
+}
+
+// Obtener productos
+async function obtenerProductos() {
+    const productos = await apiRequest('productos/');
+    if (productos) {
+        console.log('Productos:', productos);
+        // Aquí puedes mostrar los productos en tu página
+        mostrarProductos(productos.results);
+    }
+}
+
+// Función para mostrar productos en HTML
+function mostrarProductos(productos) {
+    const container = document.getElementById('productos-container');
+    container.innerHTML = '';
+    
+    productos.forEach(producto => {
+        const div = document.createElement('div');
+        div.className = 'producto';
+        div.innerHTML = `
+            &lt;h3&gt;${producto.nombre}&lt;/h3&gt;
+            &lt;p&gt;Precio: $${producto.precio}&lt;/p&gt;
+            &lt;p&gt;Categoría: ${producto.categoria_nombre}&lt;/p&gt;
+        `;
+        container.appendChild(div);
+    });
+}
+
+// Llamar la función
+obtenerProductos();
+        </div>
+
+        <h4>HTML para mostrar productos:</h4>
+        <div class="code-block">
+&lt;!-- En tu página HTML --&gt;
+&lt;div id="productos-container"&gt;
+    &lt;!-- Los productos se cargarán aquí --&gt;
+&lt;/div&gt;
+
+&lt;style&gt;
+.producto {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    background: #f9f9f9;
+}
+
+.producto h3 {
+    color: #333;
+    margin: 0 0 10px 0;
+}
+
+.producto p {
+    margin: 5px 0;
+    color: #666;
+}
+&lt;/style&gt;
+        </div>
+
+        <div class="api-info">
+            <h4>🔒 Importante - Seguridad</h4>
+            <ul>
+                <li>✅ Tu API Key está configurada y funcionando</li>
+                <li>⚠️ No compartas tu API Key públicamente</li>
+                <li>🔄 Puedes regenerar tu API Key si es necesario</li>
+                <li>📊 Monitorea el uso de tu API</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'fVdePFvNTzAkBRqv5Z2BPVEAIwQXZjwYxPo48L2ZNcyacU5diIjNcU5EZX30MxaC';
+        const BASE_URL = 'http://localhost:8000/api/public/';
+
+        async function apiRequest(endpoint) {
+            try {
+                const response = await fetch(BASE_URL + endpoint, {
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                return {
+                    status: response.status,
+                    data: data
+                };
+            } catch (error) {
+                return {
+                    status: 'error',
+                    data: { error: error.message }
+                };
+            }
+        }
+
+        async function testUserInfo() {
+            const result = await apiRequest('user/');
+            document.getElementById('user-response').innerHTML = 
+                `Status: ${result.status}\n${JSON.stringify(result.data, null, 2)}`;
+        }
+
+        async function testStats() {
+            const result = await apiRequest('stats/');
+            document.getElementById('stats-response').innerHTML = 
+                `Status: ${result.status}\n${JSON.stringify(result.data, null, 2)}`;
+        }
+
+        async function testCategories() {
+            const result = await apiRequest('categorias/');
+            document.getElementById('categories-response').innerHTML = 
+                `Status: ${result.status}\n${JSON.stringify(result.data, null, 2)}`;
+        }
+
+        async function testProducts() {
+            const result = await apiRequest('productos/');
+            document.getElementById('products-response').innerHTML = 
+                `Status: ${result.status}\n${JSON.stringify(result.data, null, 2)}`;
+        }
+
+        async function testProductsWithFilters() {
+            const result = await apiRequest('productos/?ordering=nombre&page_size=5');
+            document.getElementById('products-response').innerHTML = 
+                `Status: ${result.status}\n${JSON.stringify(result.data, null, 2)}`;
+        }
+    </script>
+</body>
+</html>

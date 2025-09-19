@@ -14,7 +14,7 @@ import ProductVariantAccordion from './ProductVariantAccordion';
 import ProductDialog from './ProductDialog';
 import ProductForm from './ProductForm';
 import EmptyState from './EmptyState';
-import PaginationControls from './PaginationControls';
+
 import ErrorBoundary from './ErrorBoundary';
 import ProductColorsDisplay from './ProductColorsDisplay';
 import SmartProductSearch from './SmartProductSearch';
@@ -249,7 +249,7 @@ const ProductList = () => {
       let response;
       if (isAuthenticated) {
         // Usar llamada HTTP directa
-        const apiResponse = await api.get('productos/productos/', { 
+        const apiResponse = await api.get('productos/', { 
           params: { search: searchTerm, page_size: 5 } 
         });
         response = apiResponse.data;
@@ -358,7 +358,7 @@ const ProductList = () => {
       let response;
       if (isAuthenticated) {
         // Usar llamada HTTP directa
-        const apiResponse = await api.get('productos/productos/', { params: searchParams });
+        const apiResponse = await api.get('productos/', { params: searchParams });
         response = apiResponse.data; // Extraer los datos de la respuesta HTTP
       } else {
         // Usar IPC si no está autenticado
@@ -431,7 +431,7 @@ const ProductList = () => {
       // Enviar cambios al backend
       if (isAuthenticated) {
         // Usar llamada HTTP directa
-        await api.post('productos/productos/reorder/', {
+        await api.post('productos/reorder/', {
           productos: productosParaBackend
         });
       } else {

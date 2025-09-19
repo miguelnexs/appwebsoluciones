@@ -396,7 +396,7 @@ module.exports = function setupProductHandlers() {
         return cachedData;
       }
       
-      const response = await axios.get(`${API_BASE_URL}/api/productos/productos/`, {
+      const response = await axios.get(`${API_BASE_URL}/api/productos/`, {
         params: {
           ordering: '-fecha_creacion',
           ...params
@@ -416,7 +416,7 @@ module.exports = function setupProductHandlers() {
     try {
       const config = await createAuthenticatedConfig();
       const response = await axios.get(
-        `${API_BASE_URL}/api/productos/productos/${slug}/`, 
+        `${API_BASE_URL}/api/productos/${slug}/`, 
         config
       );
       return response.data;
@@ -434,7 +434,7 @@ module.exports = function setupProductHandlers() {
       
       // Primero intentar obtener la lista de productos y buscar por ID
       const listResponse = await axios.get(
-        `${API_BASE_URL}/api/productos/productos/`, 
+        `${API_BASE_URL}/api/productos/`, 
         {
           ...config,
           params: {
@@ -524,7 +524,7 @@ module.exports = function setupProductHandlers() {
       let response;
       try {
         response = await axios.post(
-          `${API_BASE_URL}/api/productos/productos/${slug}/upload_imagen_principal/`,
+          `${API_BASE_URL}/api/productos/${slug}/upload_imagen_principal/`,
           formData,
           config
         );
@@ -576,7 +576,7 @@ module.exports = function setupProductHandlers() {
       
       const config = await createAuthenticatedConfig();
       const response = await axios.delete(
-        `${API_BASE_URL}/api/productos/productos/${slug}/remove_imagen_principal/`,
+        `${API_BASE_URL}/api/productos/${slug}/remove_imagen_principal/`,
         config
       );
       return response.data;
@@ -822,7 +822,7 @@ module.exports = function setupProductHandlers() {
       };
 
       console.log('Handler: Enviando FormData a backend');
-      const response = await axios.patch(`${API_BASE_URL}/api/productos/productos/${slug}/`, formData, config);
+      const response = await axios.patch(`${API_BASE_URL}/api/productos/${slug}/`, formData, config);
       console.log('Handler: Respuesta exitosa:', response.data);
       return response.data;
     } catch (error) {

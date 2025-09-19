@@ -55,6 +55,31 @@ const getBrandSettings = () => {
   };
 };
 
+// Función para obtener los colores de PDF desde localStorage
+const getPdfColors = () => {
+  try {
+    const settings = localStorage.getItem('localix-settings');
+    if (settings) {
+      const parsedSettings = JSON.parse(settings);
+      return parsedSettings.pdfColors || {
+        primary: '#e91e63',
+        secondary: '#f8bbd9',
+        accent: '#2196f3',
+        neutral: '#6b7280'
+      };
+    }
+  } catch (error) {
+    console.warn('Error al obtener configuración de colores PDF:', error);
+  }
+  
+  return {
+    primary: '#e91e63',
+    secondary: '#f8bbd9',
+    accent: '#2196f3',
+    neutral: '#6b7280'
+  };
+};
+
 // Función para cargar la imagen de fondo
 const loadBackgroundImage = async () => {
   try {
@@ -240,6 +265,7 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
   // Obtener configuración de la tienda
   const TIENDA_CONFIG = getTiendaConfig();
   const brandSettings = getBrandSettings();
+  const pdfColors = getPdfColors();
   
   // Usar el nombre de la empresa personalizado si está disponible
   const companyName = brandSettings.showCompanyName ? 
@@ -358,65 +384,95 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
                 font-weight: 400;
             }
             
-            /* Información de la venta */
+            /* Información de la venta - Diseño actualizado */
             .venta-info {
-                background: #f8fafc;
-                padding: 10px;
-                border-radius: 4px;
-                margin-bottom: 12px;
-                border: 1px solid #e5e7eb;
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border-radius: 12px;
+                padding: 16px;
+                margin-bottom: 16px;
+                border: 2px solid ${pdfColors.accent};
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .venta-info::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, ${pdfColors.primary} 0%, ${pdfColors.accent} 100%);
             }
             
             .venta-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 8px;
-                padding-bottom: 8px;
-                border-bottom: 1px solid #d1d5db;
+                margin-bottom: 12px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                position: relative;
+                z-index: 1;
             }
             
             .venta-numero {
-                font-size: 14px;
-                font-weight: 600;
-                color: #1e40af;
-                background: white;
-                padding: 4px 8px;
-                border-radius: 4px;
-                border: 1px solid #3b82f6;
+                font-size: 16px;
+                font-weight: 700;
+                color: ${pdfColors.primary};
+                background: rgba(255, 255, 255, 0.9);
+                padding: 8px 16px;
+                border-radius: 20px;
+                border: 2px solid ${pdfColors.primary};
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                letter-spacing: 0.5px;
             }
             
             .venta-fecha {
                 font-size: 12px;
-                color: #64748b;
-                font-weight: 500;
-                background: white;
-                padding: 4px 6px;
-                border-radius: 4px;
-                border: 1px solid #d1d5db;
+                color: ${pdfColors.neutral};
+                font-weight: 600;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 6px 12px;
+                border-radius: 20px;
+                border: 1px solid ${pdfColors.secondary};
+                backdrop-filter: blur(4px);
             }
             
             .cliente-info {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 15px;
-                margin-bottom: 15px;
+                gap: 16px;
+                margin-bottom: 16px;
+                position: relative;
+                z-index: 1;
             }
             
             .cliente-item {
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 10px;
+                padding: 8px 12px;
+                background: rgba(255, 255, 255, 0.7);
+                border-radius: 8px;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                transition: all 0.2s ease;
             }
             
             .cliente-label {
-                font-weight: bold;
-                color: #333;
+                font-weight: 600;
+                color: ${pdfColors.primary};
                 min-width: 80px;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
             }
             
             .cliente-valor {
-                color: #333;
+                color: #374151;
+                font-weight: 500;
+                font-size: 12px;
             }
             
             /* Tabla de productos */
@@ -438,14 +494,14 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
             }
             
             .productos-table th {
-                background: #3b82f6;
+                background: ${pdfColors.primary};
                 color: white;
                 padding: 8px 6px;
                 text-align: left;
                 font-weight: 600;
                 font-size: 11px;
                 text-transform: uppercase;
-                border-bottom: 1px solid #1e40af;
+                border-bottom: 1px solid ${pdfColors.accent};
             }
             
             .productos-table td {
@@ -486,59 +542,59 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
             
             /* Totales */
             .totales-section {
-                background: #f8fafc;
-                border-radius: 4px;
-                padding: 10px;
-                margin-bottom: 10px;
-                border: 1px solid #e5e7eb;
-            }
-            
-            .totales-grid {
-                display: grid;
-                grid-template-columns: 1fr auto;
-                gap: 6px;
-                align-items: center;
+                background: white;
+                border: 2px solid #e5e7eb;
+                border-radius: 8px;
+                padding: 16px;
+                margin-bottom: 16px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             }
             
             .total-item {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 4px 0;
-                font-weight: 500;
-                color: #374151;
+                padding: 8px 0;
+                border-bottom: 1px solid #f3f4f6;
+            }
+            
+            .total-item:last-child {
+                border-bottom: none;
             }
             
             .total-label {
                 font-weight: 500;
                 color: #374151;
-                font-size: 11px;
+                font-size: 12px;
             }
             
             .total-valor {
-                font-weight: 500;
-                color: #374151;
-                font-size: 11px;
+                font-weight: 600;
+                color: #111827;
+                font-size: 12px;
+                text-align: right;
             }
             
             .total-final {
-                border-top: 2px solid #3b82f6;
-                padding: 8px;
+                border-top: 2px solid ${pdfColors.primary};
+                padding: 12px 0 8px 0;
                 margin-top: 8px;
-                background: white;
-                border-radius: 4px;
+                background: ${pdfColors.secondary};
+                border-radius: 6px;
+                padding: 12px;
             }
             
             .total-final .total-label {
-                font-size: 13px;
-                font-weight: 600;
-                color: #1e40af;
+                font-size: 14px;
+                font-weight: 700;
+                color: ${pdfColors.primary};
+                text-transform: uppercase;
             }
             
             .total-final .total-valor {
-                font-size: 13px;
-                font-weight: 600;
-                color: #1e40af;
+                font-size: 16px;
+                font-weight: 700;
+                color: ${pdfColors.primary};
             }
             
             /* Método de pago */
@@ -606,7 +662,7 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
             
             .footer h3 {
                 font-weight: 500;
-                color: #374151;
+                color: ${pdfColors.primary};
                 margin-bottom: 4px;
                 font-size: 11px;
             }
@@ -695,30 +751,28 @@ const createReciboHTML = (venta, logoImage, backgroundImage) => {
             
             <!-- Totales -->
             <div class="totales-section">
-                <div class="totales-grid">
-                    <div class="total-item">
-                        <span class="total-label">Subtotal:</span>
-                        <span class="total-valor">$${(subtotal / 100).toFixed(2)}</span>
-                    </div>
-                    
-                    ${venta.porcentaje_descuento && venta.porcentaje_descuento > 0 ? `
-                    <div class="total-item">
-                        <span class="total-label">Descuento (${venta.porcentaje_descuento}%):</span>
-                        <span class="total-valor">-$${(((subtotal * venta.porcentaje_descuento) / 100) / 100).toFixed(2)}</span>
-                    </div>
-                    ` : ''}
-                    
-                    ${venta.precio_envio && venta.precio_envio > 0 ? `
-                    <div class="total-item">
-                        <span class="total-label">Envío:</span>
-                        <span class="total-valor">$${(venta.precio_envio / 100).toFixed(2)}</span>
-                    </div>
-                    ` : ''}
-                    
-                    <div class="total-item total-final">
-                        <span class="total-label">TOTAL:</span>
-                        <span class="total-valor">$${(venta.total / 100).toFixed(2)}</span>
-                    </div>
+                <div class="total-item">
+                    <span class="total-label">Subtotal:</span>
+                    <span class="total-valor">$${(subtotal / 100).toFixed(2)}</span>
+                </div>
+                
+                ${venta.porcentaje_descuento && venta.porcentaje_descuento > 0 ? `
+                <div class="total-item">
+                    <span class="total-label">Descuento (${venta.porcentaje_descuento}%):</span>
+                    <span class="total-valor">-$${(((subtotal * venta.porcentaje_descuento) / 100) / 100).toFixed(2)}</span>
+                </div>
+                ` : ''}
+                
+                ${venta.precio_envio && venta.precio_envio > 0 ? `
+                <div class="total-item">
+                    <span class="total-label">Envío:</span>
+                    <span class="total-valor">$${(venta.precio_envio / 100).toFixed(2)}</span>
+                </div>
+                ` : ''}
+                
+                <div class="total-item total-final">
+                    <span class="total-label">TOTAL:</span>
+                    <span class="total-valor">$${(venta.total / 100).toFixed(2)}</span>
                 </div>
             </div>
             

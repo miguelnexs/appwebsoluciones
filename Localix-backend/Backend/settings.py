@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'ventas',
     'pedidos',
     'usuarios.apps.UsuariosConfig',
-    'tiendas.apps.TiendasConfig',
 ]
 
 MIDDLEWARE = [
@@ -172,7 +171,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',  # Cambiado para permitir acceso público por defecto
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',

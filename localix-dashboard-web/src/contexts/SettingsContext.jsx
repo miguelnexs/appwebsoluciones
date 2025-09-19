@@ -111,6 +111,17 @@ const defaultSettings = {
     secondary: '#f8bbd9', // Rosa claro
     accent: '#2196f3', // Azul
     neutral: '#6b7280' // Gris
+  },
+  // Configuración de colores para datos del cliente
+  customerColors: {
+    activeBg: '#dbeafe', // bg-blue-100
+    activeText: '#1d4ed8', // text-blue-600
+    activeIcon: '#1d4ed8', // text-blue-600
+    activeBadgeBg: '#dbeafe', // bg-blue-100
+    activeBadgeText: '#1e40af', // text-blue-800
+    inactiveBg: '#f3f4f6', // bg-gray-100
+    inactiveText: '#6b7280', // text-gray-500
+    inactiveIcon: '#6b7280' // text-gray-500
   }
 };
 
@@ -195,6 +206,15 @@ export const SettingsProvider = ({ children }) => {
     updatePdfColor: (colorType, value) => setSettings(prev => ({
       ...prev,
       pdfColors: { ...prev.pdfColors, [colorType]: value }
+    })),
+    // Funciones para configuración de colores del cliente
+    updateCustomerColors: (colors) => setSettings(prev => ({
+      ...prev,
+      customerColors: { ...prev.customerColors, ...colors }
+    })),
+    updateCustomerColor: (colorType, value) => setSettings(prev => ({
+      ...prev,
+      customerColors: { ...prev.customerColors, [colorType]: value }
     })),
     resetSettings: () => setSettings(defaultSettings),
     isLoading

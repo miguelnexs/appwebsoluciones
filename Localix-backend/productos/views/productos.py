@@ -7,7 +7,7 @@ from PIL import Image
 from django.db.models import Q
 from django.utils import timezone
 from django.core.files.base import ContentFile
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -32,6 +32,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter]
     lookup_field = 'slug'
     parser_classes = (MultiPartParser, FormParser, JSONParser)
+    permission_classes = [permissions.AllowAny]  # Permitir acceso público
 
     # Configuración de filtros y búsqueda
     search_fields = ['nombre', 'descripcion_corta', 'descripcion_larga', 'sku']
@@ -53,11 +54,18 @@ class ProductoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Sobreescribe el queryset para incluir filtros personalizados y multi-tenancy
+        Sobreescribe el queryset para incluir filtros personalizados
         """
-        queryset = Producto.objects.filter(usuario=self.request.user).prefetch_related(
+        queryset = Producto.objects.all().prefetch_related(
             'variantes',
         ).order_by('-fecha_creacion')
+        
+        # Si el usuario está autenticado, filtrar por usuario
+        if self.request.user.is_authenticated:
+            queryset = queryset.filter(usuario=self.request.user)
+        else:
+            # Si no está autenticado, mostrar solo productos públicos
+            queryset = queryset.filter(estado='publicado')
         
         # Filtro para productos públicos
         if self.request.query_params.get('publicos') == 'true':
@@ -90,11 +98,11 @@ class ProductoViewSet(viewsets.ModelViewSet):
     def get_object(self):
         """
         Sobrescribe get_object para asegurar que solo se obtenga el producto del usuario autenticado
-        Esto evita el error cuando hay slugs duplicados entre diferentes usuarios
+        o productos públicos si no está autenticado
         """
         queryset = self.filter_queryset(self.get_queryset())
         
-        # Realizar la búsqueda por slug y usuario
+        # Realizar la búsqueda por slug
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
         
@@ -104,7 +112,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
             from django.http import Http404
             raise Http404('No se encontró el producto especificado.')
         except Producto.MultipleObjectsReturned:
-            # Si hay múltiples objetos, tomar el primero (esto no debería pasar con el filtro por usuario)
+            # Si hay múltiples objetos, tomar el primero
             obj = queryset.filter(**filter_kwargs).first()
             if not obj:
                 from django.http import Http404

@@ -1,0 +1,33 @@
+<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Shield background -->
+  <path d="M15 10 L25 5 L35 10 L35 25 C35 35 25 45 25 45 C25 45 15 35 15 25 Z" fill="url(#shieldGradient)" stroke="#d97706" stroke-width="1"/>
+  
+  <!-- Lightning bolt inside shield -->
+  <path d="M22 15 L28 15 L25 22 L27 22 L21 32 L24 25 L22 25 Z" fill="#ffffff" stroke="#1e40af" stroke-width="0.5"/>
+  
+  <!-- Company name -->
+  <text x="45" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="url(#logoGradient)">APSOLUCIONES</text>
+  
+  <!-- Tagline -->
+  <text x="45" y="40" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Protección Eléctrica Profesional</text>
+  
+  <!-- Decorative circuit lines -->
+  <g stroke="#3b82f6" stroke-width="1" fill="none" opacity="0.3">
+    <line x1="45" y1="45" x2="60" y2="45"/>
+    <circle cx="62" cy="45" r="1" fill="#3b82f6"/>
+    <line x1="64" y1="45" x2="75" y2="45"/>
+    <circle cx="77" cy="45" r="1" fill="#3b82f6"/>
+    <line x1="79" y1="45" x2="90" y2="45"/>
+  </g>
+</svg>

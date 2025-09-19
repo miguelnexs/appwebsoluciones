@@ -14,7 +14,7 @@ import ProductVariantAccordion from './ProductVariantAccordion';
 import ProductDialog from './ProductDialog';
 import ProductForm from './ProductForm';
 import EmptyState from './EmptyState';
-import PaginationControls from './PaginationControls';
+
 import ErrorBoundary from './ErrorBoundary';
 import ProductColorsDisplay from './ProductColorsDisplay';
 import SmartProductSearch from './SmartProductSearch';

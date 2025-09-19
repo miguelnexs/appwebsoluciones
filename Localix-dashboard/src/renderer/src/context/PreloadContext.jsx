@@ -91,7 +91,7 @@ export const PreloadProvider = ({ children }) => {
       
       if (isAuthenticated) {
         console.log('🚀 Usando API HTTP para productos (usuario autenticado)');
-        const response = await api.get('productos/productos/', {
+        const response = await api.get('productos/', {
           params: { 
             ordering: 'nombre',
             page_size: 100 // Limitar a 100 productos para preload

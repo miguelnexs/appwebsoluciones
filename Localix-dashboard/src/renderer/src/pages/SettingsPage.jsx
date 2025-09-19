@@ -24,6 +24,7 @@ import { useSettings } from '../context/SettingsContext';
 import ImageUpload from '../components/ui/ImageUpload';
 import CompanySettings from '../components/settings/CompanySettings';
 
+
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { 
