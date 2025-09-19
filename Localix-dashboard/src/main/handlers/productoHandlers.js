@@ -673,7 +673,7 @@ module.exports = function setupProductHandlers() {
       
       console.log('Handler: Enviando FormData a backend');
       try {
-        const response = await axios.post(`${API_BASE_URL}/api/productos/productos/`, formData, config);
+        const response = await axios.post(`${API_BASE_URL}/api/productos/`, formData, config);
         console.log('Handler: Respuesta exitosa del servidor');
         
         // Asegurar que la respuesta tenga la estructura correcta
@@ -844,7 +844,7 @@ module.exports = function setupProductHandlers() {
       
       const config = await createAuthenticatedConfig();
       const response = await axios.delete(
-        `${API_BASE_URL}/api/productos/productos/${slug}/`, 
+        `${API_BASE_URL}/api/productos/${slug}/`, 
         config
       );
       
@@ -868,7 +868,7 @@ module.exports = function setupProductHandlers() {
       
       const config = await createAuthenticatedConfig();
       const response = await axios.post(
-        `${API_BASE_URL}/api/productos/productos/reorder/`, 
+        `${API_BASE_URL}/api/productos/reorder/`, 
         { productos },
         config
       );
@@ -892,7 +892,7 @@ module.exports = function setupProductHandlers() {
       
       const config = await createAuthenticatedConfig();
       const response = await axios.get(
-        `${API_BASE_URL}/api/productos/productos/${slug}/imagen_principal_info/`,
+        `${API_BASE_URL}/api/productos/${slug}/imagen_principal_info/`,
         config
       );
       return response.data;
@@ -924,7 +924,7 @@ module.exports = function setupProductHandlers() {
         }
       };
       
-      const response = await axios.get(`${API_BASE_URL}/api/productos/productos/${productId}/colores/`, colorsConfig);
+      const response = await axios.get(`${API_BASE_URL}/api/productos/${productId}/colores/`, colorsConfig);
       
       // ✅ Manejar respuesta paginada del backend
       let coloresData = [];
@@ -972,7 +972,7 @@ module.exports = function setupProductHandlers() {
       
       const baseConfig = await createAuthenticatedConfig();
       const response = await axios.post(
-        `${API_BASE_URL}/api/productos/productos/${productId}/colores/`, 
+        `${API_BASE_URL}/api/productos/${productId}/colores/`, 
         querystring.stringify(colorFormData),
         {
           ...baseConfig,
@@ -1017,7 +1017,7 @@ module.exports = function setupProductHandlers() {
       
       const baseConfig = await createAuthenticatedConfig();
       const response = await axios.put(
-        `${API_BASE_URL}/api/productos/productos/${productId}/colores/${colorId}/`, 
+        `${API_BASE_URL}/api/productos/${productId}/colores/${colorId}/`, 
         querystring.stringify(colorFormData),
         {
           ...baseConfig,
@@ -1040,7 +1040,7 @@ module.exports = function setupProductHandlers() {
   ipcMain.handle('productos:eliminarColor', async (event, productId, colorId) => {
     try {
       const config = await createAuthenticatedConfig();
-      await axios.delete(`${API_BASE_URL}/api/productos/productos/${productId}/colores/${colorId}/`, config);
+      await axios.delete(`${API_BASE_URL}/api/productos/${productId}/colores/${colorId}/`, config);
       return { success: true };
     } catch (error) {
       return handleApiError(error, 'Error al eliminar color');
@@ -1227,7 +1227,7 @@ module.exports = function setupProductHandlers() {
       }
       
       const baseConfig = await createAuthenticatedConfig();
-      const response = await axios.get(`${API_BASE_URL}/api/productos/productos/${productId}/caracteristicas/`, baseConfig);
+      const response = await axios.get(`${API_BASE_URL}/api/productos/${productId}/caracteristicas/`, baseConfig);
       
       // Manejar respuesta paginada del backend
       let caracteristicasData = [];
@@ -1273,7 +1273,7 @@ module.exports = function setupProductHandlers() {
       
       const baseConfig = await createAuthenticatedConfig();
       const response = await axios.post(
-        `${API_BASE_URL}/api/productos/productos/${productId}/caracteristicas/`, 
+        `${API_BASE_URL}/api/productos/${productId}/caracteristicas/`, 
         querystring.stringify(caracteristicaFormData),
         {
           ...baseConfig,
@@ -1317,7 +1317,7 @@ module.exports = function setupProductHandlers() {
       
       const baseConfig = await createAuthenticatedConfig();
       const response = await axios.put(
-        `${API_BASE_URL}/api/productos/productos/${productId}/caracteristicas/${caracteristicaId}/`, 
+        `${API_BASE_URL}/api/productos/${productId}/caracteristicas/${caracteristicaId}/`, 
         querystring.stringify(caracteristicaFormData),
         {
           ...baseConfig,
@@ -1345,7 +1345,7 @@ module.exports = function setupProductHandlers() {
       apiCache.delete(cacheKey);
       
       const config = await createAuthenticatedConfig();
-      await axios.delete(`${API_BASE_URL}/api/productos/productos/${productId}/caracteristicas/${caracteristicaId}/`, config);
+      await axios.delete(`${API_BASE_URL}/api/productos/${productId}/caracteristicas/${caracteristicaId}/`, config);
       return { success: true };
     } catch (error) {
       console.error('Error eliminando característica:', error);

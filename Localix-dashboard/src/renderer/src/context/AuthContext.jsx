@@ -175,6 +175,7 @@ export const AuthProvider = ({ children }) => {
             originalRequest.headers.Authorization = `Bearer ${access}`;
             return api(originalRequest);
           } catch (refreshError) {
+            console.log('Interceptor refresh failed:', refreshError.response?.data || refreshError.message);
             // Si el refresh token también expiró, hacer logout
             processQueue(refreshError, null);
             logout();
@@ -275,6 +276,7 @@ export const AuthProvider = ({ children }) => {
               });
             } catch (refreshError) {
               console.log('Token refresh failed, clearing invalid tokens...');
+              console.log('Refresh error details:', refreshError.response?.data || refreshError.message);
               // Si el refresh también falla, limpiar tokens inválidos
               localStorage.removeItem('access_token');
               localStorage.removeItem('refresh_token');

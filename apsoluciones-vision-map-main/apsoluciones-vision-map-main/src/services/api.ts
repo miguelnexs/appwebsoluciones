@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://softwarebycg.shop/api';
+const API_BASE_URL = 'http://localhost:8001/api/public';
 
 export interface Producto {
   id: number;
@@ -37,15 +37,9 @@ export interface ApiResponse<T> {
 }
 
 class ApiService {
-  private getAuthToken(): string | null {
-    // Obtener el token del usuario autenticado desde localStorage
-    const userData = localStorage.getItem('apsoluciones_user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      // Para este caso, usaremos el token del backend de Django
-      return localStorage.getItem('token');
-    }
-    return null;
+  private getApiKey(): string {
+    // API Key específica para el usuario 'apsoluciones'
+    return 'BDT-6ABhFRmKKZnUMaJYXPoOldmu80WWz4Jy3pmB0EaofsXJlsra_kgKpaMwJbXq';
   }
 
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -55,11 +49,9 @@ class ApiService {
       'Content-Type': 'application/json',
     };
 
-    // Agregar token de autenticación si existe
-    const token = this.getAuthToken();
-    if (token) {
-      defaultHeaders['Authorization'] = `Token ${token}`;
-    }
+    // Agregar API Key para autenticación como usuario 'apsoluciones'
+    const apiKey = this.getApiKey();
+    defaultHeaders['Authorization'] = `Bearer ${apiKey}`;
 
     const config: RequestInit = {
       ...options,

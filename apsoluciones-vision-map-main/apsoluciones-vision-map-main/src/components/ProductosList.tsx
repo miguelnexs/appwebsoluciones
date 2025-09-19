@@ -83,7 +83,7 @@ const ProductosList: React.FC<ProductosListProps> = ({ categoriaId }) => {
         return producto.imagen_principal;
       }
       // Si es una ruta relativa, la construimos con el backend
-      return `http://softwarebycg.shop${producto.imagen_principal}`;
+      return `http://localhost:8001${producto.imagen_principal}`;
     }
     // Imagen por defecto si no hay imagen
     return 'https://via.placeholder.com/300x200/f3f4f6/9ca3af?text=Sin+Imagen';

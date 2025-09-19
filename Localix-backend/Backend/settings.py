@@ -168,10 +168,11 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 # Configuración REST Framework para desarrollo
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT authentication first for dashboard
+        'api.authentication.APIKeyAuthentication',  # API Key authentication second for public API
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',  # Cambiado para permitir acceso público por defecto
+        'rest_framework.permissions.IsAuthenticated',  # Require authentication by default
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',

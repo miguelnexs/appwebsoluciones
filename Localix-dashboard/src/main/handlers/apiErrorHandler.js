@@ -59,8 +59,8 @@ async function handleApiError(error) {
 
 module.exports = {
   handleApiError,
-      API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:8000'
+      API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:8001'
 };
 
 // Debug: mostrar la URL del API al cargar
-  console.log('API_BASE_URL configurado como:', process.env.API_BASE_URL || 'http://localhost:8000');
+  console.log('API_BASE_URL configurado como:', process.env.API_BASE_URL || 'http://localhost:8001');

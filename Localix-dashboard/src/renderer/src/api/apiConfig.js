@@ -1,5 +1,5 @@
 // URL base de la API actualizada
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://localhost:8001';
 
 // Helper para endpoints de la API REST
 export const API_URL = (path) => `${API_BASE_URL}/api/${path.replace(/^\/+/,'')}`;
