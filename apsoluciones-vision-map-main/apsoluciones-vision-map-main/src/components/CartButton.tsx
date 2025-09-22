@@ -38,7 +38,7 @@ const CartButton = () => {
   const getImageUrl = (imagePath?: string) => {
     if (!imagePath) return '/placeholder-product.jpg';
     if (imagePath.startsWith('http')) return imagePath;
-    return `${import.meta.env.VITE_API_URL || 'http://localhost:8001'}${imagePath}`;
+    return `${import.meta.env.VITE_API_URL || 'http://softwarebycg.shop'}${imagePath}`;
   };
 
   return (

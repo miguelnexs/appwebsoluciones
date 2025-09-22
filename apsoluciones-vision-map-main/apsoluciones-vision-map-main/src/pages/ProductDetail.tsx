@@ -143,7 +143,7 @@ const ProductDetail: React.FC = () => {
   const getImageUrl = (url?: string): string => {
     if (!url) return '/placeholder-product.jpg';
     if (url.startsWith('http')) return url;
-    return `http://localhost:8001${url}`;
+    return `http://softwarebycg.shop${url}`;
   };
 
   const getCurrentImages = () => {

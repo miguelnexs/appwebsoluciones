@@ -18,7 +18,8 @@ import CertificationsPage from "./pages/Certifications";
 import ContactPage from "./pages/Contact";
 import TermsOfServicePage from "./pages/TermsOfService";
 import PrivacyPolicyPage from "./pages/PrivacyPolicy";
-import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
+import Dashboard from "./components/Dashboard";
 import ProductosAdmin from "./pages/admin/ProductosAdmin";
 import CategoriasAdmin from "./pages/admin/CategoriasAdmin";
 import NotFound from "./pages/NotFound";
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/contacto" element={<ContactPage />} />
               <Route path="/terminos-servicios" element={<TermsOfServicePage />} />
               <Route path="/politicas-privacidad" element={<PrivacyPolicyPage />} />
+              <Route path="/login" element={<Login />} />
               
               {/* Admin Routes - Protected */}
               <Route path="/admin/dashboard" element={
