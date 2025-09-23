@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { ArrowLeft, Search, Filter, Grid, LayoutList, ShoppingBag, Menu } from 'lucide-react';
 import HamburgerMenu from '@/components/HamburgerMenu';
-import CartDropdown from '@/components/CartDropdown';
 import FreeShippingBar from '@/components/FreeShippingBar';
 import { useProductos } from '../hooks/useProductos';
 import { useCategorias } from '../hooks/useCategorias';
@@ -243,16 +242,6 @@ export default function TodosProductos() {
             </div>
             <div className="flex items-center justify-between">
               <p className="text-xl font-bold text-primary">{product.price}</p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Aquí iría la lógica para agregar al carrito
-                }}
-              >
-                <ShoppingBag className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         </CardContent>
@@ -282,9 +271,6 @@ export default function TodosProductos() {
             </div>
             
             <div className="flex items-center gap-4">
-              <div className="hidden md:block">
-                <CartDropdown />
-              </div>
               <div className="md:hidden">
                 <HamburgerMenu />
               </div>

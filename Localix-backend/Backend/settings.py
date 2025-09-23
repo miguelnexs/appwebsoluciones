@@ -1,20 +1,29 @@
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 import psycopg2  # ← AGREGAR ESTA LÍNEA
+
+# Cargar variables de entorno desde .env
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', default='default-secret-key')
 
-DEBUG = 'RENDER' not in os.environ
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '72.60.7.133',  # IP del servidor VPS
-    'www.72.60.7.133',
-    '*',  # Mantener para desarrollo
-]
+# Configuración de hosts permitidos
+ALLOWED_HOSTS = []
+if os.environ.get('ALLOWED_HOSTS'):
+    ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS').split(',')]
+else:
+    ALLOWED_HOSTS = [
+        'localhost',
+        '127.0.0.1',
+        '72.60.7.133',  # IP del servidor VPS
+        'www.72.60.7.133',
+        '*',  # Mantener para desarrollo
+    ]
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME') 
 if RENDER_EXTERNAL_HOSTNAME:
@@ -43,6 +52,7 @@ INSTALLED_APPS = [
     'ventas',
     'pedidos',
     'usuarios.apps.UsuariosConfig',
+    'cors_management.apps.CorsManagementConfig',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +60,8 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'cors_management.middleware.DynamicCORSMiddleware',
+    'cors_management.middleware.CORSCacheInvalidationMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -57,6 +69,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'usuarios.middleware.UserUsageMiddleware',
 ]
+
+# Agregar Django Debug Toolbar solo en modo desarrollo
+if DEBUG:
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'Backend.urls'
 
@@ -81,11 +97,11 @@ WSGI_APPLICATION = 'Backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'localix',
-        'USER': 'localix_user',
-        'PASSWORD': 'migel1457',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.environ.get('DATABASE_NAME', 'localix'),
+        'USER': os.environ.get('DATABASE_USER', 'localix_user'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'migel1457'),
+        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
+        'PORT': os.environ.get('DATABASE_PORT', '5432'),
         'OPTIONS': {
             'client_encoding': 'UTF8',
             'isolation_level': psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED,
@@ -122,8 +138,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Configuración CORS para servidor VPS
-CORS_ALLOW_ALL_ORIGINS = True
+# Configuración de CORS
+CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True').lower() == 'true'
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -136,6 +152,8 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+# URLs permitidas para CORS - configurables desde variables de entorno
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React por defecto
     "http://127.0.0.1:3000",
@@ -150,6 +168,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://www.softwarebycg.shop",
     "https://www.softwarebycg.shop",
 ]
+
+# Agregar frontend URL desde variables de entorno si existe
+frontend_url = os.environ.get('FRONTEND_URL')
+if frontend_url and frontend_url not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append(frontend_url)
+
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',
@@ -192,15 +216,15 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
 
-# Configuraciones de seguridad deshabilitadas para desarrollo
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
-SECURE_SSL_REDIRECT = False
+# Configuraciones de seguridad - configurables desde variables de entorno
+SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
+CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False').lower() == 'true'
+SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False').lower() == 'true'
 SECURE_BROWSER_XSS_FILTER = False
 X_FRAME_OPTIONS = 'ALLOW'
 
-# URL del frontend para desarrollo local
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://softwarebycg.shop")
+# URL del frontend - configurable desde variables de entorno
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 # Configuración JWT
 from datetime import timedelta
@@ -230,3 +254,32 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
+
+# Configuración de Django Debug Toolbar para desarrollo
+if DEBUG:
+    INTERNAL_IPS = [
+        '127.0.0.1',
+        'localhost',
+    ]
+    
+    # Configuración adicional para Debug Toolbar
+    DEBUG_TOOLBAR_CONFIG = {
+        'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
+        'SHOW_COLLAPSED': True,
+    }
+    
+    DEBUG_TOOLBAR_PANELS = [
+        'debug_toolbar.panels.versions.VersionsPanel',
+        'debug_toolbar.panels.timer.TimerPanel',
+        'debug_toolbar.panels.settings.SettingsPanel',
+        'debug_toolbar.panels.headers.HeadersPanel',
+        'debug_toolbar.panels.request.RequestPanel',
+        'debug_toolbar.panels.sql.SQLPanel',
+        'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+        'debug_toolbar.panels.templates.TemplatesPanel',
+        'debug_toolbar.panels.cache.CachePanel',
+        'debug_toolbar.panels.signals.SignalsPanel',
+        'debug_toolbar.panels.logging.LoggingPanel',
+        'debug_toolbar.panels.redirects.RedirectsPanel',
+        'debug_toolbar.panels.profiling.ProfilingPanel',
+    ]

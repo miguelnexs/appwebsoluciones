@@ -1,0 +1,350 @@
+{% extends 'cors_management/base.html' %}
+
+{% block title %}Dashboard - Panel CORS{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Dashboard CORS
+        </h1>
+        <p class="text-muted">Gestión centralizada de dominios CORS para Localix</p>
+    </div>
+</div>
+
+<!-- Estadísticas principales -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
+            <div class="stats-number">{{ stats.total_domains }}</div>
+            <div class="stats-label">
+                <i class="fas fa-globe me-1"></i>
+                Total Dominios
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #3498db, #5dade2);">
+            <div class="stats-number">{{ stats.active_domains }}</div>
+            <div class="stats-label">
+                <i class="fas fa-check-circle me-1"></i>
+                Dominios Activos
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #f39c12, #f1c40f);">
+            <div class="stats-number">{{ stats.inactive_domains }}</div>
+            <div class="stats-label">
+                <i class="fas fa-pause-circle me-1"></i>
+                Dominios Inactivos
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #e74c3c, #ec7063);">
+            <div class="stats-number">{{ stats.blocked_domains }}</div>
+            <div class="stats-label">
+                <i class="fas fa-ban me-1"></i>
+                Dominios Bloqueados
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Dominios recientes -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Dominios Agregados Recientemente
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_domains %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Dominio</th>
+                                    <th>Estado</th>
+                                    <th>Agregado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for domain in recent_domains %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ domain.domain }}</strong>
+                                        {% if domain.description %}
+                                            <br><small class="text-muted">{{ domain.description|truncatechars:50 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ domain.status }}">
+                                            {% if domain.status == 'active' %}
+                                                <i class="fas fa-check-circle me-1"></i>Activo
+                                            {% elif domain.status == 'inactive' %}
+                                                <i class="fas fa-pause-circle me-1"></i>Inactivo
+                                            {% else %}
+                                                <i class="fas fa-ban me-1"></i>Bloqueado
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small>{{ domain.created_at|timesince }} ago</small>
+                                        <br><small class="text-muted">por {{ domain.created_by.username }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'cors_management:domain_edit' domain.pk %}" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button class="btn btn-outline-secondary btn-sm" 
+                                                    onclick="toggleDomainStatus({{ domain.pk }}, '{{ domain.status }}')">
+                                                {% if domain.status == 'active' %}
+                                                    <i class="fas fa-pause"></i>
+                                                {% else %}
+                                                    <i class="fas fa-play"></i>
+                                                {% endif %}
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'cors_management:domain_list' %}" class="btn btn-primary">
+                            <i class="fas fa-list me-2"></i>
+                            Ver Todos los Dominios
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-globe-americas fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay dominios configurados</h5>
+                        <p class="text-muted">Comienza agregando tu primer dominio CORS</p>
+                        <a href="{% url 'cors_management:domain_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            Agregar Primer Dominio
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel lateral -->
+    <div class="col-lg-4">
+        <!-- Acciones rápidas -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Acciones Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'cors_management:domain_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Agregar Dominio
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="testCorsConnection()">
+                        <i class="fas fa-flask me-2"></i>
+                        Probar CORS
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="clearCorsCache()">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Limpiar Caché
+                    </button>
+                    <a href="{% url 'cors_management:audit_logs' %}" class="btn btn-outline-info">
+                        <i class="fas fa-history me-2"></i>
+                        Ver Auditoría
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado del sistema -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-server me-2"></i>
+                    Estado del Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Middleware CORS</span>
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle me-1"></i>Activo
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Caché CORS</span>
+                        <span class="badge bg-info">
+                            <i class="fas fa-database me-1"></i>{{ cache_status|default:"Activo" }}
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-info" style="width: 85%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Base de Datos</span>
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle me-1"></i>Conectado
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <small class="text-muted">
+                    <i class="fas fa-clock me-1"></i>
+                    Última verificación: {{ last_check|default:"Hace unos momentos" }}
+                </small>
+            </div>
+        </div>
+
+        <!-- Actividad reciente -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Actividad Reciente
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_activities %}
+                    {% for activity in recent_activities %}
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="flex-shrink-0">
+                            {% if activity.action == 'create' %}
+                                <i class="fas fa-plus-circle text-success"></i>
+                            {% elif activity.action == 'update' %}
+                                <i class="fas fa-edit text-primary"></i>
+                            {% elif activity.action == 'delete' %}
+                                <i class="fas fa-trash text-danger"></i>
+                            {% else %}
+                                <i class="fas fa-cog text-secondary"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="small">
+                                <strong>{{ activity.user.username }}</strong>
+                                {{ activity.get_action_display|lower }} 
+                                <strong>{{ activity.domain.domain }}</strong>
+                            </div>
+                            <div class="text-muted small">
+                                {{ activity.timestamp|timesince }} ago
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="text-center">
+                        <a href="{% url 'cors_management:audit_logs' %}" class="btn btn-sm btn-outline-primary">
+                            Ver Todo
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-history fa-2x mb-2"></i>
+                        <p class="small mb-0">No hay actividad reciente</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleDomainStatus(domainId, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    const actionText = newStatus === 'active' ? 'activar' : 'desactivar';
+    
+    Swal.fire({
+        title: `¿${actionText.charAt(0).toUpperCase() + actionText.slice(1)} dominio?`,
+        text: `¿Estás seguro de que quieres ${actionText} este dominio?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3498db',
+        cancelButtonColor: '#95a5a6',
+        confirmButtonText: `Sí, ${actionText}`,
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            showLoading();
+            
+            $.post(window.corsManagement.urls.toggleStatus + domainId + '/', {
+                status: newStatus
+            })
+            .done(function(response) {
+                hideLoading();
+                if (response.success) {
+                    showAlert('success', 'Estado actualizado', `Dominio ${actionText}do exitosamente`);
+                    // Recargar la página para mostrar cambios
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('error', 'Error', response.message || 'No se pudo actualizar el estado');
+                }
+            })
+            .fail(function() {
+                hideLoading();
+                showAlert('error', 'Error', 'No se pudo conectar con el servidor');
+            });
+        }
+    });
+}
+
+// Auto-refresh cada 30 segundos para estadísticas
+setInterval(function() {
+    // Solo refrescar si la página está visible
+    if (!document.hidden) {
+        $.get(window.location.href + '?ajax=1')
+            .done(function(data) {
+                // Actualizar estadísticas si han cambiado
+                if (data.stats) {
+                    $('.stats-number').each(function(index) {
+                        const newValue = Object.values(data.stats)[index];
+                        if ($(this).text() !== newValue.toString()) {
+                            $(this).fadeOut(200, function() {
+                                $(this).text(newValue).fadeIn(200);
+                            });
+                        }
+                    });
+                }
+            });
+    }
+}, 30000);
+</script>
+{% endblock %}

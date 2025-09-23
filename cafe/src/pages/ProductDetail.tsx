@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Plus, Minus, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Minus, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Product, useCartActions } from '@/contexts/CartContext';
-import { toast } from '@/hooks/use-toast';
 import { API_CONFIG } from '@/config/api';
 import { productService } from '@/services/productService';
 
@@ -43,16 +41,13 @@ interface ProductoBackend {
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useCartActions();
   
-  const [product, setProduct] = useState<Product | null>(null);
   const [backendProduct, setBackendProduct] = useState<ProductoBackend | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
   const [selectedColor, setSelectedColor] = useState<ColorProducto | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [imageTransition, setImageTransition] = useState(false);
   
   const [galleryImages, setGalleryImages] = useState<{url: string, idx: number}[]>([]);
@@ -146,30 +141,6 @@ export function ProductDetail() {
         setSelectedImageIdx(0);
       }
     }
-  };
-
-  const handleQuantityChange = (change: number) => {
-    const newQuantity = quantity + change;
-    if (newQuantity >= 1 && newQuantity <= (backendProduct?.stock || 999)) {
-      setQuantity(newQuantity);
-    }
-  };
-
-  const handleAddToCart = () => {
-    if (!product) return;
-    
-    const productToAdd = {
-      ...product,
-      selectedColor: selectedColor?.nombre,
-      selectedColorId: selectedColor?.id
-    };
-    
-    addToCart(productToAdd, quantity);
-    
-    toast({
-      title: "Producto agregado",
-      description: `${quantity} ${product.name}${selectedColor ? ` (${selectedColor.nombre})` : ''} agregado${quantity > 1 ? 's' : ''} al carrito`,
-    });
   };
 
   const handlePreviousImage = () => {
@@ -401,51 +372,6 @@ export function ProductDetail() {
                   {(backendProduct?.stock || 0) > 0 && (
                     <span className="text-gray-500">({backendProduct?.stock} disponibles)</span>
                   )}
-                </div>
-
-                {/* Selector de cantidad */}
-                {(backendProduct?.stock || 0) > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="font-medium text-gray-900">Cantidad</h3>
-                    <div className="flex items-center space-x-4">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleQuantityChange(-1)}
-                        disabled={quantity <= 1}
-                        className="h-10 w-10"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="font-bold text-xl min-w-[3rem] text-center">{quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleQuantityChange(1)}
-                        disabled={quantity >= (backendProduct?.stock || 0)}
-                        className="h-10 w-10"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Botón agregar al carrito */}
-                <div className="pt-4">
-                  <Button
-                    onClick={handleAddToCart}
-                    disabled={(backendProduct?.stock || 0) === 0}
-                    className="w-full gradient-coffee text-white hover:opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed py-4 text-lg"
-                    size="lg"
-                  >
-                    <ShoppingCart className="h-5 w-5 mr-2" />
-                    {(backendProduct?.stock || 0) > 0 
-                      ? `Agregar al carrito - $${(product.price * quantity).toFixed(2)}`
-                      : 'Producto agotado'
-                    }
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           </div>

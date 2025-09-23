@@ -26,6 +26,9 @@ urlpatterns = [
     path('api/pedidos/', include('pedidos.urls')),
     path('api/usuarios/', include('usuarios.urls')),
     
+    # Panel de administración CORS
+    path('cors-admin/', include('cors_management.urls')),
+    
     # API Pública
     path('api/public/', include('api.urls')),
     

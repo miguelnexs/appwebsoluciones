@@ -1,27 +1,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, ShoppingCart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Star } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Product, useCartActions } from '@/contexts/CartContext';
-import { toast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
-  product: Product;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+    description: string;
+    category: string;
+    slug?: string;
+    featured?: boolean;
+    rating?: number;
+  };
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { addToCart } = useCartActions();
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToCart(product);
-    toast({
-      title: "Producto agregado",
-      description: `${product.name} se ha agregado al carrito`,
-    });
-  };
 
 
 
@@ -73,16 +69,6 @@ export function ProductCard({ product }: ProductCardProps) {
                 ${product.price.toFixed(2)}
               </span>
             </div>
-
-            {/* Add to Cart Button */}
-            <Button
-              onClick={handleAddToCart}
-              className="w-full mt-3 gradient-coffee text-white hover:opacity-90 transition-smooth"
-              size="sm"
-            >
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Agregar al Carrito
-            </Button>
           </div>
           </CardContent>
         </Link>

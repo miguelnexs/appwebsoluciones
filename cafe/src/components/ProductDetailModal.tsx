@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { X, ArrowLeft, ArrowRight, Star, ShoppingCart, Heart, Share2, Truck, Shield, RefreshCw } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, Star, Heart, Share2, Truck, Shield, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Product, useCartActions } from "@/contexts/CartContext";
-import { toast } from "@/hooks/use-toast";
 import { productService, BackendProduct } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -28,7 +26,17 @@ interface CaracteristicaProducto {
 }
 
 interface ProductDetailModalProps {
-  product: Product;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+    description: string;
+    category: string;
+    slug?: string;
+    featured?: boolean;
+    rating?: number;
+  };
   isOpen: boolean;
   onClose: () => void;
 }
@@ -41,9 +49,7 @@ interface GalleryImage {
 }
 
 export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailModalProps) {
-  const { addToCart } = useCartActions();
   const { isAuthenticated } = useAuth();
-  const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const [backendProduct, setBackendProduct] = useState<BackendProduct | null>(null);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
@@ -128,25 +134,6 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
     setSelectedColorId(colorId);
     const idx = galleryImages.findIndex(img => img.colorId === colorId);
     if (idx !== -1) setSelectedImageIdx(idx);
-  };
-
-  const handleAddToCart = () => {
-    addToCart({
-      ...product,
-      color: selectedColor ? selectedColor.nombre : undefined,
-      colorId: selectedColor ? selectedColor.id : undefined
-    }, quantity);
-    toast({
-      title: "Producto agregado",
-      description: `${quantity} ${product.name}${selectedColor ? ` (${selectedColor.nombre})` : ''} agregado${quantity > 1 ? 's' : ''} al carrito`,
-    });
-  };
-
-  const handleQuantityChange = (change: number) => {
-    const newQuantity = quantity + change;
-    if (newQuantity >= 1 && newQuantity <= (backendProduct?.stock || 999)) {
-      setQuantity(newQuantity);
-    }
   };
 
   const nextImage = () => {
@@ -378,39 +365,6 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                 </p>
               </div>
             )}
-
-            {/* Quantity and Add to Cart */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium text-neutral-900">Cantidad:</label>
-                <div className="flex items-center border border-neutral-300 rounded-md">
-                  <button 
-                    onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1}
-                    className="px-3 py-2 hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    -
-                  </button>
-                  <span className="px-4 py-2 border-x border-neutral-300">{quantity}</span>
-                  <button 
-                    onClick={() => handleQuantityChange(1)}
-                    disabled={quantity >= (backendProduct?.stock || 999)}
-                    className="px-3 py-2 hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              <Button 
-                onClick={handleAddToCart}
-                className="w-full gradient-coffee text-white hover:opacity-90 py-3 text-lg"
-                disabled={backendProduct?.stock === 0}
-              >
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Agregar al Carrito - ${(product.price * quantity).toFixed(2)}
-              </Button>
-            </div>
 
             {/* Features */}
             <Card className="border-neutral-200">

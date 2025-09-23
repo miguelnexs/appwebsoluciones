@@ -25,7 +25,7 @@ export const AppProvider = ({ children }) => {
     setIsCheckingConnection(true);
     try {
       // Usar axios directamente para el health check (sin el prefijo /api/)
-      const response = await axios.get('http://localhost:8001/health/');
+      const response = await axios.get('http://softwarebycg.shop/health/');
       
       // Verificar que la respuesta sea exitosa y contenga los datos esperados
       if (response.data && response.data.status === 'healthy') {

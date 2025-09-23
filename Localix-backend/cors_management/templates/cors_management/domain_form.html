@@ -1,0 +1,547 @@
+{% extends 'cors_management/base.html' %}
+
+{% block title %}{% if object %}Editar{% else %}Agregar{% endif %} Dominio - Panel CORS{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item">
+    <a href="{% url 'cors_management:domain_list' %}">Dominios CORS</a>
+</li>
+<li class="breadcrumb-item active">
+    {% if object %}Editar Dominio{% else %}Agregar Dominio{% endif %}
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    {% if object %}
+                        <i class="fas fa-edit me-2"></i>
+                        Editar Dominio: {{ object.domain }}
+                    {% else %}
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Agregar Nuevo Dominio CORS
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="domainForm" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Información básica -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Información Básica
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="id_domain" class="form-label">
+                                    Dominio <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-globe"></i>
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control {% if form.domain.errors %}is-invalid{% endif %}" 
+                                           id="id_domain" 
+                                           name="domain" 
+                                           value="{{ form.domain.value|default:'' }}"
+                                           placeholder="ejemplo.com o https://ejemplo.com"
+                                           required>
+                                    <div class="invalid-feedback" id="domain-feedback">
+                                        {% for error in form.domain.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="form-text">
+                                    Ejemplos: <code>ejemplo.com</code>, <code>*.ejemplo.com</code>, <code>https://ejemplo.com:3000</code>
+                                </div>
+                                <div id="domain-validation-status" class="mt-2"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="id_status" class="form-label">Estado</label>
+                                <select class="form-select {% if form.status.errors %}is-invalid{% endif %}" 
+                                        id="id_status" name="status">
+                                    <option value="active" {% if form.status.value == 'active' %}selected{% endif %}>
+                                        Activo
+                                    </option>
+                                    <option value="inactive" {% if form.status.value == 'inactive' %}selected{% endif %}>
+                                        Inactivo
+                                    </option>
+                                    <option value="blocked" {% if form.status.value == 'blocked' %}selected{% endif %}>
+                                        Bloqueado
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    {% for error in form.status.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_description" class="form-label">Descripción</label>
+                                <textarea class="form-control {% if form.description.errors %}is-invalid{% endif %}" 
+                                          id="id_description" 
+                                          name="description" 
+                                          rows="3" 
+                                          placeholder="Descripción opcional del dominio...">{{ form.description.value|default:'' }}</textarea>
+                                <div class="invalid-feedback">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuración de entorno -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-cog me-2"></i>
+                                Configuración de Entorno
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_environment" class="form-label">Entorno</label>
+                                <select class="form-select {% if form.environment.errors %}is-invalid{% endif %}" 
+                                        id="id_environment" name="environment">
+                                    <option value="development" {% if form.environment.value == 'development' %}selected{% endif %}>
+                                        Desarrollo
+                                    </option>
+                                    <option value="staging" {% if form.environment.value == 'staging' %}selected{% endif %}>
+                                        Staging
+                                    </option>
+                                    <option value="production" {% if form.environment.value == 'production' %}selected{% endif %}>
+                                        Producción
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    {% for error in form.environment.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="id_allow_credentials" 
+                                           name="allow_credentials"
+                                           {% if form.allow_credentials.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="id_allow_credentials">
+                                        Permitir credenciales (cookies, headers de autorización)
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                                    Solo habilitar si es necesario por seguridad
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuración CORS avanzada -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                Configuración CORS Avanzada
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_allowed_methods" class="form-label">Métodos HTTP Permitidos</label>
+                                <div class="form-check-group">
+                                    {% for method in http_methods %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="method_{{ method }}" 
+                                               name="allowed_methods_list" 
+                                               value="{{ method }}"
+                                               {% if method in form.allowed_methods.value|default:"GET,POST,PUT,DELETE,OPTIONS" %}checked{% endif %}>
+                                        <label class="form-check-label" for="method_{{ method }}">
+                                            {{ method }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <input type="hidden" id="id_allowed_methods" name="allowed_methods" 
+                                       value="{{ form.allowed_methods.value|default:'GET,POST,PUT,DELETE,OPTIONS' }}">
+                                <div class="form-text">
+                                    Selecciona los métodos HTTP que este dominio puede usar
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_allowed_headers" class="form-label">Headers Permitidos</label>
+                                <textarea class="form-control {% if form.allowed_headers.errors %}is-invalid{% endif %}" 
+                                          id="id_allowed_headers" 
+                                          name="allowed_headers" 
+                                          rows="4" 
+                                          placeholder="Content-Type, Authorization, X-Requested-With">{{ form.allowed_headers.value|default:'Content-Type,Authorization,X-Requested-With' }}</textarea>
+                                <div class="invalid-feedback">
+                                    {% for error in form.allowed_headers.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                <div class="form-text">
+                                    Headers separados por comas. Usa * para permitir todos (no recomendado)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuración de seguridad -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-lock me-2"></i>
+                                Configuración de Seguridad
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="id_require_https" 
+                                           name="require_https"
+                                           {% if form.require_https.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="id_require_https">
+                                        Requerir HTTPS
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    Solo permitir conexiones seguras (recomendado para producción)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="id_validate_origin" 
+                                           name="validate_origin"
+                                           {% if form.validate_origin.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="id_validate_origin">
+                                        Validar origen estrictamente
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    Verificar que el dominio sea accesible antes de permitir CORS
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="row">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <a href="{% url 'cors_management:domain_list' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>
+                                        Volver a la lista
+                                    </a>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-outline-primary me-2" onclick="testDomainForm()">
+                                        <i class="fas fa-flask me-2"></i>
+                                        Probar configuración
+                                    </button>
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <span class="loading-spinner spinner-border spinner-border-sm me-2" role="status"></span>
+                                        <i class="fas fa-save me-2"></i>
+                                        {% if object %}Actualizar{% else %}Guardar{% endif %} Dominio
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Panel de ayuda -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Ayuda y Ejemplos
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Formatos de dominio válidos:</h6>
+                        <ul class="list-unstyled">
+                            <li><code>ejemplo.com</code> - Dominio simple</li>
+                            <li><code>*.ejemplo.com</code> - Todos los subdominios</li>
+                            <li><code>https://ejemplo.com</code> - Con protocolo específico</li>
+                            <li><code>localhost:3000</code> - Para desarrollo</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Configuraciones recomendadas:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Desarrollo:</strong> Permitir credenciales OFF</li>
+                            <li><strong>Staging:</strong> HTTPS requerido</li>
+                            <li><strong>Producción:</strong> Validación estricta ON</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Validación en tiempo real del dominio
+    let validationTimeout;
+    $('#id_domain').on('input', function() {
+        clearTimeout(validationTimeout);
+        const domain = $(this).val().trim();
+        
+        if (domain.length > 3) {
+            validationTimeout = setTimeout(() => {
+                validateDomainRealTime(domain);
+            }, 500);
+        } else {
+            clearValidationStatus();
+        }
+    });
+
+    // Actualizar métodos permitidos cuando cambian los checkboxes
+    $('input[name="allowed_methods_list"]').change(function() {
+        updateAllowedMethods();
+    });
+
+    // Configurar validación del formulario
+    $('#domainForm').on('submit', function(e) {
+        e.preventDefault();
+        if (validateForm()) {
+            submitForm();
+        }
+    });
+
+    // Inicializar métodos permitidos
+    updateAllowedMethods();
+});
+
+function validateDomainRealTime(domain) {
+    const statusDiv = $('#domain-validation-status');
+    statusDiv.html('<div class="spinner-border spinner-border-sm text-primary me-2"></div>Validando dominio...');
+    
+    $.post(window.corsManagement.urls.validateDomain, {
+        domain: domain
+    })
+    .done(function(response) {
+        if (response.valid) {
+            statusDiv.html(`
+                <div class="alert alert-success py-2 mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Dominio válido
+                    ${response.suggestions ? '<br><small>' + response.suggestions + '</small>' : ''}
+                </div>
+            `);
+            $('#id_domain').removeClass('is-invalid').addClass('is-valid');
+        } else {
+            statusDiv.html(`
+                <div class="alert alert-warning py-2 mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${response.message || 'Formato de dominio inválido'}
+                    ${response.suggestions ? '<br><small>' + response.suggestions + '</small>' : ''}
+                </div>
+            `);
+            $('#id_domain').removeClass('is-valid').addClass('is-invalid');
+        }
+    })
+    .fail(function() {
+        statusDiv.html(`
+            <div class="alert alert-danger py-2 mb-0">
+                <i class="fas fa-times-circle me-2"></i>
+                Error al validar el dominio
+            </div>
+        `);
+    });
+}
+
+function clearValidationStatus() {
+    $('#domain-validation-status').empty();
+    $('#id_domain').removeClass('is-valid is-invalid');
+}
+
+function updateAllowedMethods() {
+    const selectedMethods = $('input[name="allowed_methods_list"]:checked').map(function() {
+        return this.value;
+    }).get();
+    
+    $('#id_allowed_methods').val(selectedMethods.join(','));
+}
+
+function validateForm() {
+    let isValid = true;
+    
+    // Validar dominio requerido
+    const domain = $('#id_domain').val().trim();
+    if (!domain) {
+        $('#id_domain').addClass('is-invalid');
+        $('#domain-feedback').text('El dominio es requerido');
+        isValid = false;
+    }
+    
+    // Validar al menos un método HTTP
+    const selectedMethods = $('input[name="allowed_methods_list"]:checked').length;
+    if (selectedMethods === 0) {
+        showAlert('warning', 'Métodos requeridos', 'Selecciona al menos un método HTTP');
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+function submitForm() {
+    const submitBtn = $('#submitBtn');
+    submitBtn.addClass('loading').prop('disabled', true);
+    
+    // Serializar datos del formulario
+    const formData = new FormData($('#domainForm')[0]);
+    
+    $.ajax({
+        url: $('#domainForm').attr('action') || window.location.href,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false
+    })
+    .done(function(response) {
+        if (response.success) {
+            showAlert('success', 'Dominio guardado', 'El dominio ha sido guardado exitosamente');
+            setTimeout(() => {
+                window.location.href = response.redirect_url || '{% url "cors_management:domain_list" %}';
+            }, 1500);
+        } else {
+            // Mostrar errores del formulario
+            if (response.errors) {
+                Object.keys(response.errors).forEach(field => {
+                    const fieldElement = $(`#id_${field}`);
+                    fieldElement.addClass('is-invalid');
+                    fieldElement.siblings('.invalid-feedback').text(response.errors[field][0]);
+                });
+            }
+            showAlert('error', 'Error de validación', response.message || 'Corrige los errores del formulario');
+        }
+    })
+    .fail(function(xhr) {
+        if (xhr.status === 400) {
+            // Error de validación del servidor
+            const response = xhr.responseJSON;
+            if (response && response.errors) {
+                Object.keys(response.errors).forEach(field => {
+                    const fieldElement = $(`#id_${field}`);
+                    fieldElement.addClass('is-invalid');
+                    fieldElement.siblings('.invalid-feedback').text(response.errors[field][0]);
+                });
+            }
+            showAlert('error', 'Error de validación', 'Corrige los errores del formulario');
+        } else {
+            showAlert('error', 'Error', 'No se pudo guardar el dominio. Intenta nuevamente.');
+        }
+    })
+    .always(function() {
+        submitBtn.removeClass('loading').prop('disabled', false);
+    });
+}
+
+function testDomainForm() {
+    const domain = $('#id_domain').val().trim();
+    if (!domain) {
+        showAlert('warning', 'Dominio requerido', 'Ingresa un dominio para probar');
+        return;
+    }
+    
+    showLoading();
+    
+    // Simular prueba de configuración CORS
+    setTimeout(() => {
+        hideLoading();
+        
+        Swal.fire({
+            title: 'Resultado de la prueba',
+            html: `
+                <div class="text-start">
+                    <h6>Dominio: <code>${domain}</code></h6>
+                    <div class="mt-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span>Formato de dominio válido</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span>Configuración CORS aplicable</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            <span>Dominio no accesible (normal en desarrollo)</span>
+                        </div>
+                    </div>
+                </div>
+            `,
+            icon: 'info',
+            confirmButtonColor: '#3498db'
+        });
+    }, 2000);
+}
+
+// Configuraciones predefinidas por entorno
+$('#id_environment').change(function() {
+    const environment = $(this).val();
+    
+    switch(environment) {
+        case 'development':
+            $('#id_require_https').prop('checked', false);
+            $('#id_validate_origin').prop('checked', false);
+            break;
+        case 'staging':
+            $('#id_require_https').prop('checked', true);
+            $('#id_validate_origin').prop('checked', false);
+            break;
+        case 'production':
+            $('#id_require_https').prop('checked', true);
+            $('#id_validate_origin').prop('checked', true);
+            break;
+    }
+});
+</script>
+{% endblock %}

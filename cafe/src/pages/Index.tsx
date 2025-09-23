@@ -4,8 +4,20 @@ import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { productService, BackendProduct } from '@/services/api';
-import { Product } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+
+// Definir el tipo Product localmente
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  description: string;
+  category: string;
+  slug?: string;
+  featured?: boolean;
+  rating?: number;
+}
 
 const Index = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);

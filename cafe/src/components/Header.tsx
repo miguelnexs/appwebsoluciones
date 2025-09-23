@@ -1,15 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Coffee } from 'lucide-react';
+import { Menu, X, Coffee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { CartSheet } from './CartSheet';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const { state } = useCart();
   const { user } = useAuth();
 
   const navItems = [
@@ -43,26 +39,8 @@ export function Header() {
               ))}
             </nav>
 
-            {/* Cart and Mobile Menu */}
+            {/* Mobile Menu */}
             <div className="flex items-center space-x-4">
-              {/* Cart Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="relative hover-lift"
-                onClick={() => setIsCartOpen(true)}
-              >
-                <ShoppingCart className="h-4 w-4" />
-                {state.itemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium">
-                    {state.itemCount}
-                  </span>
-                )}
-                <span className="ml-2 hidden sm:inline">
-                  ${state.total.toFixed(2)}
-                </span>
-              </Button>
-
               {/* Mobile Menu Button */}
               <Button
                 variant="ghost"

@@ -59,8 +59,8 @@ async function handleApiError(error) {
 
 module.exports = {
   handleApiError,
-      API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:8001'
+      API_BASE_URL: process.env.API_BASE_URL || 'http://softwarebycg.shop'
 };
 
 // Debug: mostrar la URL del API al cargar
-  console.log('API_BASE_URL configurado como:', process.env.API_BASE_URL || 'http://localhost:8001');
+  console.log('API_BASE_URL configurado como:', process.env.API_BASE_URL || 'http://softwarebycg.shop');

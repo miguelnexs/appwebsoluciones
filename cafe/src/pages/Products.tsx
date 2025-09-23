@@ -3,9 +3,21 @@ import { useSearchParams } from 'react-router-dom';
 import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { productService, BackendProduct } from '@/services/api';
-import { Product } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+
+// Definir el tipo Product localmente
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  description: string;
+  category: string;
+  slug?: string;
+  featured?: boolean;
+  rating?: number;
+}
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();

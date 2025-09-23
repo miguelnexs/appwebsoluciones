@@ -3,7 +3,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import BolsosGrandes from "./pages/BolsosGrandes";
@@ -20,7 +19,6 @@ import TerminosCondiciones from "./pages/TerminosCondiciones";
 import ProductoDetalle from "./pages/ProductoDetalle";
 import TodosProductos from "./pages/TodosProductos";
 import NotFound from "./pages/NotFound";
-import Checkout from "./pages/Checkout";
 import CategoriaPage from "./pages/CategoriaPage";
 import TodasCategorias from "./pages/TodasCategorias";
 import Header from "./components/Header";
@@ -38,13 +36,12 @@ const queryClient = new QueryClient();
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <CookiesNotice />
-          <BrowserRouter>
-            <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <CookiesNotice />
+        <BrowserRouter>
+          <AuthProvider>
               <Header />
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -59,7 +56,6 @@ const App = () => {
                 <Route path="/ventas" element={<Ventas />} />
                 <Route path="/todos-productos" element={<TodosProductos />} />
                 <Route path="/todas-categorias" element={<TodasCategorias />} />
-                <Route path="/checkout" element={<Checkout />} />
                 <Route path="/politicas-privacidad" element={<PoliticasPrivacidad />} />
                 <Route path="/terminos-condiciones" element={<TerminosCondiciones />} />
                 <Route path="/producto/:slug" element={<ProductoDetalle />} />
@@ -88,7 +84,6 @@ const App = () => {
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
-      </CartProvider>
     </QueryClientProvider>
   );
 };

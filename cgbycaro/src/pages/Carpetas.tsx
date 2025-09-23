@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import HamburgerMenu from "@/components/HamburgerMenu";
-import CartDropdown from "@/components/CartDropdown";
 import FreeShippingBar from "@/components/FreeShippingBar";
 
 const Carpetas = () => {

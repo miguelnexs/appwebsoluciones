@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import HeroCarousel from "@/components/HeroCarousel";
-import CartDropdown from "@/components/CartDropdown";
 import SocialLinks from "@/components/SocialLinks";
 import LocationInfo from "@/components/LocationInfo";
 import { Link } from "react-router-dom";
@@ -373,7 +372,6 @@ const Index = () => {
                 <li><Link to="/ventas" className="hover:text-neutral-200 transition-colors">Ofertas</Link></li>
                 <li><Link to="/politicas-privacidad" className="hover:text-neutral-200 transition-colors">Privacidad</Link></li>
                 <li><Link to="/terminos-condiciones" className="hover:text-neutral-200 transition-colors">Términos</Link></li>
-                <li><Link to="/checkout" className="hover:text-neutral-200 transition-colors">Checkout</Link></li>
               </ul>
             </div>
             <div>

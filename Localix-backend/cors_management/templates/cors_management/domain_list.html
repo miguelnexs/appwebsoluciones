@@ -1,0 +1,542 @@
+{% extends 'cors_management/base.html' %}
+
+{% block title %}Lista de Dominios - Panel CORS{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">Dominios CORS</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-list me-2"></i>
+            Dominios CORS
+        </h1>
+        <p class="text-muted">Gestiona todos los dominios permitidos para CORS</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'cors_management:domain_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>
+            Agregar Dominio
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3" id="filterForm">
+            <div class="col-md-3">
+                <label for="status" class="form-label">Estado</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="">Todos los estados</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Activo</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactivo</option>
+                    <option value="blocked" {% if request.GET.status == 'blocked' %}selected{% endif %}>Bloqueado</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="environment" class="form-label">Entorno</label>
+                <select name="environment" id="environment" class="form-select">
+                    <option value="">Todos los entornos</option>
+                    <option value="development" {% if request.GET.environment == 'development' %}selected{% endif %}>Desarrollo</option>
+                    <option value="staging" {% if request.GET.environment == 'staging' %}selected{% endif %}>Staging</option>
+                    <option value="production" {% if request.GET.environment == 'production' %}selected{% endif %}>Producción</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="search" class="form-label">Buscar dominio</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Buscar por dominio o descripción..." 
+                       value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-1"></i>
+                        Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de dominios -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-globe me-2"></i>
+            Dominios Configurados ({{ domains.count }})
+        </h5>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-secondary" onclick="exportDomains()">
+                <i class="fas fa-download me-1"></i>
+                Exportar
+            </button>
+            <button class="btn btn-outline-warning" onclick="bulkActions()">
+                <i class="fas fa-tasks me-1"></i>
+                Acciones en lote
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if domains %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="domainsTable">
+                    <thead>
+                        <tr>
+                            <th width="30">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
+                            <th>Dominio</th>
+                            <th>Estado</th>
+                            <th>Entorno</th>
+                            <th>Configuración</th>
+                            <th>Uso</th>
+                            <th>Creado</th>
+                            <th width="120">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for domain in domains %}
+                        <tr data-domain-id="{{ domain.pk }}">
+                            <td>
+                                <input type="checkbox" class="form-check-input domain-checkbox" 
+                                       value="{{ domain.pk }}">
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ domain.domain }}</strong>
+                                    {% if domain.description %}
+                                        <br><small class="text-muted">{{ domain.description|truncatechars:60 }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ domain.status }}" 
+                                      id="status-{{ domain.pk }}">
+                                    {% if domain.status == 'active' %}
+                                        <i class="fas fa-check-circle me-1"></i>Activo
+                                    {% elif domain.status == 'inactive' %}
+                                        <i class="fas fa-pause-circle me-1"></i>Inactivo
+                                    {% else %}
+                                        <i class="fas fa-ban me-1"></i>Bloqueado
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    {{ domain.get_environment_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    {% if domain.allow_credentials %}
+                                        <span class="badge bg-info me-1">Credentials</span>
+                                    {% endif %}
+                                    {% if domain.allowed_methods %}
+                                        <span class="badge bg-light text-dark">
+                                            {{ domain.allowed_methods|truncatechars:15 }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    <strong>{{ domain.usage_count|default:0 }}</strong> usos
+                                    {% if domain.last_used_at %}
+                                        <br><span class="text-muted">{{ domain.last_used_at|timesince }} ago</span>
+                                    {% else %}
+                                        <br><span class="text-muted">Nunca usado</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    {{ domain.created_at|date:"d/m/Y" }}
+                                    <br><span class="text-muted">{{ domain.created_by.username }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary btn-sm" 
+                                            onclick="editDomain({{ domain.pk }})"
+                                            title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" 
+                                            onclick="toggleDomainStatus({{ domain.pk }}, '{{ domain.status }}')"
+                                            title="{% if domain.status == 'active' %}Desactivar{% else %}Activar{% endif %}">
+                                        {% if domain.status == 'active' %}
+                                            <i class="fas fa-pause"></i>
+                                        {% else %}
+                                            <i class="fas fa-play"></i>
+                                        {% endif %}
+                                    </button>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" 
+                                                data-bs-toggle="dropdown" title="Más opciones">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item" href="#" 
+                                                   onclick="viewDomainDetails({{ domain.pk }})">
+                                                    <i class="fas fa-eye me-2"></i>Ver detalles
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="#" 
+                                                   onclick="testDomain('{{ domain.domain }}')">
+                                                    <i class="fas fa-flask me-2"></i>Probar CORS
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="#" 
+                                                   onclick="viewAuditLog({{ domain.pk }})">
+                                                    <i class="fas fa-history me-2"></i>Historial
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="#" 
+                                                   onclick="deleteDomain({{ domain.pk }}, '{{ domain.domain }}')">
+                                                    <i class="fas fa-trash me-2"></i>Eliminar
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if is_paginated %}
+            <nav aria-label="Paginación de dominios" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.environment %}&environment={{ request.GET.environment }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.environment %}&environment={{ request.GET.environment }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.environment %}&environment={{ request.GET.environment }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.environment %}&environment={{ request.GET.environment }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.environment %}&environment={{ request.GET.environment }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-globe-americas fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No se encontraron dominios</h4>
+                {% if request.GET.search or request.GET.status or request.GET.environment %}
+                    <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+                    <a href="{% url 'cors_management:domain_list' %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-times me-1"></i>
+                        Limpiar filtros
+                    </a>
+                {% else %}
+                    <p class="text-muted">Comienza agregando tu primer dominio CORS</p>
+                {% endif %}
+                <a href="{% url 'cors_management:domain_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Agregar Dominio
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para detalles del dominio -->
+<div class="modal fade" id="domainDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Detalles del Dominio
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="domainDetailsContent">
+                <!-- Contenido cargado dinámicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Configurar DataTable
+    $('#domainsTable').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        columnDefs: [
+            { orderable: false, targets: [0, 7] }
+        ]
+    });
+
+    // Select all checkbox
+    $('#selectAll').change(function() {
+        $('.domain-checkbox').prop('checked', this.checked);
+    });
+
+    // Auto-submit filtros
+    $('#filterForm select, #filterForm input').change(function() {
+        if ($(this).attr('type') !== 'text') {
+            $('#filterForm').submit();
+        }
+    });
+
+    // Búsqueda con delay
+    let searchTimeout;
+    $('#search').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            $('#filterForm').submit();
+        }, 500);
+    });
+});
+
+function editDomain(domainId) {
+    window.location.href = `{% url 'cors_management:domain_edit' 0 %}`.replace('0', domainId);
+}
+
+function toggleDomainStatus(domainId, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    const actionText = newStatus === 'active' ? 'activar' : 'desactivar';
+    
+    Swal.fire({
+        title: `¿${actionText.charAt(0).toUpperCase() + actionText.slice(1)} dominio?`,
+        text: `¿Estás seguro de que quieres ${actionText} este dominio?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3498db',
+        cancelButtonColor: '#95a5a6',
+        confirmButtonText: `Sí, ${actionText}`,
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            showLoading();
+            
+            $.post(window.corsManagement.urls.toggleStatus + domainId + '/', {
+                status: newStatus
+            })
+            .done(function(response) {
+                hideLoading();
+                if (response.success) {
+                    // Actualizar badge de estado
+                    const statusBadge = $(`#status-${domainId}`);
+                    statusBadge.removeClass('status-active status-inactive status-blocked')
+                             .addClass(`status-${newStatus}`);
+                    
+                    if (newStatus === 'active') {
+                        statusBadge.html('<i class="fas fa-check-circle me-1"></i>Activo');
+                    } else {
+                        statusBadge.html('<i class="fas fa-pause-circle me-1"></i>Inactivo');
+                    }
+                    
+                    showAlert('success', 'Estado actualizado', `Dominio ${actionText}do exitosamente`);
+                } else {
+                    showAlert('error', 'Error', response.message || 'No se pudo actualizar el estado');
+                }
+            })
+            .fail(function() {
+                hideLoading();
+                showAlert('error', 'Error', 'No se pudo conectar con el servidor');
+            });
+        }
+    });
+}
+
+function deleteDomain(domainId, domainName) {
+    Swal.fire({
+        title: '¿Eliminar dominio?',
+        text: `¿Estás seguro de que quieres eliminar "${domainName}"? Esta acción no se puede deshacer.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e74c3c',
+        cancelButtonColor: '#95a5a6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            showLoading();
+            
+            $.ajax({
+                url: `{% url 'cors_management:domain_delete' 0 %}`.replace('0', domainId),
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': window.corsManagement.csrfToken
+                }
+            })
+            .done(function(response) {
+                hideLoading();
+                if (response.success) {
+                    $(`tr[data-domain-id="${domainId}"]`).fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                    showAlert('success', 'Dominio eliminado', 'El dominio ha sido eliminado exitosamente');
+                } else {
+                    showAlert('error', 'Error', response.message || 'No se pudo eliminar el dominio');
+                }
+            })
+            .fail(function() {
+                hideLoading();
+                showAlert('error', 'Error', 'No se pudo conectar con el servidor');
+            });
+        }
+    });
+}
+
+function viewDomainDetails(domainId) {
+    showLoading();
+    
+    $.get(`{% url 'cors_management:domain_detail' 0 %}`.replace('0', domainId))
+        .done(function(response) {
+            hideLoading();
+            $('#domainDetailsContent').html(response);
+            $('#domainDetailsModal').modal('show');
+        })
+        .fail(function() {
+            hideLoading();
+            showAlert('error', 'Error', 'No se pudieron cargar los detalles del dominio');
+        });
+}
+
+function testDomain(domain) {
+    showAlert('info', 'Probando CORS', `Iniciando prueba CORS para ${domain}...`);
+    // Implementar lógica de prueba CORS
+}
+
+function viewAuditLog(domainId) {
+    window.location.href = `{% url 'cors_management:audit_logs' %}?domain=${domainId}`;
+}
+
+function exportDomains() {
+    const selectedDomains = $('.domain-checkbox:checked').map(function() {
+        return this.value;
+    }).get();
+    
+    if (selectedDomains.length === 0) {
+        showAlert('warning', 'Selección requerida', 'Selecciona al menos un dominio para exportar');
+        return;
+    }
+    
+    // Crear formulario para exportar
+    const form = $('<form>', {
+        method: 'POST',
+        action: '{% url "cors_management:export_domains" %}'
+    });
+    
+    form.append($('<input>', {
+        type: 'hidden',
+        name: 'csrfmiddlewaretoken',
+        value: window.corsManagement.csrfToken
+    }));
+    
+    selectedDomains.forEach(domainId => {
+        form.append($('<input>', {
+            type: 'hidden',
+            name: 'domains',
+            value: domainId
+        }));
+    });
+    
+    $('body').append(form);
+    form.submit();
+    form.remove();
+}
+
+function bulkActions() {
+    const selectedDomains = $('.domain-checkbox:checked').map(function() {
+        return this.value;
+    }).get();
+    
+    if (selectedDomains.length === 0) {
+        showAlert('warning', 'Selección requerida', 'Selecciona al menos un dominio para realizar acciones en lote');
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Acciones en lote',
+        text: `${selectedDomains.length} dominios seleccionados`,
+        icon: 'question',
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: 'Activar todos',
+        denyButtonText: 'Desactivar todos',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#27ae60',
+        denyButtonColor: '#f39c12'
+    }).then((result) => {
+        if (result.isConfirmed || result.isDenied) {
+            const action = result.isConfirmed ? 'active' : 'inactive';
+            bulkUpdateStatus(selectedDomains, action);
+        }
+    });
+}
+
+function bulkUpdateStatus(domainIds, status) {
+    showLoading();
+    
+    $.post('{% url "cors_management:bulk_update_status" %}', {
+        domains: domainIds,
+        status: status
+    })
+    .done(function(response) {
+        hideLoading();
+        if (response.success) {
+            showAlert('success', 'Actualización completada', `${response.updated} dominios actualizados`);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('error', 'Error', response.message || 'No se pudieron actualizar los dominios');
+        }
+    })
+    .fail(function() {
+        hideLoading();
+        showAlert('error', 'Error', 'No se pudo conectar con el servidor');
+    });
+}
+</script>
+{% endblock %}

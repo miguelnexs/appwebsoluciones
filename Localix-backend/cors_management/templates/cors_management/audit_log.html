@@ -1,0 +1,411 @@
+{% extends 'cors_management/base.html' %}
+
+{% block title %}Registro de Auditoría - Panel CORS{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">Registro de Auditoría</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Registro de Auditoría CORS
+                </h4>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="exportAuditLog()">
+                        <i class="fas fa-download me-2"></i>
+                        Exportar
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="refreshAuditLog()">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Actualizar
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Filtros -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <label for="filterAction" class="form-label">Acción</label>
+                        <select class="form-select" id="filterAction">
+                            <option value="">Todas las acciones</option>
+                            <option value="CREATE">Crear</option>
+                            <option value="UPDATE">Actualizar</option>
+                            <option value="DELETE">Eliminar</option>
+                            <option value="TOGGLE_STATUS">Cambiar Estado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterUser" class="form-label">Usuario</label>
+                        <select class="form-select" id="filterUser">
+                            <option value="">Todos los usuarios</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterDateFrom" class="form-label">Desde</label>
+                        <input type="date" class="form-control" id="filterDateFrom">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterDateTo" class="form-label">Hasta</label>
+                        <input type="date" class="form-control" id="filterDateTo">
+                    </div>
+                </div>
+
+                <!-- Estadísticas rápidas -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">{{ stats.total_actions }}</h5>
+                                <p class="card-text">Total de Acciones</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">{{ stats.today_actions }}</h5>
+                                <p class="card-text">Acciones Hoy</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">{{ stats.unique_users }}</h5>
+                                <p class="card-text">Usuarios Activos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">{{ stats.domains_modified }}</h5>
+                                <p class="card-text">Dominios Modificados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de auditoría -->
+                <div class="table-responsive">
+                    <table class="table table-hover" id="auditTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Usuario</th>
+                                <th>Acción</th>
+                                <th>Dominio</th>
+                                <th>IP</th>
+                                <th>Detalles</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in audit_logs %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold">{{ log.timestamp|date:"d/m/Y" }}</span>
+                                        <small class="text-muted">{{ log.timestamp|time:"H:i:s" }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ log.user.get_full_name|default:log.user.username }}</div>
+                                            <small class="text-muted">{{ log.user.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if log.action == 'CREATE' %}bg-success
+                                        {% elif log.action == 'UPDATE' %}bg-primary
+                                        {% elif log.action == 'DELETE' %}bg-danger
+                                        {% elif log.action == 'TOGGLE_STATUS' %}bg-warning
+                                        {% else %}bg-secondary{% endif %}">
+                                        {% if log.action == 'CREATE' %}
+                                            <i class="fas fa-plus me-1"></i>Crear
+                                        {% elif log.action == 'UPDATE' %}
+                                            <i class="fas fa-edit me-1"></i>Actualizar
+                                        {% elif log.action == 'DELETE' %}
+                                            <i class="fas fa-trash me-1"></i>Eliminar
+                                        {% elif log.action == 'TOGGLE_STATUS' %}
+                                            <i class="fas fa-toggle-on me-1"></i>Estado
+                                        {% else %}
+                                            {{ log.action }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <code class="text-primary">{{ log.domain.domain }}</code>
+                                        <small class="text-muted">{{ log.domain.environment|title }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="font-monospace text-muted">{{ log.ip_address|default:"N/A" }}</span>
+                                </td>
+                                <td>
+                                    <div class="details-preview" style="max-width: 200px;">
+                                        {% if log.changes %}
+                                            <small class="text-muted">
+                                                {% for field, change in log.changes.items %}
+                                                    <div><strong>{{ field }}:</strong> {{ change.old }} → {{ change.new }}</div>
+                                                {% endfor %}
+                                            </small>
+                                        {% else %}
+                                            <small class="text-muted">{{ log.details|default:"Sin detalles" }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" 
+                                                onclick="viewAuditDetails('{{ log.id }}')"
+                                                title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if log.domain %}
+                                        <a href="{% url 'cors_management:domain_edit' log.domain.id %}" 
+                                           class="btn btn-outline-secondary"
+                                           title="Ver dominio">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                                        <p>No hay registros de auditoría disponibles</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if is_paginated %}
+                <nav aria-label="Paginación de auditoría">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalles de auditoría -->
+<div class="modal fade" id="auditDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Detalles de Auditoría
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="auditDetailsContent">
+                <!-- Contenido cargado dinámicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Inicializar DataTable
+    const auditTable = $('#auditTable').DataTable({
+        order: [[0, 'desc']], // Ordenar por fecha descendente
+        pageLength: 25,
+        responsive: true,
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+        },
+        columnDefs: [
+            {
+                targets: [6], // Columna de acciones
+                orderable: false,
+                searchable: false
+            }
+        ]
+    });
+
+    // Filtros en tiempo real
+    $('#filterAction, #filterUser').change(function() {
+        applyFilters();
+    });
+
+    $('#filterDateFrom, #filterDateTo').change(function() {
+        applyFilters();
+    });
+
+    // Auto-refresh cada 30 segundos
+    setInterval(refreshAuditLog, 30000);
+});
+
+function applyFilters() {
+    const action = $('#filterAction').val();
+    const user = $('#filterUser').val();
+    const dateFrom = $('#filterDateFrom').val();
+    const dateTo = $('#filterDateTo').val();
+
+    let url = new URL(window.location.href);
+    
+    // Limpiar parámetros existentes
+    url.searchParams.delete('action');
+    url.searchParams.delete('user');
+    url.searchParams.delete('date_from');
+    url.searchParams.delete('date_to');
+    
+    // Agregar nuevos filtros
+    if (action) url.searchParams.set('action', action);
+    if (user) url.searchParams.set('user', user);
+    if (dateFrom) url.searchParams.set('date_from', dateFrom);
+    if (dateTo) url.searchParams.set('date_to', dateTo);
+    
+    // Recargar página con filtros
+    window.location.href = url.toString();
+}
+
+function viewAuditDetails(logId) {
+    showLoading();
+    
+    $.get(`{% url 'cors_management:audit_detail' 0 %}`.replace('0', logId))
+    .done(function(response) {
+        $('#auditDetailsContent').html(response.html);
+        $('#auditDetailsModal').modal('show');
+    })
+    .fail(function() {
+        showAlert('error', 'Error', 'No se pudieron cargar los detalles de auditoría');
+    })
+    .always(function() {
+        hideLoading();
+    });
+}
+
+function refreshAuditLog() {
+    showLoading();
+    window.location.reload();
+}
+
+function exportAuditLog() {
+    const action = $('#filterAction').val();
+    const user = $('#filterUser').val();
+    const dateFrom = $('#filterDateFrom').val();
+    const dateTo = $('#filterDateTo').val();
+
+    let exportUrl = '{% url "cors_management:audit_export" %}';
+    const params = new URLSearchParams();
+    
+    if (action) params.append('action', action);
+    if (user) params.append('user', user);
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+    
+    if (params.toString()) {
+        exportUrl += '?' + params.toString();
+    }
+
+    // Crear enlace temporal para descarga
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.download = `audit_log_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showAlert('success', 'Exportación iniciada', 'El archivo se descargará automáticamente');
+}
+
+// Formatear detalles de cambios
+function formatChanges(changes) {
+    if (!changes) return 'Sin cambios registrados';
+    
+    let html = '<div class="changes-list">';
+    
+    Object.keys(changes).forEach(field => {
+        const change = changes[field];
+        html += `
+            <div class="change-item mb-2">
+                <strong>${field}:</strong>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-danger me-2">${change.old || 'N/A'}</span>
+                    <i class="fas fa-arrow-right mx-2"></i>
+                    <span class="badge bg-success">${change.new || 'N/A'}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+// Tooltip para detalles largos
+$(document).ready(function() {
+    $('[data-bs-toggle="tooltip"]').tooltip();
+});
+</script>
+{% endblock %}

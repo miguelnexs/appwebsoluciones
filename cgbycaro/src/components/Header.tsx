@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { User, LogIn } from "lucide-react";
 import HamburgerMenu from "./HamburgerMenu";
-import CartDropdown from "./CartDropdown";
 import UserProfile from "./UserProfile";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -32,10 +31,8 @@ const Header = () => {
           )}
         </div>
         
-        {/* Carrito y Usuario */}
+        {/* Usuario */}
         <div className="flex items-center space-x-3 relative">
-          <CartDropdown />
-          
           {isAuthenticated ? (
             <UserProfile />
           ) : (

@@ -7,18 +7,9 @@ import { CONNECTION_CONFIG, isConnectionError, isServerError } from '../utils/co
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
   const [user, setUser] = useState(null);
   const [connectionError, setConnectionError] = useState(false);
   const [isCheckingConnection, setIsCheckingConnection] = useState(false);
-  
-  const addToCart = (product) => {
-    setCart([...cart, product]);
-  };
-  
-  const removeFromCart = (productId) => {
-    setCart(cart.filter(item => item.id !== productId));
-  };
 
   // Función para verificar la conexión
   const checkConnection = useCallback(async () => {
@@ -113,12 +104,9 @@ export const AppProvider = ({ children }) => {
   
   return (
     <AppContext.Provider value={{
-      cart,
       user,
       connectionError,
       isCheckingConnection,
-      addToCart,
-      removeFromCart,
       setUser,
       retryConnection,
       checkConnection
