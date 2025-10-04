@@ -46,11 +46,11 @@ export default function ProductForm({ productToEdit, onSuccess, onCancel, compac
     mode: 'onChange',
     defaultValues: {
       nombre: '',
-      sku: `PROD-${Date.now()}`, // Generar SKU único por defecto
+      sku: '',
       tipo: 'fisico',
       estado: 'borrador',
-      descripcion_corta: 'Descripción breve del producto', // Valor por defecto
-      descripcion_larga: 'Descripción detallada del producto con todas sus características.', // Valor por defecto
+      descripcion_corta: '',
+      descripcion_larga: '',
       precio: 0,
       precio_comparacion: null,
       costo: 0,

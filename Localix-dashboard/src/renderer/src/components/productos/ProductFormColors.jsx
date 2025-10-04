@@ -226,9 +226,9 @@ const ProductFormColors = ({ productId, onColorsChange }) => {
           name: file.name,
           type: file.type,
           size: file.size,
-          data: Array.from(uint8Array) // Convertir a array normal para serialización
+          data: Array.from(uint8Array)
         },
-        orden: imagenes.length
+        orden: imagenes.length + 1
       };
 
       const response = await window.electronAPI.productos.subirImagen(selectedColor.id, imageData);
@@ -613,4 +613,4 @@ const ProductFormColors = ({ productId, onColorsChange }) => {
   );
 };
 
-export default ProductFormColors; 
+export default ProductFormColors;

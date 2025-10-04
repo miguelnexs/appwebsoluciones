@@ -1,6 +1,6 @@
 from rest_framework import status, generics
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
@@ -19,7 +19,7 @@ class ColorProductoListCreateView(generics.ListCreateAPIView):
     """
     Vista para listar y crear colores de un producto
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     parser_classes = [MultiPartParser, FormParser]
     
     def get_queryset(self):
@@ -48,7 +48,7 @@ class ColorProductoDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     Vista para obtener, actualizar y eliminar un color específico
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     parser_classes = [MultiPartParser, FormParser]
     serializer_class = ColorProductoSerializer
     
@@ -75,7 +75,7 @@ class ImagenProductoListCreateView(generics.ListCreateAPIView):
     """
     Vista para listar y crear imágenes de un color
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     parser_classes = [MultiPartParser, FormParser]
     serializer_class = ImagenProductoSerializer
     
@@ -105,7 +105,7 @@ class ImagenProductoDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     Vista para obtener, actualizar y eliminar una imagen específica
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     parser_classes = [MultiPartParser, FormParser]
     serializer_class = ImagenProductoSerializer
     
@@ -115,7 +115,7 @@ class ImagenProductoDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticatedOrReadOnly])
 def reordenar_imagenes(request, color_id):
     """
     Reordenar imágenes de un color
@@ -150,7 +150,7 @@ def reordenar_imagenes(request, color_id):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticatedOrReadOnly])
 def establecer_imagen_principal(request, color_id, imagen_id):
     """
     Establecer una imagen como principal para un color
@@ -176,7 +176,7 @@ def establecer_imagen_principal(request, color_id, imagen_id):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticatedOrReadOnly])
 def colores_producto_publico(request, producto_id):
     """
     Obtener colores de un producto para la vista pública
@@ -195,4 +195,4 @@ def colores_producto_publico(request, producto_id):
         return Response(
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        ) 
+        )

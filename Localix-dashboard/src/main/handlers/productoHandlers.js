@@ -396,12 +396,13 @@ module.exports = function setupProductHandlers() {
         return cachedData;
       }
       
+      const authConfig = await createAuthenticatedConfig();
       const response = await axios.get(`${API_BASE_URL}/api/productos/`, {
+        ...authConfig,
         params: {
           ordering: '-fecha_creacion',
           ...params
-        },
-        ...AXIOS_CONFIG
+        }
       });
       
       setCache(cacheKey, response.data);
@@ -1056,7 +1057,7 @@ module.exports = function setupProductHandlers() {
       console.log('Color ID:', colorId);
       
       const config = await createAuthenticatedConfig();
-      const response = await axios.get(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/`, config);
+      const response = await axios.get(`${API_BASE_URL}/api/colores/${colorId}/imagenes/`, config);
       console.log('📡 Respuesta del backend:', response.data);
       
       // ✅ Manejar respuesta paginada del backend
@@ -1093,91 +1094,80 @@ module.exports = function setupProductHandlers() {
 
   // Subir imagen para un color
   ipcMain.handle('productos:subirImagen', async (event, colorId, formData) => {
+    let tempFileRef = null;
     try {
       console.log('=== SUBIENDO IMAGEN ===');
       console.log('Color ID:', colorId);
       console.log('FormData recibido:', formData);
-      
+
+      if (!colorId) {
+        throw new Error('Color ID requerido');
+      }
       // Verificar que se recibió la imagen
       if (!formData || !formData.imagen) {
         console.error('❌ No se recibió formData o formData.imagen');
         console.error('❌ formData:', formData);
         throw new Error('Image is required');
       }
-      
-      // Verificar que la imagen tiene datos
-      if (!formData.imagen.data || !Array.isArray(formData.imagen.data)) {
-        console.error('❌ No se recibieron datos de imagen válidos');
-        console.error('❌ formData.imagen:', formData.imagen);
-        throw new Error('Image data is required');
-      }
-      
-      // Preparar FormData para la subida usando la librería form-data
-      const FormData = require('form-data');
-      const uploadFormData = new FormData();
-      
-      // Agregar archivo de imagen
+
       const imageFile = formData.imagen;
-      console.log('📁 Archivo de imagen:', {
+
+      // Preparar la imagen usando el pipeline robusto (admite Array, Uint8Array, Buffer, base64)
+      tempFileRef = await prepareImageForUpload({
         name: imageFile.name,
         type: imageFile.type,
         size: imageFile.size,
-        dataLength: imageFile.data.length
+        data: imageFile.data,
+        lastModified: imageFile.lastModified,
       });
-      
-      // Convertir el archivo a Buffer
-      let imageBuffer;
-      if (imageFile.data && Array.isArray(imageFile.data)) {
-        // Si el archivo tiene datos como array (Uint8Array convertido)
-        imageBuffer = Buffer.from(imageFile.data);
-        console.log('✅ Datos convertidos de array a Buffer');
-      } else if (imageFile.data instanceof Buffer) {
-        // Si ya es un Buffer
-        imageBuffer = imageFile.data;
-        console.log('✅ Datos ya son Buffer');
-      } else if (imageFile.data instanceof Uint8Array) {
-        // Si es Uint8Array
-        imageBuffer = Buffer.from(imageFile.data);
-        console.log('✅ Datos convertidos de Uint8Array a Buffer');
-      } else {
-        console.error('❌ Formato de archivo no soportado:', typeof imageFile.data);
-        console.error('❌ Estructura del archivo:', Object.keys(imageFile));
-        throw new Error('Formato de archivo no soportado');
-      }
-      
-      // Agregar el archivo al FormData
-      uploadFormData.append('imagen', imageBuffer, {
-        filename: imageFile.name || 'imagen.jpg',
-        contentType: imageFile.type || 'image/jpeg'
+
+      // Construir FormData con stream del archivo temporal procesado
+      const uploadFormData = new FormData();
+      const fileStream = fs.createReadStream(tempFileRef.path);
+
+      uploadFormData.append('imagen', fileStream, {
+        filename: tempFileRef.name || imageFile.name || 'imagen.jpg',
+        contentType: tempFileRef.type || imageFile.type || 'image/jpeg',
       });
-      
+
       // Agregar orden si existe
       if (formData.orden !== undefined) {
-        uploadFormData.append('orden', formData.orden.toString());
+        const orden = parseInt(formData.orden, 10);
+        if (!Number.isNaN(orden) && orden >= 1) {
+          uploadFormData.append('orden', String(orden));
+        } else {
+          console.warn('Orden inválido recibido, se omitirá:', formData.orden);
+        }
       }
-      
+
       console.log('📤 Enviando FormData al backend...');
-      console.log('📊 Tamaño del buffer:', imageBuffer.length);
       console.log('📊 Headers del FormData:', uploadFormData.getHeaders());
-      
+
       const baseConfig = await createAuthenticatedConfig();
       const response = await axios.post(
-        `${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/`,
+        `${API_BASE_URL}/api/colores/${colorId}/imagenes/`,
         uploadFormData,
         {
           ...baseConfig,
           headers: {
             ...baseConfig.headers,
-            ...uploadFormData.getHeaders()
-          }
+            ...uploadFormData.getHeaders(),
+          },
         }
       );
-      
+
       console.log('✅ Imagen subida exitosamente:', response.data);
       return { success: true, data: response.data };
     } catch (error) {
-      console.error('❌ Error subiendo imagen:', error);
-      return handleApiError(error, 'Error al subir imagen');
+      const errorMessage = await handleApiError(error);
+      console.error('❌ Error subiendo imagen:', errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      if (tempFileRef?.path) {
+        await fsp.unlink(tempFileRef.path).catch((err) =>
+          console.warn('No se pudo limpiar archivo temporal:', err.message)
+        );
+      }
     }
   });
 
@@ -1185,7 +1175,7 @@ module.exports = function setupProductHandlers() {
   ipcMain.handle('productos:eliminarImagen', async (event, colorId, imagenId) => {
     try {
       const config = await createAuthenticatedConfig();
-      await axios.delete(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/${imagenId}/`, config);
+      await axios.delete(`${API_BASE_URL}/api/colores/${colorId}/imagenes/${imagenId}/`, config);
       return { success: true };
     } catch (error) {
       return handleApiError(error, 'Error al eliminar imagen');
@@ -1196,7 +1186,7 @@ module.exports = function setupProductHandlers() {
   ipcMain.handle('productos:establecerImagenPrincipal', async (event, colorId, imagenId) => {
     try {
       const config = await createAuthenticatedConfig();
-      const response = await axios.post(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/${imagenId}/establecer-principal/`, {}, config);
+      const response = await axios.post(`${API_BASE_URL}/api/colores/${colorId}/imagenes/${imagenId}/establecer-principal/`, {}, config);
       return { success: true, data: response.data };
     } catch (error) {
       return handleApiError(error, 'Error al establecer imagen principal');
@@ -1207,7 +1197,7 @@ module.exports = function setupProductHandlers() {
   ipcMain.handle('productos:reordenarImagenes', async (event, colorId, ordenData) => {
     try {
       const config = await createAuthenticatedConfig();
-      const response = await axios.post(`${API_BASE_URL}/api/productos/colores/${colorId}/imagenes/reordenar/`, ordenData, config);
+      const response = await axios.post(`${API_BASE_URL}/api/colores/${colorId}/imagenes/reordenar/`, ordenData, config);
       return { success: true, data: response.data };
     } catch (error) {
       return handleApiError(error, 'Error al reordenar imágenes');

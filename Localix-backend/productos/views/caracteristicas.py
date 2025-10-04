@@ -1,6 +1,6 @@
 from rest_framework import status, generics
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db import transaction
@@ -16,7 +16,7 @@ class CaracteristicaProductoListCreateView(generics.ListCreateAPIView):
     """
     Vista para listar y crear características de un producto
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     
     def get_queryset(self):
         producto_id = self.kwargs.get('producto_id')
@@ -42,7 +42,7 @@ class CaracteristicaProductoDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     Vista para obtener, actualizar y eliminar una característica específica
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = CaracteristicaProductoSerializer
     
     def get_queryset(self):
@@ -57,7 +57,7 @@ class CaracteristicaProductoDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticatedOrReadOnly])
 def caracteristicas_producto_publico(request, producto_id):
     """
     Obtener características de un producto para la vista pública

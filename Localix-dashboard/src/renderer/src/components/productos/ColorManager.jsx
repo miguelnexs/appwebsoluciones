@@ -63,7 +63,7 @@ const ColorManager = ({ productoId, onColorsChange }) => {
   const cargarColores = async () => {
     setLoading(true);
     try {
-      const response = await window.productosAPI.obtenerColores(productoId);
+      const response = await window.electronAPI.productos.obtenerColores(productoId);
       if (response.success) {
         setColores(response.data);
       } else {
@@ -80,7 +80,7 @@ const ColorManager = ({ productoId, onColorsChange }) => {
   // Cargar imágenes de un color
   const cargarImagenes = async (colorId) => {
     try {
-      const response = await window.productosAPI.obtenerImagenes(colorId);
+      const response = await window.electronAPI.productos.obtenerImagenes(colorId);
       if (response.success) {
         setImagenes(response.data);
       }
@@ -128,9 +128,9 @@ const ColorManager = ({ productoId, onColorsChange }) => {
     try {
       let response;
       if (editingColor) {
-        response = await window.productosAPI.actualizarColor(productoId, editingColor.id, colorForm);
+        response = await window.electronAPI.productos.actualizarColor(productoId, editingColor.id, colorForm);
       } else {
-        response = await window.productosAPI.crearColor(productoId, colorForm);
+        response = await window.electronAPI.productos.crearColor(productoId, colorForm);
       }
 
       if (response.success) {
@@ -154,7 +154,7 @@ const ColorManager = ({ productoId, onColorsChange }) => {
     }
 
     try {
-      const response = await window.productosAPI.eliminarColor(productoId, colorId);
+      const response = await window.electronAPI.productos.eliminarColor(productoId, colorId);
       if (response.success) {
         setSuccess('Color eliminado correctamente');
         cargarColores();
@@ -187,11 +187,20 @@ const ColorManager = ({ productoId, onColorsChange }) => {
 
     setUploadingImage(true);
     try {
-      const formData = new FormData();
-      formData.append('imagen', file);
-      formData.append('orden', imagenes.length);
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
 
-      const response = await window.productosAPI.subirImagen(selectedColor.id, formData);
+      const imageData = {
+        imagen: {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: Array.from(uint8Array)
+        },
+        orden: imagenes.length + 1
+      };
+
+      const response = await window.electronAPI.productos.subirImagen(selectedColor.id, imageData);
       if (response.success) {
         setSuccess('Imagen subida correctamente');
         await cargarImagenes(selectedColor.id);
@@ -213,7 +222,7 @@ const ColorManager = ({ productoId, onColorsChange }) => {
     }
 
     try {
-      const response = await window.productosAPI.eliminarImagen(selectedColor.id, imagenId);
+      const response = await window.electronAPI.productos.eliminarImagen(selectedColor.id, imagenId);
       if (response.success) {
         setSuccess('Imagen eliminada correctamente');
         await cargarImagenes(selectedColor.id);
@@ -229,7 +238,7 @@ const ColorManager = ({ productoId, onColorsChange }) => {
   // Establecer imagen principal
   const handleSetMainImage = async (imagenId) => {
     try {
-      const response = await window.productosAPI.establecerImagenPrincipal(selectedColor.id, imagenId);
+      const response = await window.electronAPI.productos.establecerImagenPrincipal(selectedColor.id, imagenId);
       if (response.success) {
         setSuccess('Imagen principal establecida correctamente');
         await cargarImagenes(selectedColor.id);
@@ -462,4 +471,4 @@ const ColorManager = ({ productoId, onColorsChange }) => {
   );
 };
 
-export default ColorManager; 
+export default ColorManager;

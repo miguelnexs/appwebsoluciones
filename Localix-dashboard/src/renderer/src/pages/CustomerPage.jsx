@@ -4,7 +4,7 @@ import {
   Search, Filter, Download, Plus,
   ChevronDown, ChevronUp, ArrowUpDown,
   User, Mail, Phone, ShoppingBag, Calendar,
-  Eye, Edit, Trash2, DollarSign, Package, RefreshCw
+  Edit, Trash2, DollarSign, Package, RefreshCw
 } from 'lucide-react';
 import CustomerModal from '../components/CustomerModal';
 import { toast } from 'react-toastify';
@@ -26,6 +26,7 @@ const CustomersPage = () => {
   const [filtroActivo, setFiltroActivo] = useState('todos'); // 'todos', 'activos', 'inactivos'
   const [eliminandoCliente, setEliminandoCliente] = useState(null); // ID del cliente que se está eliminando
   const [clienteParaEditar, setClienteParaEditar] = useState(null); // Cliente seleccionado para editar
+  const [ventasClienteSeleccionado, setVentasClienteSeleccionado] = useState([]);
 
   // Hook para configuración
   const { settings } = useSettings();
@@ -230,10 +231,10 @@ const CustomersPage = () => {
       if (response.success) {
         // Actualizar las ventas con la información detallada
         if (response.data && response.data.ventas) {
+          setVentasClienteSeleccionado(response.data.ventas || []);
           // Actualizar las ventas existentes con la información detallada
           setVentas(prevVentas => {
             const ventasActualizadas = [...prevVentas];
-            
             response.data.ventas.forEach(ventaDetallada => {
               const index = ventasActualizadas.findIndex(v => v.id === ventaDetallada.id);
               if (index !== -1) {
@@ -243,9 +244,10 @@ const CustomersPage = () => {
                 };
               }
             });
-            
             return ventasActualizadas;
           });
+        } else {
+          setVentasClienteSeleccionado([]);
         }
       } else {
         console.error('Error obteniendo ventas del cliente:', response.error);
@@ -534,14 +536,7 @@ const CustomersPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          <button
-                            onClick={() => verVentasCliente(cliente)}
-                            className="flex items-center gap-1 px-2 py-1 bg-theme-secondary text-theme-textSecondary rounded hover:bg-theme-border transition-colors"
-                            title="Ver historial de compras"
-                          >
-                            <Eye size={14} />
-                            <span className="text-xs">Ver</span>
-                          </button>
+
                           <button
                             onClick={() => editarCliente(cliente)}
                             className="flex items-center gap-1 px-2 py-1 bg-theme-secondary text-theme-textSecondary rounded hover:bg-theme-border transition-colors"
@@ -645,7 +640,7 @@ const CustomersPage = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => setMostrarVentasModal(false)}
+                  onClick={() => { setMostrarVentasModal(false); setVentasClienteSeleccionado([]); }}
                   className="p-2 hover:bg-theme-secondary rounded-lg transition-colors"
                 >
                   <svg className="h-5 w-5 text-theme-textSecondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -656,7 +651,7 @@ const CustomersPage = () => {
             </div>
             
             <div className="p-6">
-              {obtenerVentasCliente(clienteSeleccionado.id).length > 0 ? (
+              {((Array.isArray(ventasClienteSeleccionado) && ventasClienteSeleccionado.length > 0) || obtenerVentasCliente(clienteSeleccionado.id).length > 0) ? (
                 <div className="space-y-6">
                   {/* Resumen del cliente */}
                   <div className="bg-theme-background rounded-lg p-6 border border-theme-border">
@@ -697,16 +692,20 @@ const CustomersPage = () => {
                         </div>
                         <p className="text-xs text-theme-textSecondary mb-1">Última Compra</p>
                         <p className="text-sm font-medium text-theme-text">
-                          {obtenerVentasCliente(clienteSeleccionado.id).length > 0 
-                            ? new Date(obtenerVentasCliente(clienteSeleccionado.id)[0].fecha_venta).toLocaleDateString('es-ES')
-                            : 'N/A'}
+                          {(Array.isArray(ventasClienteSeleccionado) && ventasClienteSeleccionado.length > 0)
+                            ? new Date(ventasClienteSeleccionado[0].fecha_venta).toLocaleDateString('es-ES')
+                            : (obtenerVentasCliente(clienteSeleccionado.id).length > 0
+                                ? new Date(obtenerVentasCliente(clienteSeleccionado.id)[0].fecha_venta).toLocaleDateString('es-ES')
+                                : 'N/A') }
                         </p>
                       </div>
                     </div>
                     
                     {/* Productos más comprados */}
                     {(() => {
-                      const ventasCliente = obtenerVentasCliente(clienteSeleccionado.id);
+                      const ventasCliente = (Array.isArray(ventasClienteSeleccionado) && ventasClienteSeleccionado.length > 0)
+                        ? ventasClienteSeleccionado
+                        : obtenerVentasCliente(clienteSeleccionado.id);
                       const productosComprados = {};
                       
                       ventasCliente.forEach(venta => {
@@ -767,7 +766,7 @@ const CustomersPage = () => {
                   <div className="space-y-4">
                     <h4 className="text-lg font-semibold text-theme-text">Detalle de Compras</h4>
                     <div className="space-y-3">
-                      {obtenerVentasCliente(clienteSeleccionado.id).map((venta) => (
+                      {(Array.isArray(ventasClienteSeleccionado) && ventasClienteSeleccionado.length > 0 ? ventasClienteSeleccionado : obtenerVentasCliente(clienteSeleccionado.id)).map((venta) => (
                         <div key={venta.id} className="bg-theme-surface border border-theme-border rounded-lg p-4 hover:shadow-sm transition-shadow">
                           <div className="flex justify-between items-start mb-4">
                             <div>

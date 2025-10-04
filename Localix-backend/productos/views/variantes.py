@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -12,6 +12,7 @@ class VarianteProductoViewSet(viewsets.ModelViewSet):
     """
     queryset = VarianteProducto.objects.all().select_related('producto')
     serializer_class = VarianteProductoSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = [
         'producto',

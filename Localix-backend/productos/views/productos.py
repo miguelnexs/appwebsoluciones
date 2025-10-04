@@ -32,7 +32,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter]
     lookup_field = 'slug'
     parser_classes = (MultiPartParser, FormParser, JSONParser)
-    permission_classes = [permissions.AllowAny]  # Permitir acceso público
+    permission_classes = [permissions.IsAuthenticated]  # Solo lectura para no autenticados
 
     # Configuración de filtros y búsqueda
     search_fields = ['nombre', 'descripcion_corta', 'descripcion_larga', 'sku']

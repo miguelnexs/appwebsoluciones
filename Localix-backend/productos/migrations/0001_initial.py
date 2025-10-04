@@ -103,7 +103,7 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Imágenes de productos',
                 'ordering': ['color', 'orden', 'id'],
                 'indexes': [models.Index(fields=['color'], name='productos_i_color_i_2acb03_idx'), models.Index(fields=['orden'], name='productos_i_orden_7a4439_idx'), models.Index(fields=['es_principal'], name='productos_i_es_prin_e029b4_idx')],
-                'constraints': [models.CheckConstraint(condition=models.Q(('orden__gte', 0)), name='orden_imagen_positivo')],
+                'constraints': [models.CheckConstraint(check=models.Q(orden__gte=0), name='orden_imagen_positivo')],
             },
         ),
         migrations.AddIndex(
@@ -128,11 +128,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='producto',
-            constraint=models.CheckConstraint(condition=models.Q(('precio__gte', models.F('costo'))), name='precio_mayor_igual_costo'),
+            constraint=models.CheckConstraint(check=models.Q(precio__gte=models.F('costo')), name='precio_mayor_igual_costo'),
         ),
         migrations.AddConstraint(
             model_name='producto',
-            constraint=models.CheckConstraint(condition=models.Q(('precio_comparacion__isnull', True), ('precio_comparacion__gt', models.F('precio')), _connector='OR'), name='precio_comparacion_mayor'),
+            constraint=models.CheckConstraint(check=(models.Q(precio_comparacion__isnull=True) | models.Q(precio_comparacion__gt=models.F('precio'))), name='precio_comparacion_mayor'),
         ),
         migrations.AddIndex(
             model_name='colorproducto',

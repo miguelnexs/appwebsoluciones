@@ -618,11 +618,24 @@ const ProductList = () => {
       }
       
       // Obtener todos los productos sin paginación
-      const allProductsResponse = await window.electronAPI.productos.listar({
-        page_size: 10000, // Número grande para obtener todos
-        search: searchQuery,
-        ...exportFilters
-      });
+      const token = localStorage.getItem('access_token');
+      let allProductsResponse;
+      if (token) {
+        const apiResponse = await api.get('productos/', {
+          params: {
+            page_size: 10000, // Número grande para obtener todos
+            search: searchQuery,
+            ...exportFilters
+          }
+        });
+        allProductsResponse = apiResponse.data;
+      } else {
+        allProductsResponse = await window.electronAPI.productos.listar({
+          page_size: 10000, // Número grande para obtener todos
+          search: searchQuery,
+          ...exportFilters
+        });
+      }
       
       const allProducts = Array.isArray(allProductsResponse?.results) 
         ? allProductsResponse.results 
@@ -632,7 +645,7 @@ const ProductList = () => {
         toast.error('No hay productos para exportar', 'No se encontraron productos que coincidan con los filtros aplicados');
         return;
       }
-
+  
       // Obtener colores para cada producto
       const productsWithColors = await Promise.all(
         allProducts.map(async (product) => {
@@ -662,7 +675,7 @@ const ProductList = () => {
           }
         })
       );
-
+  
       // Preparar datos para Excel
       const excelData = productsWithColors.map(product => {
         console.log(`Procesando producto ${product.id} con ${product.colores.length} colores:`, product.colores);
@@ -677,7 +690,7 @@ const ProductList = () => {
           const imagenesCount = color.imagenes ? color.imagenes.length : 0;
           return `${color.nombre}: ${imagenesCount} imagen${imagenesCount !== 1 ? 'es' : ''}`;
         }).join('; ');
-
+  
         return {
           'ID': product.id,
           'Nombre': product.nombre,
@@ -716,18 +729,18 @@ const ProductList = () => {
           'Oferta': product.oferta ? 'Sí' : 'No'
         };
       });
-
+  
       // Generar nombre del archivo con fecha
       const now = new Date();
       const fileName = `productos_localix_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}.xlsx`;
-
+  
       // Exportar usando la API de Electron
       const result = await window.electronAPI.exportToExcel({
         data: excelData,
         fileName: fileName,
         sheetName: 'Productos'
       });
-
+  
       if (result.success) {
         const totalColores = productsWithColors.reduce((total, product) => total + product.colores.length, 0);
         toast.success('Exportación exitosa', `Se exportaron ${allProducts.length} productos con ${totalColores} colores a ${fileName}`);

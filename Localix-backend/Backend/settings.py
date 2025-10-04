@@ -1,29 +1,46 @@
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-import psycopg2  # ← AGREGAR ESTA LÍNEA
+import dj_database_url
 
 # Cargar variables de entorno desde .env
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', default='default-secret-key')
-
+# Definir DEBUG antes de usarlo
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
+# Configuración de SECRET_KEY dependiente de DEBUG
+SECRET_KEY = os.environ.get('SECRET_KEY') or (
+    'default-secret-key-for-development-only' if DEBUG else None
+)
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY debe estar configurada en producción")
+
 # Configuración de hosts permitidos
-ALLOWED_HOSTS = []
-if os.environ.get('ALLOWED_HOSTS'):
-    ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS').split(',')]
-else:
+if DEBUG:
     ALLOWED_HOSTS = [
         'localhost',
         '127.0.0.1',
         '72.60.7.133',  # IP del servidor VPS
         'www.72.60.7.133',
-        '*',  # Mantener para desarrollo
+        '*',  # Solo para desarrollo
     ]
+else:
+    # En producción, solo hosts específicos
+    ALLOWED_HOSTS = []
+    if os.environ.get('ALLOWED_HOSTS'):
+        ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS').split(',')]
+    else:
+        ALLOWED_HOSTS = [
+            'localhost',
+            '127.0.0.1',
+            '72.60.7.133',  # IP del servidor VPS
+            'www.72.60.7.133',
+            'softwarebycg.shop',
+            'www.softwarebycg.shop',
+        ]
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME') 
 if RENDER_EXTERNAL_HOSTNAME:
@@ -94,27 +111,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Backend.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DATABASE_NAME', 'localix'),
-        'USER': os.environ.get('DATABASE_USER', 'localix_user'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'migel1457'),
-        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-        'PORT': os.environ.get('DATABASE_PORT', '5432'),
-        'OPTIONS': {
-            'client_encoding': 'UTF8',
-            'isolation_level': psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED,
-        },
+# Configuración de base de datos: usar DATABASE_URL si está definida
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
-    # Deshabilitadas para desarrollo
-    # {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    # {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    # {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    # {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 LANGUAGE_CODE = 'es-es'
@@ -139,7 +154,10 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configuración de CORS
-CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True').lower() == 'true'
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -216,12 +234,25 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
 
-# Configuraciones de seguridad - configurables desde variables de entorno
-SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
-CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False').lower() == 'true'
-SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False').lower() == 'true'
-SECURE_BROWSER_XSS_FILTER = False
-X_FRAME_OPTIONS = 'ALLOW'
+# Configuraciones de seguridad
+if DEBUG:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_SSL_REDIRECT = False
+    SECURE_BROWSER_XSS_FILTER = False
+    X_FRAME_OPTIONS = 'ALLOW'
+else:
+    # Configuraciones de seguridad para producción
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 año
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 # URL del frontend - configurable desde variables de entorno
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")

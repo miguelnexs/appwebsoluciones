@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils import timezone
-from .models import Usuario, UserUsagePlan
+from .models import Usuario, UserUsagePlan, LimitCategory, PlanTemplate, PlanTemplateLimits, UserPlanLimits, UserPlanAssignment
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
@@ -195,3 +195,226 @@ class UserUsagePlanAdmin(admin.ModelAdmin):
         self.message_user(request, f'{count} plan(es) activado(s).')
     
     activate_plan.short_description = "Activar plan"
+
+
+@admin.register(LimitCategory)
+class LimitCategoryAdmin(admin.ModelAdmin):
+    list_display = ('display_name', 'name', 'is_active', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('name', 'display_name', 'description')
+    ordering = ('display_name',)
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('name', 'display_name', 'description', 'is_active')
+        }),
+        ('Información del Sistema', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    readonly_fields = ('created_at',)
+
+
+class PlanTemplateLimitsInline(admin.TabularInline):
+    model = PlanTemplateLimits
+    extra = 1
+    fields = ('category', 'limit_type', 'limit_value', 'is_unlimited')
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('category')
+
+
+@admin.register(PlanTemplate)
+class PlanTemplateAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'is_active', 'limits_count', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('name', 'description')
+    ordering = ('name',)
+    inlines = [PlanTemplateLimitsInline]
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('name', 'description', 'is_active')
+        }),
+        ('Información del Sistema', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    readonly_fields = ('created_at', 'updated_at')
+    
+    def limits_count(self, obj):
+        """Muestra el número de límites configurados"""
+        count = obj.limits.count()
+        return format_html('<span style="font-weight: bold;">{} límites</span>', count)
+    
+    limits_count.short_description = 'Límites Configurados'
+
+
+@admin.register(UserPlanLimits)
+class UserPlanLimitsAdmin(admin.ModelAdmin):
+    list_display = ('user', 'category', 'limit_display', 'usage_display', 'usage_percentage_display', 'reset_period', 'last_reset')
+    list_filter = ('limit_type', 'is_unlimited', 'reset_period', 'category', 'created_at')
+    search_fields = ('user__username', 'user__email', 'user__nombre_completo', 'category__display_name')
+    ordering = ('user__username', 'category__display_name')
+    
+    fieldsets = (
+        ('Usuario y Categoría', {
+            'fields': ('user', 'category')
+        }),
+        ('Configuración del Límite', {
+            'fields': ('limit_type', 'limit_value', 'is_unlimited')
+        }),
+        ('Uso y Reinicio', {
+            'fields': ('current_usage', 'reset_period', 'last_reset')
+        }),
+        ('Información del Sistema', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    readonly_fields = ('created_at', 'updated_at')
+    
+    def limit_display(self, obj):
+        """Muestra el límite de forma legible"""
+        if obj.is_unlimited:
+            return format_html('<span style="color: green; font-weight: bold;">ILIMITADO</span>')
+        elif obj.limit_type == 'boolean':
+            value = obj.get_limit_as_bool()
+            color = 'green' if value else 'red'
+            text = 'SÍ' if value else 'NO'
+            return format_html('<span style="color: {}; font-weight: bold;">{}</span>', color, text)
+        else:
+            return obj.limit_value
+    
+    limit_display.short_description = 'Límite'
+    
+    def usage_display(self, obj):
+        """Muestra el uso actual"""
+        if obj.limit_type == 'number' and not obj.is_unlimited:
+            limit = obj.get_limit_as_int()
+            if obj.current_usage >= limit:
+                return format_html('<span style="color: red; font-weight: bold;">{}/{}</span>', obj.current_usage, limit)
+            elif obj.current_usage >= limit * 0.8:
+                return format_html('<span style="color: orange; font-weight: bold;">{}/{}</span>', obj.current_usage, limit)
+            else:
+                return format_html('<span style="color: green;">{}/{}</span>', obj.current_usage, limit)
+        return '-'
+    
+    usage_display.short_description = 'Uso Actual'
+    
+    def usage_percentage_display(self, obj):
+        """Muestra el porcentaje de uso con colores"""
+        if obj.limit_type == 'number' and not obj.is_unlimited:
+            percentage = obj.usage_percentage
+            if percentage >= 100:
+                return format_html('<span style="color: red; font-weight: bold;">{}%</span>', int(percentage))
+            elif percentage >= 80:
+                return format_html('<span style="color: orange; font-weight: bold;">{}%</span>', int(percentage))
+            else:
+                return format_html('<span style="color: green;">{}%</span>', int(percentage))
+        return '-'
+    
+    usage_percentage_display.short_description = 'Porcentaje de Uso'
+    
+    actions = ['reset_usage', 'set_unlimited', 'check_and_reset_usage']
+    
+    def reset_usage(self, request, queryset):
+        """Reiniciar el uso de los límites seleccionados"""
+        count = 0
+        for limit in queryset:
+            limit.reset_usage()
+            count += 1
+        self.message_user(request, f'{count} límite(s) reiniciado(s).')
+    
+    reset_usage.short_description = "Reiniciar uso"
+    
+    def set_unlimited(self, request, queryset):
+        """Establecer como ilimitado"""
+        count = queryset.update(is_unlimited=True)
+        self.message_user(request, f'{count} límite(s) establecido(s) como ilimitado.')
+    
+    set_unlimited.short_description = "Establecer como ilimitado"
+    
+    def check_and_reset_usage(self, request, queryset):
+        """Verificar y reiniciar uso si es necesario"""
+        count = 0
+        for limit in queryset:
+            if limit.should_reset_usage():
+                limit.reset_usage()
+                count += 1
+        self.message_user(request, f'{count} límite(s) reiniciado(s) automáticamente.')
+    
+    check_and_reset_usage.short_description = "Verificar y reiniciar uso automáticamente"
+
+
+@admin.register(UserPlanAssignment)
+class UserPlanAssignmentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'template', 'assigned_by', 'assigned_at', 'limits_applied')
+    list_filter = ('template', 'assigned_at', 'assigned_by')
+    search_fields = ('user__username', 'user__email', 'user__nombre_completo', 'template__name')
+    ordering = ('-assigned_at',)
+    list_per_page = 25  # Limitar resultados por página
+    
+    fieldsets = (
+        ('Asignación', {
+            'fields': ('user', 'template', 'assigned_by')
+        }),
+        ('Información Adicional', {
+            'fields': ('notes',)
+        }),
+        ('Información del Sistema', {
+            'fields': ('assigned_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    readonly_fields = ('assigned_at',)
+    
+    def get_queryset(self, request):
+        """Optimizar consultas para evitar problemas de cursor"""
+        return super().get_queryset(request).select_related(
+            'user', 'template', 'assigned_by'
+        ).prefetch_related('template__limits')
+    
+    def limits_applied(self, obj):
+        """Muestra si los límites han sido aplicados"""
+        if obj.template:
+            try:
+                user_limits_count = UserPlanLimits.objects.filter(user=obj.user).count()
+                template_limits_count = obj.template.limits.count()
+                if user_limits_count == template_limits_count and template_limits_count > 0:
+                    return format_html('<span style="color: green; font-weight: bold;">✓ APLICADOS</span>')
+                else:
+                    return format_html('<span style="color: orange; font-weight: bold;">⚠ PENDIENTES</span>')
+            except Exception:
+                return format_html('<span style="color: red; font-weight: bold;">ERROR</span>')
+        return '-'
+    
+    limits_applied.short_description = 'Estado de Límites'
+    
+    actions = ['apply_template_limits']
+    
+    def apply_template_limits(self, request, queryset):
+        """Aplicar límites de plantilla a usuarios seleccionados"""
+        count = 0
+        try:
+            for assignment in queryset.select_related('template', 'user'):
+                if assignment.template:
+                    assignment.apply_template_limits()
+                    count += 1
+            self.message_user(request, f'Límites aplicados a {count} usuario(s).')
+        except Exception as e:
+            self.message_user(request, f'Error al aplicar límites: {str(e)}', level='ERROR')
+    
+    apply_template_limits.short_description = "Aplicar límites de plantilla"
+    
+    def save_model(self, request, obj, form, change):
+        """Personalizar el guardado del modelo"""
+        if not obj.assigned_by:
+            obj.assigned_by = request.user
+        super().save_model(request, obj, form, change)

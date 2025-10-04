@@ -236,11 +236,20 @@ const ProductColorsTab = ({ product, onColorsChange }) => {
 
     setUploadingImage(true);
     try {
-      const formData = new FormData();
-      formData.append('imagen', file);
-      formData.append('orden', imagenes.length);
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
 
-      const response = await window.electronAPI.productos.subirImagen(selectedColor.id, formData);
+      const imageData = {
+        imagen: {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: Array.from(uint8Array)
+        },
+        orden: imagenes.length + 1
+      };
+
+      const response = await window.electronAPI.productos.subirImagen(selectedColor.id, imageData);
       if (response.success) {
         setSuccess('Imagen subida correctamente');
         await cargarImagenes(selectedColor.id);
@@ -533,4 +542,4 @@ const ProductColorsTab = ({ product, onColorsChange }) => {
   );
 };
 
-export default ProductColorsTab; 
+export default ProductColorsTab;
